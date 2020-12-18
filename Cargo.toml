@@ -1,0 +1,28 @@
+[package]
+name = "kml"
+version = "0.0.1"
+authors = ["Pat Sier <pjsier@gmail.com>"]
+description = "KML support for Rust"
+readme = "README.md"
+repository = "https://github.com/pjsier/kml"
+license = "MIT"
+edition = "2018"
+keywords = ["geo", "geospatial", "kml"]
+exclude = [".github/*"]
+# autobenches = true
+
+[dependencies]
+quick-xml = { version = "0.20" }
+num-traits = "0.2"
+thiserror = "1.0"
+geo-types = { version = "0.6", optional = true }
+
+[features]
+default = ["geo-types"]
+
+# [dev-dependencies]
+# criterion = "0.2"
+
+# [[bench]]
+# name = "parse"
+# harness = false
