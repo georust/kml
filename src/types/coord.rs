@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 // Coordinates are delimited by any whitespace and items within tuples separated by commas
 // TODO: Specific reference in spec
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Copy, Clone, Default, Debug, PartialEq)]
 pub struct Coord {
     pub x: f64,
     pub y: f64,

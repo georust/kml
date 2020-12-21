@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum AltitudeMode {
     ClampToGround,
     RelativeToGround,
