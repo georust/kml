@@ -1,4 +1,4 @@
-use crate::types::{Geometry, LineString, LinearRing, Point, Polygon};
+use crate::types::{Element, Geometry, LineString, LinearRing, Point, Polygon};
 
 // TODO: Only start with abstract group for Feature, Geometry
 // TODO: Should Kml contain every tag, with variants specifying more specific elements based on spec?
@@ -23,6 +23,10 @@ pub struct KmlDocument {
     pub elements: Vec<Kml>,
 }
 
+// TODO: Figure out specific attributes like "name" for Placemark
+
+// TODO: Figure out representing arbitrary attributes, struct for attributes hash and children?
+
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Kml {
@@ -31,8 +35,9 @@ pub enum Kml {
     LineString(LineString),
     LinearRing(LinearRing),
     Polygon(Polygon),
-    MultiGeometry(Vec<Kml>),
+    MultiGeometry(Vec<Geometry>),
     Placemark(Geometry),
     Document { elements: Vec<Kml> },
     Folder { elements: Vec<Kml> },
+    Element(Element),
 }

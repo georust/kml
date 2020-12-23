@@ -4,6 +4,7 @@ pub mod types;
 pub mod conversion;
 
 pub use crate::types::Coord;
+pub use crate::types::Element;
 pub use crate::types::LineString;
 pub use crate::types::LinearRing;
 pub use crate::types::Point;

@@ -14,6 +14,10 @@ pub use self::linestring::LineString;
 pub use self::point::Point;
 pub use self::polygon::Polygon;
 
+mod element;
+
+pub use self::element::Element;
+
 mod feature;
 mod geometry;
 

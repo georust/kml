@@ -1,11 +1,14 @@
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::io::BufRead;
 use std::str;
 use std::str::FromStr;
 
 use crate::types::coords_from_str;
-use crate::{types, Coord, Kml, KmlDocument, LineString, LinearRing, Point, Polygon};
-use quick_xml::events::Event;
+use crate::{
+    types, Coord, Element, Geometry, Kml, KmlDocument, LineString, LinearRing, Point, Polygon,
+};
+use quick_xml::events::{BytesStart, Event};
 
 pub struct KmlReader<B: BufRead> {
     reader: quick_xml::Reader<B>,
@@ -31,17 +34,21 @@ impl<B: BufRead> KmlReader<B> {
     pub fn parse(&mut self) -> Result<Kml, quick_xml::Error> {
         let mut result: Vec<Kml> = Vec::new();
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let e = self.reader.read_event(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => {
+                Event::Start(ref e) => {
                     match e.local_name() {
                         b"Point" => result.push(Kml::Point(self.parse_point()?)),
                         b"LineString" => result.push(Kml::LineString(self.parse_line_string()?)),
                         b"LinearRing" => result.push(Kml::LinearRing(self.parse_linear_ring()?)),
-                        n => {
-                            return Err(quick_xml::Error::UnexpectedToken(
-                                str::from_utf8(n).unwrap().to_string(),
-                            ))
+                        b"Polygon" => result.push(Kml::Polygon(self.parse_polygon()?)),
+                        b"MultiGeometry" => {
+                            result.push(Kml::MultiGeometry(self.parse_multi_geometry()?))
+                        }
+                        _ => {
+                            // Need to call to_owned() here to avoid duplicate multiple borrow E0499
+                            let start = e.to_owned();
+                            result.push(Kml::Element(self.parse_element(&start)?));
                         }
                     };
                 }
@@ -78,7 +85,7 @@ impl<B: BufRead> KmlReader<B> {
             coords: props.coords,
             altitude_mode: props.altitude_mode,
             extrude: props.extrude,
-            tesselate: props.tesselate,
+            tessellate: props.tessellate,
         })
     }
 
@@ -88,7 +95,7 @@ impl<B: BufRead> KmlReader<B> {
             coords: props.coords,
             altitude_mode: props.altitude_mode,
             extrude: props.extrude,
-            tesselate: props.tesselate,
+            tessellate: props.tessellate,
         })
     }
 
@@ -97,7 +104,7 @@ impl<B: BufRead> KmlReader<B> {
         let mut inner: Vec<LinearRing> = Vec::new();
         let mut altitude_mode = types::AltitudeMode::default();
         let mut extrude = false;
-        let mut tesselate = false;
+        let mut tessellate = false;
 
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
@@ -112,7 +119,7 @@ impl<B: BufRead> KmlReader<B> {
                         altitude_mode = types::AltitudeMode::from_str(&self.parse_str()?).unwrap()
                     }
                     b"extrude" => extrude = self.parse_str()? == "1",
-                    b"tesselate" => tesselate = self.parse_str()? == "1",
+                    b"tessellate" => tessellate = self.parse_str()? == "1",
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -128,8 +135,62 @@ impl<B: BufRead> KmlReader<B> {
             inner,
             altitude_mode,
             extrude,
-            tesselate,
+            tessellate,
         })
+    }
+
+    fn parse_multi_geometry(&mut self) -> Result<Vec<Geometry>, quick_xml::Error> {
+        let mut geometries: Vec<Geometry> = Vec::new();
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"Point" => geometries.push(Geometry::Point(self.parse_point()?)),
+                    b"LineString" => {
+                        geometries.push(Geometry::LineString(self.parse_line_string()?))
+                    }
+                    b"LinearRing" => {
+                        geometries.push(Geometry::LinearRing(self.parse_linear_ring()?))
+                    }
+                    b"Polygon" => geometries.push(Geometry::Polygon(self.parse_polygon()?)),
+                    // TODO: Can multigeometry be nested?
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"MultiGeometry" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(geometries)
+    }
+
+    fn parse_element(&mut self, start: &BytesStart) -> Result<Element, quick_xml::Error> {
+        let mut element = Element::default();
+        let tag = start.local_name();
+        element.name = str::from_utf8(tag).unwrap().to_string();
+        element.attrs = self.parse_attrs(start)?;
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref e) => {
+                    let e_start = e.to_owned();
+                    element.children.push(self.parse_element(&e_start)?);
+                }
+                Event::Text(ref mut e) => {
+                    element.content = e.unescape_and_decode(&self.reader).expect("Error")
+                }
+                Event::End(ref mut e) => {
+                    if e.local_name() == tag {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(element)
     }
 
     fn parse_boundary(&mut self, end_tag: &[u8]) -> Result<Vec<LinearRing>, quick_xml::Error> {
@@ -157,20 +218,20 @@ impl<B: BufRead> KmlReader<B> {
         let mut coords: Vec<Coord> = Vec::new();
         let mut altitude_mode = types::AltitudeMode::default();
         let mut extrude = false;
-        let mut tesselate = false;
+        let mut tessellate = false;
 
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
                     b"coordinates" => {
-                        coords = self.parse_coords()?;
+                        coords = coords_from_str(&self.parse_str()?).unwrap();
                     }
                     b"altitudeMode" => {
                         altitude_mode = types::AltitudeMode::from_str(&self.parse_str()?).unwrap()
                     }
                     b"extrude" => extrude = self.parse_str()? == "1",
-                    b"tesselate" => tesselate = self.parse_str()? == "1",
+                    b"tessellate" => tessellate = self.parse_str()? == "1",
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -178,26 +239,15 @@ impl<B: BufRead> KmlReader<B> {
                         break;
                     }
                 }
-                _ => break,
+                _ => {}
             }
         }
         Ok(GeomProps {
             coords,
             altitude_mode,
             extrude,
-            tesselate,
+            tessellate,
         })
-    }
-
-    fn parse_coords(&mut self) -> Result<Vec<Coord>, quick_xml::Error> {
-        let e = self.reader.read_event(&mut self.buf)?;
-        match e {
-            Event::Text(e) => Ok(coords_from_str(
-                &e.unescape_and_decode(&self.reader).expect("Error!"),
-            )
-            .expect("e")),
-            _ => Err(quick_xml::Error::UnexpectedToken("f".to_string())),
-        }
     }
 
     fn parse_str(&mut self) -> Result<String, quick_xml::Error> {
@@ -207,14 +257,28 @@ impl<B: BufRead> KmlReader<B> {
             _ => Err(quick_xml::Error::UnexpectedToken("f".to_string())),
         }
     }
+
+    fn parse_attrs(&self, start: &BytesStart) -> Result<HashMap<String, String>, quick_xml::Error> {
+        let attrs = start
+            .attributes()
+            .filter_map(Result::ok)
+            .map(|a| {
+                (
+                    str::from_utf8(a.key).unwrap().to_string(),
+                    str::from_utf8(&a.value).unwrap().to_string(),
+                )
+            })
+            .collect();
+        Ok(attrs)
+    }
 }
 
-// TODO: Might have to include everything here, all possible variables like tesselate
+// TODO: Might have to include everything here, all possible variables like tessellate
 struct GeomProps {
     coords: Vec<Coord>,
     altitude_mode: types::AltitudeMode,
     extrude: bool,
-    tesselate: bool,
+    tessellate: bool,
 }
 
 #[cfg(test)]
@@ -273,7 +337,67 @@ mod tests {
                     ],
                     altitude_mode: types::AltitudeMode::RelativeToGround,
                     extrude: false,
-                    tesselate: false
+                    tessellate: false
+                }
+            ),
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn test_parse_polygon() {
+        let poly_str = r#"<Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <tessellate>1</tessellate>
+            <coordinates>
+              -1,2,0
+              -1.5,3,0
+              -1.5,2,0
+              -1,2,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>"#;
+        let mut r = KmlReader::from_string(poly_str);
+
+        let p: Kml = r.parse().unwrap();
+        assert!(matches!(p, Kml::Polygon(_)));
+        match p {
+            Kml::Polygon(p) => assert_eq!(
+                p,
+                Polygon {
+                    outer: LinearRing {
+                        coords: vec![
+                            Coord {
+                                x: -1.,
+                                y: 2.,
+                                z: Some(0.)
+                            },
+                            Coord {
+                                x: -1.5,
+                                y: 3.,
+                                z: Some(0.)
+                            },
+                            Coord {
+                                x: -1.5,
+                                y: 2.,
+                                z: Some(0.)
+                            },
+                            Coord {
+                                x: -1.,
+                                y: 2.,
+                                z: Some(0.)
+                            },
+                        ],
+                        extrude: false,
+                        tessellate: true,
+                        altitude_mode: types::AltitudeMode::ClampToGround,
+                    },
+                    inner: vec![],
+                    extrude: false,
+                    tessellate: false,
+                    altitude_mode: types::AltitudeMode::ClampToGround
                 }
             ),
             _ => unreachable!(),
@@ -320,7 +444,7 @@ mod tests {
                     ],
                     altitude_mode: types::AltitudeMode::ClampToGround,
                     extrude: false,
-                    tesselate: false
+                    tessellate: false
                 },
             _ => false,
         }))

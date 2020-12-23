@@ -5,6 +5,6 @@ use crate::types::coord::Coord;
 pub struct LineString {
     pub coords: Vec<Coord>,
     pub extrude: bool,
-    pub tesselate: bool,
+    pub tessellate: bool,
     pub altitude_mode: AltitudeMode,
 }
