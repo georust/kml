@@ -1,6 +1,6 @@
 [package]
 name = "kml"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Pat Sier <pjsier@gmail.com>"]
 description = "KML support for Rust"
 readme = "README.md"
