@@ -26,6 +26,8 @@
 //! let kml: Kml = kml_str.parse().unwrap();
 //! ```
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 pub mod types;
 
 pub use crate::types::{Kml, KmlDocument, KmlVersion};
