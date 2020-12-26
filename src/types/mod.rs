@@ -1,28 +1,30 @@
 mod altitude_mode;
 mod coord;
 
-pub use self::altitude_mode::AltitudeMode;
-pub use self::coord::{coords_from_str, Coord};
+pub use altitude_mode::AltitudeMode;
+pub use coord::{coords_from_str, Coord};
 
-mod linearring;
-mod linestring;
+mod line_string;
+mod linear_ring;
+mod multi_geometry;
 mod point;
 mod polygon;
 
-pub use self::linearring::LinearRing;
-pub use self::linestring::LineString;
-pub use self::point::Point;
-pub use self::polygon::Polygon;
+pub use line_string::LineString;
+pub use linear_ring::LinearRing;
+pub use multi_geometry::MultiGeometry;
+pub use point::Point;
+pub use polygon::Polygon;
 
 mod element;
+mod placemark;
 
-pub use self::element::Element;
+pub use element::Element;
+pub use placemark::Placemark;
 
-mod feature;
 mod geometry;
 
-pub use self::feature::Feature;
-pub use self::geometry::Geometry;
+pub use geometry::Geometry;
 
 mod kml;
 

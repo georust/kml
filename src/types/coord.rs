@@ -1,24 +1,94 @@
-use std::num::ParseFloatError;
+use std::fmt::Debug;
 use std::str::FromStr;
 
-// Coordinates are delimited by any whitespace and items within tuples separated by commas
+use num_traits::Float;
+
+use crate::errors::Error;
+
+/// delimited by any whitespace and items within tuples separated by commas
 // TODO: Specific reference in spec
 #[derive(Copy, Clone, Default, Debug, PartialEq)]
-pub struct Coord {
-    pub x: f64,
-    pub y: f64,
-    pub z: Option<f64>,
+pub struct Coord<T: Float = f64> {
+    pub x: T,
+    pub y: T,
+    pub z: Option<T>,
 }
 
-impl FromStr for Coord {
-    type Err = ParseFloatError;
+impl<T> Coord<T>
+where
+    T: Float,
+{
+    pub fn new(x: T, y: T, z: Option<T>) -> Self {
+        Coord { x, y, z }
+    }
+}
+
+impl<T> From<(T, T)> for Coord<T>
+where
+    T: Float,
+{
+    fn from(coord: (T, T)) -> Self {
+        Coord::new(coord.0, coord.1, None)
+    }
+}
+
+impl<T> From<[T; 2]> for Coord<T>
+where
+    T: Float,
+{
+    fn from(coord: [T; 2]) -> Self {
+        Coord::new(coord[0], coord[1], None)
+    }
+}
+
+impl<T> From<(T, T, Option<T>)> for Coord<T>
+where
+    T: Float,
+{
+    fn from(coord: (T, T, Option<T>)) -> Self {
+        Coord::new(coord.0, coord.1, coord.2)
+    }
+}
+
+impl<T> From<(T, T, T)> for Coord<T>
+where
+    T: Float,
+{
+    fn from(coord: (T, T, T)) -> Self {
+        Coord::new(coord.0, coord.1, Some(coord.2))
+    }
+}
+
+impl<T> From<[T; 3]> for Coord<T>
+where
+    T: Float,
+{
+    fn from(coord: [T; 3]) -> Self {
+        Coord::new(coord[0], coord[1], Some(coord[2]))
+    }
+}
+
+impl<T> FromStr for Coord<T>
+where
+    T: Float + FromStr + Debug,
+{
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.trim().split(',');
-        let x = parts.next().unwrap_or("").parse::<f64>()?;
-        let y = parts.next().unwrap_or("").parse::<f64>()?;
+        let x_str = parts.next().ok_or(Error::CoordEmpty)?;
+        let x: T = x_str
+            .parse()
+            .map_err(|_| Error::FloatParse(x_str.to_string()))?;
+        let y_str = parts.next().ok_or(Error::CoordEmpty)?;
+        let y: T = y_str
+            .parse()
+            .map_err(|_| Error::FloatParse(y_str.to_string()))?;
         let z = if let Some(z) = parts.next() {
-            Some(z.parse::<f64>()?)
+            Some(
+                z.parse::<T>()
+                    .map_err(|_| Error::FloatParse(z.to_string()))?,
+            )
         } else {
             None
         };
@@ -26,7 +96,17 @@ impl FromStr for Coord {
     }
 }
 
-pub fn coords_from_str(s: &str) -> Result<Vec<Coord>, ParseFloatError> {
+/// Utility method for parsing multiple coordinates according to the spec
+///
+/// # Example
+///
+/// ```
+/// use kml::types::{Coord, coords_from_str};
+///
+/// let coords_str = "1,1,0\n\n1,2,0  2,2,0";
+/// let coords: Vec<Coord> = coords_from_str(coords_str).unwrap();
+/// ```
+pub fn coords_from_str<T: Float + FromStr + Debug>(s: &str) -> Result<Vec<Coord<T>>, Error> {
     s.split_whitespace().map(Coord::from_str).collect()
 }
 

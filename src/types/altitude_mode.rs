@@ -1,6 +1,9 @@
 use std::str::FromStr;
 
-#[derive(Clone, Debug, PartialEq)]
+use crate::errors::Error;
+
+// reference docs TODO:
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum AltitudeMode {
     ClampToGround,
     RelativeToGround,
@@ -14,14 +17,14 @@ impl Default for AltitudeMode {
 }
 
 impl FromStr for AltitudeMode {
-    type Err = ();
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "clampToGround" => Ok(AltitudeMode::ClampToGround),
-            "relativeToGround" => Ok(AltitudeMode::RelativeToGround),
-            "absolute" => Ok(AltitudeMode::Absolute),
-            _ => Err(()),
+            "clampToGround" => Ok(Self::ClampToGround),
+            "relativeToGround" => Ok(Self::RelativeToGround),
+            "absolute" => Ok(Self::Absolute),
+            _ => Err(Error::PlaceholderError),
         }
     }
 }

@@ -1,16 +1,20 @@
-use crate::types::linearring::LinearRing;
-use crate::types::linestring::LineString;
+use num_traits::Float;
+
+use crate::types::element::Element;
+use crate::types::line_string::LineString;
+use crate::types::linear_ring::LinearRing;
+use crate::types::multi_geometry::MultiGeometry;
 use crate::types::point::Point;
 use crate::types::polygon::Polygon;
 
-// TODO: Should geometry have separate enum or use main Kml?
-// Includes everything within AbstractGeometryGroup
+/// AbstractGeometryGroup
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub enum Geometry {
-    Point(Point),
-    LineString(LineString),
-    LinearRing(LinearRing),
-    Polygon(Polygon),
-    MultiGeometry(Vec<Geometry>),
+pub enum Geometry<T: Float = f64> {
+    Point(Point<T>),
+    LineString(LineString<T>),
+    LinearRing(LinearRing<T>),
+    Polygon(Polygon<T>),
+    MultiGeometry(MultiGeometry<T>),
+    Element(Element), // Currently just a stand-in for Model
 }

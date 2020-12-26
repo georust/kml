@@ -1,76 +1,115 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::io::BufRead;
+use std::marker::PhantomData;
 use std::str;
 use std::str::FromStr;
 
-use crate::types::coords_from_str;
-use crate::{
-    types, Coord, Element, Geometry, Kml, KmlDocument, LineString, LinearRing, Point, Polygon,
-};
+use num_traits::Float;
 use quick_xml::events::{BytesStart, Event};
 
-pub struct KmlReader<B: BufRead> {
+use crate::errors::Error;
+use crate::types::{
+    self, coords_from_str, Coord, Element, Geometry, Kml, KmlDocument, KmlVersion, LineString,
+    LinearRing, MultiGeometry, Placemark, Point, Polygon,
+};
+
+pub struct KmlReader<B: BufRead, T: Float + FromStr + Default + Debug = f64> {
     reader: quick_xml::Reader<B>,
     buf: Vec<u8>,
+    version: KmlVersion, // TODO: How to incorporate this so it can be set before parsing?
+    _phantom: PhantomData<T>,
 }
 
-impl<'a> KmlReader<&'a [u8]> {
-    pub fn from_string(s: &str) -> KmlReader<&[u8]> {
-        KmlReader::from_xml_reader(quick_xml::Reader::<&[u8]>::from_str(s))
+impl<'a, T> KmlReader<&'a [u8], T>
+where
+    T: Float + FromStr + Default + Debug,
+{
+    pub fn from_string(s: &str) -> KmlReader<&[u8], T> {
+        KmlReader::<&[u8], T>::from_xml_reader(quick_xml::Reader::<&[u8]>::from_str(s))
     }
 }
 
-impl<B: BufRead> KmlReader<B> {
-    fn from_xml_reader(mut reader: quick_xml::Reader<B>) -> KmlReader<B> {
+impl<B: BufRead, T> KmlReader<B, T>
+where
+    T: Float + FromStr + Default + Debug,
+{
+    fn from_xml_reader(mut reader: quick_xml::Reader<B>) -> KmlReader<B, T> {
         reader.trim_text(true);
         reader.expand_empty_elements(true);
         KmlReader {
             reader,
             buf: Vec::new(),
+            version: KmlVersion::Unknown,
+            _phantom: PhantomData,
         }
     }
 
-    pub fn parse(&mut self) -> Result<Kml, quick_xml::Error> {
-        let mut result: Vec<Kml> = Vec::new();
+    pub fn parse(&mut self) -> Result<Kml<T>, Error> {
+        let mut result = self.parse_elements()?;
+        // Converts multiple items at the same level to KmlDocument
+        match result.len().cmp(&1) {
+            Ordering::Greater => Ok(Kml::KmlDocument(KmlDocument {
+                elements: result,
+                ..Default::default()
+            })),
+            Ordering::Equal => Ok(result.remove(0)),
+            Ordering::Less => Err(Error::NoElements),
+        }
+    }
+
+    fn parse_elements(&mut self) -> Result<Vec<Kml<T>>, Error> {
+        let mut elements: Vec<Kml<T>> = Vec::new();
         loop {
             let e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref e) => {
                     match e.local_name() {
-                        b"Point" => result.push(Kml::Point(self.parse_point()?)),
-                        b"LineString" => result.push(Kml::LineString(self.parse_line_string()?)),
-                        b"LinearRing" => result.push(Kml::LinearRing(self.parse_linear_ring()?)),
-                        b"Polygon" => result.push(Kml::Polygon(self.parse_polygon()?)),
+                        b"kml" => elements.push(Kml::KmlDocument(self.parse_kml_document()?)),
+                        b"Point" => elements.push(Kml::Point(self.parse_point()?)),
+                        b"LineString" => elements.push(Kml::LineString(self.parse_line_string()?)),
+                        b"LinearRing" => elements.push(Kml::LinearRing(self.parse_linear_ring()?)),
+                        b"Polygon" => elements.push(Kml::Polygon(self.parse_polygon()?)),
                         b"MultiGeometry" => {
-                            result.push(Kml::MultiGeometry(self.parse_multi_geometry()?))
+                            elements.push(Kml::MultiGeometry(self.parse_multi_geometry()?))
                         }
+                        b"Placemark" => elements.push(Kml::Placemark(self.parse_placemark()?)),
+                        b"Document" => elements.push(Kml::Document {
+                            elements: self.parse_elements()?,
+                        }),
+                        b"Folder" => elements.push(Kml::Folder {
+                            elements: self.parse_elements()?,
+                        }),
                         _ => {
                             // Need to call to_owned() here to avoid duplicate multiple borrow E0499
                             let start = e.to_owned();
-                            result.push(Kml::Element(self.parse_element(&start)?));
+                            elements.push(Kml::Element(self.parse_element(&start)?));
                         }
                     };
                 }
-                Event::Empty(_) | Event::Text(_) | Event::End(_) => {}
+                Event::Decl(_)
+                | Event::CData(_)
+                | Event::Empty(_)
+                | Event::Text(_)
+                | Event::End(_) => {}
                 Event::Eof => break,
-                _ => return Err(quick_xml::Error::UnexpectedToken("t".to_string())),
+                _ => return Err(Error::InvalidInput),
             };
         }
 
-        // Converts multiple items at the same level to KmlDocument
-        match result.len().cmp(&1) {
-            Ordering::Greater => {
-                let mut doc = KmlDocument::default();
-                doc.elements = result;
-                Ok(Kml::KmlDocument(doc))
-            }
-            Ordering::Equal => Ok(result.remove(0)),
-            Ordering::Less => Err(quick_xml::Error::UnexpectedToken("no results".to_string())),
-        }
+        Ok(elements)
     }
 
-    fn parse_point(&mut self) -> Result<Point, quick_xml::Error> {
+    fn parse_kml_document(&mut self) -> Result<KmlDocument<T>, Error> {
+        // TODO: Should parse version, change version based on NS
+        Ok(KmlDocument {
+            elements: self.parse_elements()?,
+            ..Default::default()
+        })
+    }
+
+    fn parse_point(&mut self) -> Result<Point<T>, Error> {
         let mut props = self.parse_geom_props(b"Point")?;
         Ok(Point {
             coord: props.coords.remove(0),
@@ -79,7 +118,7 @@ impl<B: BufRead> KmlReader<B> {
         })
     }
 
-    fn parse_line_string(&mut self) -> Result<LineString, quick_xml::Error> {
+    fn parse_line_string(&mut self) -> Result<LineString<T>, Error> {
         let props = self.parse_geom_props(b"LineString")?;
         Ok(LineString {
             coords: props.coords,
@@ -89,7 +128,7 @@ impl<B: BufRead> KmlReader<B> {
         })
     }
 
-    fn parse_linear_ring(&mut self) -> Result<LinearRing, quick_xml::Error> {
+    fn parse_linear_ring(&mut self) -> Result<LinearRing<T>, Error> {
         let props = self.parse_geom_props(b"LinearRing")?;
         Ok(LinearRing {
             coords: props.coords,
@@ -99,9 +138,9 @@ impl<B: BufRead> KmlReader<B> {
         })
     }
 
-    fn parse_polygon(&mut self) -> Result<Polygon, quick_xml::Error> {
-        let mut outer: LinearRing = LinearRing::default();
-        let mut inner: Vec<LinearRing> = Vec::new();
+    fn parse_polygon(&mut self) -> Result<Polygon<T>, Error> {
+        let mut outer: LinearRing<T> = LinearRing::default();
+        let mut inner: Vec<LinearRing<T>> = Vec::new();
         let mut altitude_mode = types::AltitudeMode::default();
         let mut extrude = false;
         let mut tessellate = false;
@@ -139,8 +178,8 @@ impl<B: BufRead> KmlReader<B> {
         })
     }
 
-    fn parse_multi_geometry(&mut self) -> Result<Vec<Geometry>, quick_xml::Error> {
-        let mut geometries: Vec<Geometry> = Vec::new();
+    fn parse_multi_geometry(&mut self) -> Result<MultiGeometry<T>, Error> {
+        let mut geometries: Vec<Geometry<T>> = Vec::new();
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -153,7 +192,7 @@ impl<B: BufRead> KmlReader<B> {
                         geometries.push(Geometry::LinearRing(self.parse_linear_ring()?))
                     }
                     b"Polygon" => geometries.push(Geometry::Polygon(self.parse_polygon()?)),
-                    // TODO: Can multigeometry be nested?
+                    // TODO: Can multi_geometry be nested?
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -164,10 +203,49 @@ impl<B: BufRead> KmlReader<B> {
                 _ => break,
             }
         }
-        Ok(geometries)
+        Ok(MultiGeometry(geometries))
     }
 
-    fn parse_element(&mut self, start: &BytesStart) -> Result<Element, quick_xml::Error> {
+    fn parse_placemark(&mut self) -> Result<Placemark<T>, Error> {
+        let mut name: Option<String> = None;
+        let mut description: Option<String> = None;
+        let mut geometry: Option<Geometry<T>> = None;
+
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"name" => name = Some(self.parse_str()?),
+                    b"description" => description = Some(self.parse_str()?),
+                    b"Point" => geometry = Some(Geometry::Point(self.parse_point()?)),
+                    b"LineString" => {
+                        geometry = Some(Geometry::LineString(self.parse_line_string()?))
+                    }
+                    b"LinearRing" => {
+                        geometry = Some(Geometry::LinearRing(self.parse_linear_ring()?))
+                    }
+                    b"Polygon" => geometry = Some(Geometry::Polygon(self.parse_polygon()?)),
+                    b"MultiGeometry" => {
+                        geometry = Some(Geometry::MultiGeometry(self.parse_multi_geometry()?))
+                    }
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Placemark" {
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        Ok(Placemark {
+            name,
+            description,
+            geometry,
+        })
+    }
+
+    fn parse_element(&mut self, start: &BytesStart) -> Result<Element, Error> {
         let mut element = Element::default();
         let tag = start.local_name();
         element.name = str::from_utf8(tag).unwrap().to_string();
@@ -193,8 +271,8 @@ impl<B: BufRead> KmlReader<B> {
         Ok(element)
     }
 
-    fn parse_boundary(&mut self, end_tag: &[u8]) -> Result<Vec<LinearRing>, quick_xml::Error> {
-        let mut boundary: Vec<LinearRing> = Vec::new();
+    fn parse_boundary(&mut self, end_tag: &[u8]) -> Result<Vec<LinearRing<T>>, Error> {
+        let mut boundary: Vec<LinearRing<T>> = Vec::new();
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -214,8 +292,8 @@ impl<B: BufRead> KmlReader<B> {
         Ok(boundary)
     }
 
-    fn parse_geom_props(&mut self, end_tag: &[u8]) -> Result<GeomProps, quick_xml::Error> {
-        let mut coords: Vec<Coord> = Vec::new();
+    fn parse_geom_props(&mut self, end_tag: &[u8]) -> Result<GeomProps<T>, Error> {
+        let mut coords: Vec<Coord<T>> = Vec::new();
         let mut altitude_mode = types::AltitudeMode::default();
         let mut extrude = false;
         let mut tessellate = false;
@@ -250,15 +328,17 @@ impl<B: BufRead> KmlReader<B> {
         })
     }
 
-    fn parse_str(&mut self) -> Result<String, quick_xml::Error> {
+    fn parse_str(&mut self) -> Result<String, Error> {
         let e = self.reader.read_event(&mut self.buf)?;
         match e {
-            Event::Text(e) => Ok(e.unescape_and_decode(&self.reader).expect("Error")),
-            _ => Err(quick_xml::Error::UnexpectedToken("f".to_string())),
+            Event::Text(e) | Event::CData(e) => {
+                Ok(e.unescape_and_decode(&self.reader).expect("Error"))
+            }
+            e => Err(Error::InvalidXmlEvent(format!("{:?}", e))), // TODO: Not sure if right approach
         }
     }
 
-    fn parse_attrs(&self, start: &BytesStart) -> Result<HashMap<String, String>, quick_xml::Error> {
+    fn parse_attrs(&self, start: &BytesStart) -> Result<HashMap<String, String>, Error> {
         let attrs = start
             .attributes()
             .filter_map(Result::ok)
@@ -273,12 +353,23 @@ impl<B: BufRead> KmlReader<B> {
     }
 }
 
-// TODO: Might have to include everything here, all possible variables like tessellate
-struct GeomProps {
-    coords: Vec<Coord>,
+// TODO: Use in structs?
+struct GeomProps<T: Float + FromStr + Default + Debug = f64> {
+    coords: Vec<Coord<T>>,
     altitude_mode: types::AltitudeMode,
     extrude: bool,
     tessellate: bool,
+}
+
+impl<T> FromStr for Kml<T>
+where
+    T: Float + FromStr + Default + Debug,
+{
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        KmlReader::<&[u8], T>::from_string(s).parse()
+    }
 }
 
 #[cfg(test)]
@@ -287,8 +378,8 @@ mod tests {
 
     #[test]
     fn test_parse_point() {
-        let mut r = KmlReader::from_string("<Point><coordinates>1,1,1</coordinates><altitudeMode>relativeToGround</altitudeMode></Point>");
-        let p: Kml = r.parse().unwrap();
+        let kml_str = "<Point><coordinates>1,1,1</coordinates><altitudeMode>relativeToGround</altitudeMode></Point>";
+        let p: Kml = kml_str.parse().unwrap();
         assert!(matches!(p, Kml::Point(_)));
         match p {
             Kml::Point(p) => assert_eq!(
@@ -309,10 +400,11 @@ mod tests {
 
     #[test]
     fn test_parse_line_string() {
-        let mut r = KmlReader::from_string(
-            "<LineString><coordinates>1,1 2,1 3,1</coordinates><altitudeMode>relativeToGround</altitudeMode></LineString>",
-        );
-        let l: Kml = r.parse().unwrap();
+        let kml_str = r#"<LineString>
+            <coordinates>1,1 2,1 3,1</coordinates>
+            <altitudeMode>relativeToGround</altitudeMode>
+        </LineString>"#;
+        let l: Kml = kml_str.parse().unwrap();
         assert!(matches!(l, Kml::LineString(_)));
         match l {
             Kml::LineString(l) => assert_eq!(
@@ -406,10 +498,8 @@ mod tests {
 
     #[test]
     fn test_parse_kml_document_default() {
-        let mut r = KmlReader::from_string(
-            "<Point><coordinates>1,1,1</coordinates></Point><LineString><coordinates>1,1 2,1</coordinates></LineString>",
-        );
-        let d: Kml = r.parse().unwrap();
+        let kml_str ="<Point><coordinates>1,1,1</coordinates></Point><LineString><coordinates>1,1 2,1</coordinates></LineString>";
+        let d: Kml = kml_str.parse().unwrap();
 
         assert!(matches!(d, Kml::KmlDocument(_)));
         let doc: Option<KmlDocument> = match d {
@@ -448,5 +538,15 @@ mod tests {
                 },
             _ => false,
         }))
+    }
+
+    #[test]
+    fn test_parse() {
+        let kml_str = include_str!("../fixtures/sample.kml");
+
+        assert!(matches!(
+            Kml::<f64>::from_str(kml_str).unwrap(),
+            Kml::KmlDocument(_)
+        ))
     }
 }

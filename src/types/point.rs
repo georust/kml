@@ -1,17 +1,23 @@
+use num_traits::Float;
+
 use crate::types::altitude_mode::AltitudeMode;
 use crate::types::coord::Coord;
 
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct Point {
-    pub coord: Coord, // TODO: Can this be empty and require Option?
+#[derive(Copy, Clone, Default, Debug, PartialEq)]
+pub struct Point<T: Float = f64> {
+    pub coord: Coord<T>,
     pub extrude: bool,
     pub altitude_mode: AltitudeMode,
 }
 
-impl Point {
-    pub fn from_coord(coord: Coord) -> Point {
-        let mut p = Point::default();
-        p.coord = coord;
-        p
+impl<T> From<Coord<T>> for Point<T>
+where
+    T: Float + Default,
+{
+    fn from(coord: Coord<T>) -> Self {
+        Point {
+            coord,
+            ..Default::default()
+        }
     }
 }
