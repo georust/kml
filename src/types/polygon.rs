@@ -5,8 +5,6 @@ use num_traits::Float;
 use crate::types::altitude_mode::AltitudeMode;
 use crate::types::linear_ring::LinearRing;
 
-// TODO: Are all geometry fields nullable?
-// TODO: Does linear ring only have tessellate or polygon too?
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Polygon<T: Float = f64> {
     pub outer: LinearRing<T>,

@@ -6,7 +6,6 @@ use num_traits::Float;
 use crate::errors::Error;
 use crate::types::{Element, LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon};
 
-// TODO: Use this in reader implementation
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum KmlVersion {

@@ -96,7 +96,6 @@ where
     }
 
     fn write_polygon(&mut self, polygon: &Polygon<T>) -> Result<(), Error> {
-        // TODO: Clean up start creation
         self.writer.write_event(Event::Start(
             BytesStart::owned_name(b"Polygon".to_vec())
                 .with_attributes(self.hash_map_as_attrs(&polygon.attrs)),

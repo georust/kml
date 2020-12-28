@@ -167,8 +167,13 @@ where
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
                     b"outerBoundaryIs" => {
-                        // TODO: remove because required?
-                        outer = self.parse_boundary(b"outerBoundaryIs")?.remove(0)
+                        let mut outer_ring = self.parse_boundary(b"outerBoundaryIs")?;
+                        if outer_ring.is_empty() {
+                            return Err(Error::InvalidGeometry(
+                                "Polygon must have an outer boundary".to_string(),
+                            ));
+                        }
+                        outer = outer_ring.remove(0);
                     }
                     b"innerBoundaryIs" => inner = self.parse_boundary(b"innerBoundaryIs")?,
                     b"altitudeMode" => {
@@ -217,7 +222,8 @@ where
                         b"Polygon" => {
                             geometries.push(Geometry::Polygon(self.parse_polygon(attrs)?))
                         }
-                        // TODO: Can multi_geometry be nested?
+                        b"MultiGeometry" => geometries
+                            .push(Geometry::MultiGeometry(self.parse_multi_geometry(attrs)?)),
                         _ => {}
                     }
                 }
