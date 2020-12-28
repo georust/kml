@@ -211,6 +211,7 @@ where
         let mut name: Option<String> = None;
         let mut description: Option<String> = None;
         let mut geometry: Option<Geometry<T>> = None;
+        let mut children: Vec<Element> = Vec::new();
 
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
@@ -229,7 +230,10 @@ where
                     b"MultiGeometry" => {
                         geometry = Some(Geometry::MultiGeometry(self.parse_multi_geometry()?))
                     }
-                    _ => {}
+                    _ => {
+                        let start = e.to_owned();
+                        children.push(self.parse_element(&start)?);
+                    }
                 },
                 Event::End(ref mut e) => {
                     if e.local_name() == b"Placemark" {
@@ -243,6 +247,7 @@ where
             name,
             description,
             geometry,
+            children,
         })
     }
 

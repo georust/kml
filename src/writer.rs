@@ -152,6 +152,9 @@ where
         if let Some(geometry) = &placemark.geometry {
             self.write_geometry(geometry)?;
         }
+        for c in placemark.children.iter() {
+            self.write_element(c)?;
+        }
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::borrowed(b"Placemark")))?)
