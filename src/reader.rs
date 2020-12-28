@@ -367,12 +367,18 @@ where
                 _ => {}
             }
         }
-        Ok(GeomProps {
-            coords,
-            altitude_mode,
-            extrude,
-            tessellate,
-        })
+        if coords.is_empty() {
+            Err(Error::InvalidGeometry(
+                "Geometry must contain coordinates element".to_string(),
+            ))
+        } else {
+            Ok(GeomProps {
+                coords,
+                altitude_mode,
+                extrude,
+                tessellate,
+            })
+        }
     }
 
     fn parse_str(&mut self) -> Result<String, Error> {

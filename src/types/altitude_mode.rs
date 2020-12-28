@@ -25,7 +25,7 @@ impl FromStr for AltitudeMode {
             "clampToGround" => Ok(Self::ClampToGround),
             "relativeToGround" => Ok(Self::RelativeToGround),
             "absolute" => Ok(Self::Absolute),
-            _ => Err(Error::PlaceholderError),
+            v => Err(Error::InvalidAltitudeMode(v.to_string())),
         }
     }
 }

@@ -15,16 +15,12 @@ where
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
-impl<T> TryFrom<Point<T>> for geo_types::Point<T>
+impl<T> From<Point<T>> for geo_types::Point<T>
 where
     T: Float,
 {
-    type Error = Error;
-
-    fn try_from(val: Point<T>) -> Result<geo_types::Point<T>, Self::Error> {
-        Ok(geo_types::Point::from(geo_types::Coordinate::from(
-            val.coord,
-        )))
+    fn from(val: Point<T>) -> geo_types::Point<T> {
+        geo_types::Point::from(geo_types::Coordinate::from(val.coord))
     }
 }
 
@@ -100,7 +96,7 @@ where
 
     fn try_from(val: Geometry<T>) -> Result<geo_types::Geometry<T>, Self::Error> {
         match val {
-            Geometry::Point(p) => Ok(geo_types::Geometry::Point(geo_types::Point::try_from(p)?)),
+            Geometry::Point(p) => Ok(geo_types::Geometry::Point(geo_types::Point::from(p))),
             Geometry::LineString(l) => Ok(geo_types::Geometry::LineString(
                 geo_types::LineString::from(l),
             )),
@@ -111,7 +107,7 @@ where
             Geometry::MultiGeometry(g) => Ok(geo_types::Geometry::GeometryCollection(
                 geo_types::GeometryCollection::try_from(g)?,
             )),
-            _ => Err(Error::InvalidGeometry),
+            _ => Err(Error::InvalidGeometry("Can't convert geometry".to_string())),
         }
     }
 }
@@ -128,9 +124,7 @@ where
             .flatten()
             .collect()),
         Kml::Point(p) => Ok(vec![
-            geo_types::Geometry::Point(geo_types::Point::try_from(
-                p
-            )?);
+            geo_types::Geometry::Point(geo_types::Point::from(p));
             1
         ]),
         Kml::LineString(l) => Ok(vec![

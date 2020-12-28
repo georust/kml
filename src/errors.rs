@@ -2,8 +2,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Placeholder")]
-    PlaceholderError,
     #[error("Invalid input supplied for XML")]
     InvalidInput,
     #[error("Encountered malformed XML: {0}")]
@@ -18,6 +16,10 @@ pub enum Error {
     FloatParse(String),
     #[error("Invalid KML version: {0}")]
     InvalidKmlVersion(String),
-    #[error("Geometry is invalid")]
-    InvalidGeometry,
+    #[error("Invalid KML element: {0}")]
+    InvalidKmlElement(String),
+    #[error("Geometry is invalid: {0}")]
+    InvalidGeometry(String),
+    #[error("Invalid altitude mode: {0}")]
+    InvalidAltitudeMode(String),
 }
