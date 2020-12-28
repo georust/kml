@@ -560,7 +560,7 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        let kml_str = include_str!("../fixtures/sample.kml");
+        let kml_str = include_str!("../tests/fixtures/sample.kml");
 
         assert!(matches!(
             Kml::<f64>::from_str(kml_str).unwrap(),

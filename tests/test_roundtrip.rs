@@ -9,7 +9,7 @@ mod roundtrip_tests {
         ($name:ident : $file_name:expr) => {
             #[test]
             fn $name() {
-                let fixture_dir_path = "fixtures/";
+                let fixture_dir_path = "tests/fixtures/";
                 let mut file_path = fixture_dir_path.to_owned();
                 file_path.push_str($file_name.to_owned().as_str());
 
