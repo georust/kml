@@ -373,22 +373,18 @@ mod tests {
     fn test_parse_point() {
         let kml_str = "<Point><coordinates>1,1,1</coordinates><altitudeMode>relativeToGround</altitudeMode></Point>";
         let p: Kml = kml_str.parse().unwrap();
-        assert!(matches!(p, Kml::Point(_)));
-        match p {
-            Kml::Point(p) => assert_eq!(
-                p,
-                Point {
-                    coord: Coord {
-                        x: 1.,
-                        y: 1.,
-                        z: Some(1.)
-                    },
-                    altitude_mode: types::AltitudeMode::RelativeToGround,
-                    extrude: false,
-                }
-            ),
-            _ => unreachable!(),
-        }
+        assert_eq!(
+            p,
+            Kml::Point(Point {
+                coord: Coord {
+                    x: 1.,
+                    y: 1.,
+                    z: Some(1.)
+                },
+                altitude_mode: types::AltitudeMode::RelativeToGround,
+                extrude: false,
+            })
+        );
     }
 
     #[test]
@@ -398,35 +394,31 @@ mod tests {
             <altitudeMode>relativeToGround</altitudeMode>
         </LineString>"#;
         let l: Kml = kml_str.parse().unwrap();
-        assert!(matches!(l, Kml::LineString(_)));
-        match l {
-            Kml::LineString(l) => assert_eq!(
-                l,
-                LineString {
-                    coords: vec![
-                        Coord {
-                            x: 1.,
-                            y: 1.,
-                            z: None
-                        },
-                        Coord {
-                            x: 2.,
-                            y: 1.,
-                            z: None
-                        },
-                        Coord {
-                            x: 3.,
-                            y: 1.,
-                            z: None
-                        }
-                    ],
-                    altitude_mode: types::AltitudeMode::RelativeToGround,
-                    extrude: false,
-                    tessellate: false
-                }
-            ),
-            _ => unreachable!(),
-        }
+        assert_eq!(
+            l,
+            Kml::LineString(LineString {
+                coords: vec![
+                    Coord {
+                        x: 1.,
+                        y: 1.,
+                        z: None
+                    },
+                    Coord {
+                        x: 2.,
+                        y: 1.,
+                        z: None
+                    },
+                    Coord {
+                        x: 3.,
+                        y: 1.,
+                        z: None
+                    }
+                ],
+                altitude_mode: types::AltitudeMode::RelativeToGround,
+                extrude: false,
+                tessellate: false
+            })
+        );
     }
 
     #[test]
@@ -447,46 +439,42 @@ mod tests {
         let mut r = KmlReader::from_string(poly_str);
 
         let p: Kml = r.parse().unwrap();
-        assert!(matches!(p, Kml::Polygon(_)));
-        match p {
-            Kml::Polygon(p) => assert_eq!(
-                p,
-                Polygon {
-                    outer: LinearRing {
-                        coords: vec![
-                            Coord {
-                                x: -1.,
-                                y: 2.,
-                                z: Some(0.)
-                            },
-                            Coord {
-                                x: -1.5,
-                                y: 3.,
-                                z: Some(0.)
-                            },
-                            Coord {
-                                x: -1.5,
-                                y: 2.,
-                                z: Some(0.)
-                            },
-                            Coord {
-                                x: -1.,
-                                y: 2.,
-                                z: Some(0.)
-                            },
-                        ],
-                        extrude: false,
-                        tessellate: true,
-                        altitude_mode: types::AltitudeMode::ClampToGround,
-                    },
-                    inner: vec![],
+        assert_eq!(
+            p,
+            Kml::Polygon(Polygon {
+                outer: LinearRing {
+                    coords: vec![
+                        Coord {
+                            x: -1.,
+                            y: 2.,
+                            z: Some(0.)
+                        },
+                        Coord {
+                            x: -1.5,
+                            y: 3.,
+                            z: Some(0.)
+                        },
+                        Coord {
+                            x: -1.5,
+                            y: 2.,
+                            z: Some(0.)
+                        },
+                        Coord {
+                            x: -1.,
+                            y: 2.,
+                            z: Some(0.)
+                        },
+                    ],
                     extrude: false,
-                    tessellate: false,
-                    altitude_mode: types::AltitudeMode::ClampToGround
-                }
-            ),
-            _ => unreachable!(),
-        }
+                    tessellate: true,
+                    altitude_mode: types::AltitudeMode::ClampToGround,
+                },
+                inner: vec![],
+                extrude: false,
+                tessellate: false,
+                altitude_mode: types::AltitudeMode::ClampToGround
+            })
+        );
     }
 
     #[test]

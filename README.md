@@ -5,7 +5,7 @@
 
 [Documentation](https://docs.rs/kml/)
 
-KML support for Rust with a focus on conversion to `geo-types`. Currently only partial read support is implemented.
+KML support for Rust with a focus on conversion to [`geo-types`](https://github.com/georust/geo) primitives. Currently only partial read/write support is implemented.
 
 ## Examples
 

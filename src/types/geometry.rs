@@ -9,7 +9,7 @@ use crate::types::polygon::Polygon;
 
 /// AbstractGeometryGroup
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Geometry<T: Float = f64> {
     Point(Point<T>),
     LineString(LineString<T>),

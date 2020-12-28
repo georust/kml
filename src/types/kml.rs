@@ -33,14 +33,14 @@ impl FromStr for KmlVersion {
     }
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, PartialEq, Debug)]
 pub struct KmlDocument<T: Float = f64> {
     pub version: KmlVersion,
     pub elements: Vec<Kml<T>>,
 }
 
 // Should represent all potential top-level types, maybe all generally?
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Kml<T: Float = f64> {
     KmlDocument(KmlDocument<T>),

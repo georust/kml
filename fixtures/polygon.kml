@@ -1,0 +1,4 @@
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-1,2,0
+-1.5,3,0
+-1.5,2,0
+-1,2,0</coordinates><altitudeMode>clampToGround</altitudeMode><extrude>0</extrude><tessellate>1</tessellate></LinearRing></outerBoundaryIs><altitudeMode>clampToGround</altitudeMode><extrude>0</extrude><tessellate>0</tessellate></Polygon>

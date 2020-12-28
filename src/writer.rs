@@ -113,7 +113,7 @@ where
                 self.write_linear_ring(b)?;
             }
             self.writer
-                .write_event(Event::End(BytesEnd::borrowed(b"outerBoundaryIs")))?;
+                .write_event(Event::End(BytesEnd::borrowed(b"innerBoundaryIs")))?;
         }
         self.write_geom_props(GeomProps {
             coords: Vec::new(),
@@ -183,6 +183,7 @@ where
             Geometry::LineString(l) => self.write_line_string(l),
             Geometry::LinearRing(l) => self.write_linear_ring(l),
             Geometry::Polygon(p) => self.write_polygon(p),
+            Geometry::MultiGeometry(g) => self.write_multi_geometry(g),
             _ => Ok(()),
         }
     }
@@ -227,7 +228,6 @@ where
     }
 }
 
-// TODO:
 impl<T> fmt::Display for Kml<T>
 where
     T: Float + Default + Debug + FromStr + fmt::Display,
@@ -258,5 +258,50 @@ mod tests {
             extrude: false,
         });
         assert_eq!("<Point><coordinates>1,1,1</coordinates><altitudeMode>relativeToGround</altitudeMode><extrude>0</extrude></Point>", kml.to_string());
+    }
+
+    #[test]
+    fn test_write_polygon() {
+        let kml = Kml::Polygon(Polygon {
+            outer: LinearRing {
+                coords: vec![
+                    Coord {
+                        x: -1.,
+                        y: 2.,
+                        z: Some(0.),
+                    },
+                    Coord {
+                        x: -1.5,
+                        y: 3.,
+                        z: Some(0.),
+                    },
+                    Coord {
+                        x: -1.5,
+                        y: 2.,
+                        z: Some(0.),
+                    },
+                    Coord {
+                        x: -1.,
+                        y: 2.,
+                        z: Some(0.),
+                    },
+                ],
+                extrude: false,
+                tessellate: true,
+                altitude_mode: types::AltitudeMode::ClampToGround,
+            },
+            inner: vec![],
+            extrude: false,
+            tessellate: false,
+            altitude_mode: types::AltitudeMode::ClampToGround,
+        });
+
+        assert_eq!(
+            r#"<Polygon><outerBoundaryIs><LinearRing><coordinates>-1,2,0
+-1.5,3,0
+-1.5,2,0
+-1,2,0</coordinates><altitudeMode>clampToGround</altitudeMode><extrude>0</extrude><tessellate>1</tessellate></LinearRing></outerBoundaryIs><altitudeMode>clampToGround</altitudeMode><extrude>0</extrude><tessellate>0</tessellate></Polygon>"#,
+            kml.to_string()
+        );
     }
 }
