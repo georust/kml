@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{self, Debug};
 use std::io::Write;
 use std::marker::PhantomData;
@@ -18,7 +19,7 @@ pub struct KmlWriter<W: Write, T: Float + FromStr + Default + Debug = f64> {
     _phantom: PhantomData<T>,
 }
 
-impl<W, T> KmlWriter<W, T>
+impl<'a, W, T> KmlWriter<W, T>
 where
     W: Write,
     T: Float + FromStr + Default + Debug + fmt::Display,
@@ -36,15 +37,17 @@ where
 
     fn write_kml(&mut self, k: &Kml<T>) -> Result<(), Error> {
         match k {
-            Kml::KmlDocument(d) => self.write_container(b"kml", &d.elements)?,
+            Kml::KmlDocument(d) => self.write_container(b"kml", &d.attrs, &d.elements)?,
             Kml::Point(p) => self.write_point(p)?,
             Kml::LineString(l) => self.write_line_string(l)?,
             Kml::LinearRing(l) => self.write_linear_ring(l)?,
             Kml::Polygon(p) => self.write_polygon(p)?,
             Kml::MultiGeometry(g) => self.write_multi_geometry(g)?,
             Kml::Placemark(p) => self.write_placemark(p)?,
-            Kml::Document { elements } => self.write_container(b"Document", &elements)?,
-            Kml::Folder { elements } => self.write_container(b"Folder", &elements)?,
+            Kml::Document { attrs, elements } => {
+                self.write_container(b"Document", attrs, &elements)?
+            }
+            Kml::Folder { attrs, elements } => self.write_container(b"Folder", attrs, &elements)?,
             Kml::Element(e) => self.write_element(e)?,
         }
 
@@ -94,8 +97,10 @@ where
 
     fn write_polygon(&mut self, polygon: &Polygon<T>) -> Result<(), Error> {
         // TODO: Clean up start creation
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"Polygon".to_vec())))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Polygon".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&polygon.attrs)),
+        ))?;
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(
                 b"outerBoundaryIs".to_vec(),
@@ -127,12 +132,12 @@ where
     }
 
     fn write_multi_geometry(&mut self, multi_geometry: &MultiGeometry<T>) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(
-                b"MultiGeometry".to_vec(),
-            )))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"MultiGeometry".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&multi_geometry.attrs)),
+        ))?;
 
-        for g in multi_geometry.0.iter() {
+        for g in multi_geometry.geometries.iter() {
             self.write_geometry(g)?;
         }
         Ok(self
@@ -161,12 +166,8 @@ where
     }
 
     fn write_element(&mut self, e: &Element) -> Result<(), Error> {
-        let start = BytesStart::borrowed_name(e.name.as_bytes()).with_attributes(
-            e.attrs
-                .iter()
-                .map(|(k, v)| (&k[..], &v[..]))
-                .collect::<Vec<(&str, &str)>>(),
-        );
+        let start = BytesStart::borrowed_name(e.name.as_bytes())
+            .with_attributes(self.hash_map_as_attrs(&e.attrs));
         self.writer.write_event(Event::Start(start))?;
         if let Some(content) = &e.content {
             self.writer
@@ -208,9 +209,15 @@ where
         self.write_text_element(b"tessellate", if props.tessellate { "1" } else { "0" })
     }
 
-    fn write_container(&mut self, tag: &[u8], elements: &[Kml<T>]) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(tag)))?;
+    fn write_container(
+        &mut self,
+        tag: &[u8],
+        attrs: &HashMap<String, String>,
+        elements: &[Kml<T>],
+    ) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(tag).with_attributes(self.hash_map_as_attrs(attrs)),
+        ))?;
         for e in elements.iter() {
             self.write_kml(e)?;
         }
@@ -228,6 +235,13 @@ where
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::borrowed(tag)))?)
+    }
+
+    fn hash_map_as_attrs(&self, hash_map: &'a HashMap<String, String>) -> Vec<(&'a str, &'a str)> {
+        hash_map
+            .iter()
+            .map(|(k, v)| (&k[..], &v[..]))
+            .collect::<Vec<(&str, &str)>>()
     }
 }
 
@@ -258,7 +272,7 @@ mod tests {
                 z: Some(1.),
             },
             altitude_mode: types::AltitudeMode::RelativeToGround,
-            extrude: false,
+            ..Default::default()
         });
         assert_eq!("<Point><coordinates>1,1,1</coordinates><altitudeMode>relativeToGround</altitudeMode><extrude>0</extrude></Point>", kml.to_string());
     }
@@ -289,14 +303,11 @@ mod tests {
                         z: Some(0.),
                     },
                 ],
-                extrude: false,
                 tessellate: true,
-                altitude_mode: types::AltitudeMode::ClampToGround,
+                ..Default::default()
             },
             inner: vec![],
-            extrude: false,
-            tessellate: false,
-            altitude_mode: types::AltitudeMode::ClampToGround,
+            ..Default::default()
         });
 
         assert_eq!(

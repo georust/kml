@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use num_traits::Float;
@@ -20,6 +21,8 @@ impl Default for KmlVersion {
     }
 }
 
+// TODO: According to http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#7 namespace for 2.3
+// is unchanged since it should be backwards-compatible
 impl FromStr for KmlVersion {
     type Err = Error;
 
@@ -36,6 +39,7 @@ impl FromStr for KmlVersion {
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct KmlDocument<T: Float = f64> {
     pub version: KmlVersion,
+    pub attrs: HashMap<String, String>,
     pub elements: Vec<Kml<T>>,
 }
 
@@ -50,7 +54,13 @@ pub enum Kml<T: Float = f64> {
     Polygon(Polygon<T>),
     MultiGeometry(MultiGeometry<T>),
     Placemark(Placemark<T>),
-    Document { elements: Vec<Kml<T>> },
-    Folder { elements: Vec<Kml<T>> },
+    Document {
+        attrs: HashMap<String, String>,
+        elements: Vec<Kml<T>>,
+    },
+    Folder {
+        attrs: HashMap<String, String>,
+        elements: Vec<Kml<T>>,
+    },
     Element(Element),
 }

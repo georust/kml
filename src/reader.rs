@@ -7,6 +7,7 @@ use std::str;
 use std::str::FromStr;
 
 use num_traits::Float;
+use quick_xml::events::attributes::Attributes;
 use quick_xml::events::{BytesStart, Event};
 
 use crate::errors::Error;
@@ -19,7 +20,7 @@ use crate::types::{
 pub struct KmlReader<B: BufRead, T: Float + FromStr + Default + Debug = f64> {
     reader: quick_xml::Reader<B>,
     buf: Vec<u8>,
-    version: KmlVersion, // TODO: How to incorporate this so it can be set before parsing?
+    _version: KmlVersion, // TODO: How to incorporate this so it can be set before parsing?
     _phantom: PhantomData<T>,
 }
 
@@ -42,7 +43,7 @@ where
         KmlReader {
             reader,
             buf: Vec::new(),
-            version: KmlVersion::Unknown,
+            _version: KmlVersion::Unknown,
             _phantom: PhantomData,
         }
     }
@@ -63,29 +64,35 @@ where
     fn parse_elements(&mut self) -> Result<Vec<Kml<T>>, Error> {
         let mut elements: Vec<Kml<T>> = Vec::new();
         loop {
-            let e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
-                Event::Start(ref e) => {
+                Event::Start(ref mut e) => {
+                    let attrs = Self::parse_attrs(e.attributes());
                     match e.local_name() {
                         b"kml" => elements.push(Kml::KmlDocument(self.parse_kml_document()?)),
-                        b"Point" => elements.push(Kml::Point(self.parse_point()?)),
-                        b"LineString" => elements.push(Kml::LineString(self.parse_line_string()?)),
-                        b"LinearRing" => elements.push(Kml::LinearRing(self.parse_linear_ring()?)),
-                        b"Polygon" => elements.push(Kml::Polygon(self.parse_polygon()?)),
-                        b"MultiGeometry" => {
-                            elements.push(Kml::MultiGeometry(self.parse_multi_geometry()?))
+                        b"Point" => elements.push(Kml::Point(self.parse_point(attrs)?)),
+                        b"LineString" => {
+                            elements.push(Kml::LineString(self.parse_line_string(attrs)?))
                         }
-                        b"Placemark" => elements.push(Kml::Placemark(self.parse_placemark()?)),
+                        b"LinearRing" => {
+                            elements.push(Kml::LinearRing(self.parse_linear_ring(attrs)?))
+                        }
+                        b"Polygon" => elements.push(Kml::Polygon(self.parse_polygon(attrs)?)),
+                        b"MultiGeometry" => {
+                            elements.push(Kml::MultiGeometry(self.parse_multi_geometry(attrs)?))
+                        }
+                        b"Placemark" => elements.push(Kml::Placemark(self.parse_placemark(attrs)?)),
                         b"Document" => elements.push(Kml::Document {
+                            attrs,
                             elements: self.parse_elements()?,
                         }),
                         b"Folder" => elements.push(Kml::Folder {
+                            attrs,
                             elements: self.parse_elements()?,
                         }),
                         _ => {
-                            // Need to call to_owned() here to avoid duplicate multiple borrow E0499
                             let start = e.to_owned();
-                            elements.push(Kml::Element(self.parse_element(&start)?));
+                            elements.push(Kml::Element(self.parse_element(&start, attrs)?));
                         }
                     };
                 }
@@ -110,36 +117,45 @@ where
         })
     }
 
-    fn parse_point(&mut self) -> Result<Point<T>, Error> {
+    fn parse_point(&mut self, attrs: HashMap<String, String>) -> Result<Point<T>, Error> {
         let mut props = self.parse_geom_props(b"Point")?;
         Ok(Point {
             coord: props.coords.remove(0),
             altitude_mode: props.altitude_mode,
             extrude: props.extrude,
+            attrs,
         })
     }
 
-    fn parse_line_string(&mut self) -> Result<LineString<T>, Error> {
+    fn parse_line_string(
+        &mut self,
+        attrs: HashMap<String, String>,
+    ) -> Result<LineString<T>, Error> {
         let props = self.parse_geom_props(b"LineString")?;
         Ok(LineString {
             coords: props.coords,
             altitude_mode: props.altitude_mode,
             extrude: props.extrude,
             tessellate: props.tessellate,
+            attrs,
         })
     }
 
-    fn parse_linear_ring(&mut self) -> Result<LinearRing<T>, Error> {
+    fn parse_linear_ring(
+        &mut self,
+        attrs: HashMap<String, String>,
+    ) -> Result<LinearRing<T>, Error> {
         let props = self.parse_geom_props(b"LinearRing")?;
         Ok(LinearRing {
             coords: props.coords,
             altitude_mode: props.altitude_mode,
             extrude: props.extrude,
             tessellate: props.tessellate,
+            attrs,
         })
     }
 
-    fn parse_polygon(&mut self) -> Result<Polygon<T>, Error> {
+    fn parse_polygon(&mut self, attrs: HashMap<String, String>) -> Result<Polygon<T>, Error> {
         let mut outer: LinearRing<T> = LinearRing::default();
         let mut inner: Vec<LinearRing<T>> = Vec::new();
         let mut altitude_mode = types::AltitudeMode::default();
@@ -176,26 +192,35 @@ where
             altitude_mode,
             extrude,
             tessellate,
+            attrs,
         })
     }
 
-    fn parse_multi_geometry(&mut self) -> Result<MultiGeometry<T>, Error> {
+    fn parse_multi_geometry(
+        &mut self,
+        attrs: HashMap<String, String>,
+    ) -> Result<MultiGeometry<T>, Error> {
         let mut geometries: Vec<Geometry<T>> = Vec::new();
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
-                    b"Point" => geometries.push(Geometry::Point(self.parse_point()?)),
-                    b"LineString" => {
-                        geometries.push(Geometry::LineString(self.parse_line_string()?))
+                Event::Start(ref e) => {
+                    let attrs = Self::parse_attrs(e.attributes());
+                    match e.local_name() {
+                        b"Point" => geometries.push(Geometry::Point(self.parse_point(attrs)?)),
+                        b"LineString" => {
+                            geometries.push(Geometry::LineString(self.parse_line_string(attrs)?))
+                        }
+                        b"LinearRing" => {
+                            geometries.push(Geometry::LinearRing(self.parse_linear_ring(attrs)?))
+                        }
+                        b"Polygon" => {
+                            geometries.push(Geometry::Polygon(self.parse_polygon(attrs)?))
+                        }
+                        // TODO: Can multi_geometry be nested?
+                        _ => {}
                     }
-                    b"LinearRing" => {
-                        geometries.push(Geometry::LinearRing(self.parse_linear_ring()?))
-                    }
-                    b"Polygon" => geometries.push(Geometry::Polygon(self.parse_polygon()?)),
-                    // TODO: Can multi_geometry be nested?
-                    _ => {}
-                },
+                }
                 Event::End(ref mut e) => {
                     if e.local_name() == b"MultiGeometry" {
                         break;
@@ -204,38 +229,45 @@ where
                 _ => break,
             }
         }
-        Ok(MultiGeometry(geometries))
+        Ok(MultiGeometry { geometries, attrs })
     }
 
-    fn parse_placemark(&mut self) -> Result<Placemark<T>, Error> {
+    fn parse_placemark(&mut self, attrs: HashMap<String, String>) -> Result<Placemark<T>, Error> {
         let mut name: Option<String> = None;
         let mut description: Option<String> = None;
         let mut geometry: Option<Geometry<T>> = None;
         let mut children: Vec<Element> = Vec::new();
 
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let e = self.reader.read_event(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
-                    b"name" => name = Some(self.parse_str()?),
-                    b"description" => description = Some(self.parse_str()?),
-                    b"Point" => geometry = Some(Geometry::Point(self.parse_point()?)),
-                    b"LineString" => {
-                        geometry = Some(Geometry::LineString(self.parse_line_string()?))
+                Event::Start(ref e) => {
+                    let attrs = Self::parse_attrs(e.attributes());
+                    match e.local_name() {
+                        b"name" => name = Some(self.parse_str()?),
+                        b"description" => description = Some(self.parse_str()?),
+                        b"Point" => geometry = Some(Geometry::Point(self.parse_point(attrs)?)),
+                        b"LineString" => {
+                            geometry = Some(Geometry::LineString(self.parse_line_string(attrs)?))
+                        }
+                        b"LinearRing" => {
+                            geometry = Some(Geometry::LinearRing(self.parse_linear_ring(attrs)?))
+                        }
+                        b"Polygon" => {
+                            geometry = Some(Geometry::Polygon(self.parse_polygon(attrs)?))
+                        }
+                        b"MultiGeometry" => {
+                            geometry =
+                                Some(Geometry::MultiGeometry(self.parse_multi_geometry(attrs)?))
+                        }
+                        _ => {
+                            let start = e.to_owned();
+                            let start_attrs = Self::parse_attrs(start.attributes());
+                            children.push(self.parse_element(&start, start_attrs)?);
+                        }
                     }
-                    b"LinearRing" => {
-                        geometry = Some(Geometry::LinearRing(self.parse_linear_ring()?))
-                    }
-                    b"Polygon" => geometry = Some(Geometry::Polygon(self.parse_polygon()?)),
-                    b"MultiGeometry" => {
-                        geometry = Some(Geometry::MultiGeometry(self.parse_multi_geometry()?))
-                    }
-                    _ => {
-                        let start = e.to_owned();
-                        children.push(self.parse_element(&start)?);
-                    }
-                },
-                Event::End(ref mut e) => {
+                }
+                Event::End(ref e) => {
                     if e.local_name() == b"Placemark" {
                         break;
                     }
@@ -247,21 +279,29 @@ where
             name,
             description,
             geometry,
+            attrs,
             children,
         })
     }
 
-    fn parse_element(&mut self, start: &BytesStart) -> Result<Element, Error> {
+    fn parse_element(
+        &mut self,
+        start: &BytesStart,
+        attrs: HashMap<String, String>,
+    ) -> Result<Element, Error> {
         let mut element = Element::default();
         let tag = start.local_name();
         element.name = str::from_utf8(tag).unwrap().to_string();
-        element.attrs = self.parse_attrs(start)?;
+        element.attrs = attrs;
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
-                Event::Start(ref e) => {
-                    let e_start = e.to_owned();
-                    element.children.push(self.parse_element(&e_start)?);
+                Event::Start(e) => {
+                    let start = e.to_owned();
+                    let start_attrs = Self::parse_attrs(start.attributes());
+                    element
+                        .children
+                        .push(self.parse_element(&start, start_attrs)?);
                 }
                 Event::Text(ref mut e) => {
                     element.content = Some(e.unescape_and_decode(&self.reader).expect("Error"))
@@ -283,8 +323,9 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
+                    let attrs = Self::parse_attrs(e.attributes());
                     if e.local_name() == b"LinearRing" {
-                        boundary.push(self.parse_linear_ring()?);
+                        boundary.push(self.parse_linear_ring(attrs)?);
                     }
                 }
                 Event::End(ref mut e) => {
@@ -344,9 +385,8 @@ where
         }
     }
 
-    fn parse_attrs(&self, start: &BytesStart) -> Result<HashMap<String, String>, Error> {
-        let attrs = start
-            .attributes()
+    fn parse_attrs(attrs: Attributes) -> HashMap<String, String> {
+        attrs
             .filter_map(Result::ok)
             .map(|a| {
                 (
@@ -354,8 +394,7 @@ where
                     str::from_utf8(&a.value).unwrap().to_string(),
                 )
             })
-            .collect();
-        Ok(attrs)
+            .collect()
     }
 }
 
@@ -387,7 +426,7 @@ mod tests {
                     z: Some(1.)
                 },
                 altitude_mode: types::AltitudeMode::RelativeToGround,
-                extrude: false,
+                ..Default::default()
             })
         );
     }
@@ -420,8 +459,7 @@ mod tests {
                     }
                 ],
                 altitude_mode: types::AltitudeMode::RelativeToGround,
-                extrude: false,
-                tessellate: false
+                ..Default::default()
             })
         );
     }
@@ -470,14 +508,11 @@ mod tests {
                             z: Some(0.)
                         },
                     ],
-                    extrude: false,
                     tessellate: true,
-                    altitude_mode: types::AltitudeMode::ClampToGround,
+                    ..Default::default()
                 },
                 inner: vec![],
-                extrude: false,
-                tessellate: false,
-                altitude_mode: types::AltitudeMode::ClampToGround
+                ..Default::default()
             })
         );
     }
@@ -501,8 +536,7 @@ mod tests {
                         y: 1.,
                         z: Some(1.)
                     },
-                    altitude_mode: types::AltitudeMode::ClampToGround,
-                    extrude: false,
+                    ..Default::default()
                 },
             Kml::LineString(l) =>
                 *l == LineString {
@@ -518,9 +552,7 @@ mod tests {
                             z: None
                         },
                     ],
-                    altitude_mode: types::AltitudeMode::ClampToGround,
-                    extrude: false,
-                    tessellate: false
+                    ..Default::default()
                 },
             _ => false,
         }))

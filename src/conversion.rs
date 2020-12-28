@@ -83,7 +83,7 @@ where
 
     fn try_from(val: MultiGeometry<T>) -> Result<geo_types::GeometryCollection<T>, Self::Error> {
         Ok(geo_types::GeometryCollection(
-            val.0
+            val.geometries
                 .into_iter()
                 .map(geo_types::Geometry::try_from)
                 .collect::<Result<Vec<geo_types::Geometry<T>>, _>>()?,
@@ -207,6 +207,7 @@ where
 mod tests {
     use super::*;
     use crate::KmlDocument;
+    use std::collections::HashMap;
 
     #[test]
     fn test_quick_collection() {
@@ -214,6 +215,7 @@ mod tests {
             elements: vec![
                 Kml::Point(Point::from(Coord::from((1., 1.)))),
                 Kml::Folder {
+                    attrs: HashMap::new(),
                     elements: vec![
                         Kml::LineString(LineString::from(vec![
                             Coord::from((1., 1.)),

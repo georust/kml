@@ -1,13 +1,16 @@
+use std::collections::HashMap;
+
 use num_traits::Float;
 
 use crate::types::altitude_mode::AltitudeMode;
 use crate::types::coord::Coord;
 
-#[derive(Copy, Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub struct Point<T: Float = f64> {
     pub coord: Coord<T>,
     pub extrude: bool,
     pub altitude_mode: AltitudeMode,
+    pub attrs: HashMap<String, String>,
 }
 
 impl<T> From<Coord<T>> for Point<T>
