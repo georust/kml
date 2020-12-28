@@ -6,7 +6,7 @@ use crate::errors::Error;
 use crate::types::{Element, LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon};
 
 // TODO: Use this in reader implementation
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum KmlVersion {
     Unknown,
@@ -33,14 +33,14 @@ impl FromStr for KmlVersion {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct KmlDocument<T: Float = f64> {
     pub version: KmlVersion,
     pub elements: Vec<Kml<T>>,
 }
 
 // Should represent all potential top-level types, maybe all generally?
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[non_exhaustive]
 pub enum Kml<T: Float = f64> {
     KmlDocument(KmlDocument<T>),

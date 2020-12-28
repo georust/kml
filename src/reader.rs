@@ -10,6 +10,7 @@ use num_traits::Float;
 use quick_xml::events::{BytesStart, Event};
 
 use crate::errors::Error;
+use crate::types::geom_props::GeomProps;
 use crate::types::{
     self, coords_from_str, Coord, Element, Geometry, Kml, KmlDocument, KmlVersion, LineString,
     LinearRing, MultiGeometry, Placemark, Point, Polygon,
@@ -258,7 +259,7 @@ where
                     element.children.push(self.parse_element(&e_start)?);
                 }
                 Event::Text(ref mut e) => {
-                    element.content = e.unescape_and_decode(&self.reader).expect("Error")
+                    element.content = Some(e.unescape_and_decode(&self.reader).expect("Error"))
                 }
                 Event::End(ref mut e) => {
                     if e.local_name() == tag {
@@ -351,14 +352,6 @@ where
             .collect();
         Ok(attrs)
     }
-}
-
-// TODO: Use in structs?
-struct GeomProps<T: Float + FromStr + Default + Debug = f64> {
-    coords: Vec<Coord<T>>,
-    altitude_mode: types::AltitudeMode,
-    extrude: bool,
-    tessellate: bool,
 }
 
 impl<T> FromStr for Kml<T>

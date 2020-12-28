@@ -17,6 +17,7 @@ pub use point::Point;
 pub use polygon::Polygon;
 
 mod element;
+pub(crate) mod geom_props;
 mod placemark;
 
 pub use element::Element;

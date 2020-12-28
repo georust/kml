@@ -38,6 +38,9 @@ pub use crate::errors::Error;
 pub mod reader;
 pub use crate::reader::KmlReader;
 
+pub mod writer;
+pub use crate::writer::KmlWriter;
+
 #[cfg(feature = "geo-types")]
 pub mod conversion;
 

@@ -1,3 +1,4 @@
+use std::fmt;
 use std::str::FromStr;
 
 use crate::errors::Error;
@@ -26,5 +27,19 @@ impl FromStr for AltitudeMode {
             "absolute" => Ok(Self::Absolute),
             _ => Err(Error::PlaceholderError),
         }
+    }
+}
+
+impl fmt::Display for AltitudeMode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::ClampToGround => "clampToGround",
+                Self::RelativeToGround => "relativeToGround",
+                Self::Absolute => "absolute",
+            }
+        )
     }
 }

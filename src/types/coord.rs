@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{self, Debug};
 use std::str::FromStr;
 
 use num_traits::Float;
@@ -93,6 +93,19 @@ where
             None
         };
         Ok(Coord { x, y, z })
+    }
+}
+
+impl<T> fmt::Display for Coord<T>
+where
+    T: fmt::Display + Float,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(z) = self.z {
+            write!(f, "{},{},{}", self.x, self.y, z)
+        } else {
+            write!(f, "{},{}", self.x, self.y)
+        }
     }
 }
 

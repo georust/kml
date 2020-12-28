@@ -5,6 +5,6 @@ use std::collections::HashMap;
 pub struct Element {
     pub name: String,
     pub attrs: HashMap<String, String>,
-    pub content: String,
+    pub content: Option<String>,
     pub children: Vec<Element>,
 }
