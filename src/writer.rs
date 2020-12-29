@@ -84,7 +84,7 @@ where
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(b"LinearRing".to_vec())))?;
         self.write_geom_props(GeomProps {
-            // TODO: Remove clone, convert GeomProps to tuple params?
+            // TODO: Avoid clone if possible
             coords: linear_ring.coords.clone(),
             altitude_mode: linear_ring.altitude_mode,
             extrude: linear_ring.extrude,

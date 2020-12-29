@@ -194,7 +194,7 @@ where
                     }
                     b"innerBoundaryIs" => inner = self.parse_boundary(b"innerBoundaryIs")?,
                     b"altitudeMode" => {
-                        altitude_mode = types::AltitudeMode::from_str(&self.parse_str()?).unwrap()
+                        altitude_mode = types::AltitudeMode::from_str(&self.parse_str()?)?
                     }
                     b"extrude" => extrude = self.parse_str()? == "1",
                     b"tessellate" => tessellate = self.parse_str()? == "1",
@@ -373,10 +373,10 @@ where
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
                     b"coordinates" => {
-                        coords = coords_from_str(&self.parse_str()?).unwrap();
+                        coords = coords_from_str(&self.parse_str()?)?;
                     }
                     b"altitudeMode" => {
-                        altitude_mode = types::AltitudeMode::from_str(&self.parse_str()?).unwrap()
+                        altitude_mode = types::AltitudeMode::from_str(&self.parse_str()?)?
                     }
                     b"extrude" => extrude = self.parse_str()? == "1",
                     b"tessellate" => tessellate = self.parse_str()? == "1",
@@ -410,7 +410,7 @@ where
             Event::Text(e) | Event::CData(e) => {
                 Ok(e.unescape_and_decode(&self.reader).expect("Error"))
             }
-            e => Err(Error::InvalidXmlEvent(format!("{:?}", e))), // TODO: Not sure if right approach
+            e => Err(Error::InvalidXmlEvent(format!("{:?}", e))),
         }
     }
 

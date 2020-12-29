@@ -1,6 +1,7 @@
 //! # kml
 //!
-//! `kml` provides basic KML support for Rust with conversions to `geo-types`
+//! KML support for Rust with a focus on conversion to [`geo-types`](https://github.com/georust/geo) primitives.
+//! Currently only partial read/write support is implemented.
 //!
 //! ## Example
 //!
