@@ -26,12 +26,6 @@ jobs:
         with:
           command: check
 
-      - name: Build cargo bench
-        uses: actions-rs/cargo@v1
-        with:
-          command: bench
-          args: --no-run
-
       - name: Run cargo build
         uses: actions-rs/cargo@v1
         with:
@@ -52,6 +46,12 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+
+      - name: Build cargo bench
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: --no-run
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
