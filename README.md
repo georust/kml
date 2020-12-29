@@ -2,8 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/kml.svg)](https://crates.io/crates/kml)
 [![Build status](https://github.com/pjsier/kml/workflows/CI/badge.svg)](https://github.com/pjsier/kml/actions?query=workflow%3ACI)
-
-[Documentation](https://docs.rs/kml/)
+[![Documentation](https://docs.rs/kml/badge.svg)](https://docs.rs/kml)
 
 KML support for Rust with a focus on conversion to [`geo-types`](https://github.com/georust/geo) primitives. Currently only partial read/write support is implemented.
 
