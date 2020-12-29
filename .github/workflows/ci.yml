@@ -14,11 +14,23 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
+      - name: Install ${{ matrix.rust }} toolchain
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      - name: Build cargo bench
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: --no-run
 
       - name: Run cargo build
         uses: actions-rs/cargo@v1
@@ -37,6 +49,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
           override: true
 
@@ -53,14 +66,13 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
+      - name: Install stable toolchain with clippy
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
           override: true
-
-      - name: Install clippy
-        run: rustup component add clippy
+          components: clippy
 
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
@@ -76,14 +88,13 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
+      - name: Install stable toolchain with rustfmt
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
           override: true
-
-      - name: Install rustfmt
-        run: rustup component add rustfmt
+          components: rustfmt
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
