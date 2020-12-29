@@ -46,3 +46,9 @@ pub mod conversion;
 
 #[cfg(feature = "geo-types")]
 pub use conversion::quick_collection;
+
+#[cfg(feature = "zip")]
+mod kmz_reader;
+
+#[cfg(feature = "zip")]
+pub use kmz_reader::*;

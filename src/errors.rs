@@ -22,4 +22,8 @@ pub enum Error {
     InvalidGeometry(String),
     #[error("Invalid altitude mode: {0}")]
     InvalidAltitudeMode(String),
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+    #[error("ZIP error: {0}")]
+    ZipError(#[from] zip::result::ZipError),
 }

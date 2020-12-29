@@ -1,8 +1,10 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::io::BufRead;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::marker::PhantomData;
+use std::path::Path;
 use std::str;
 use std::str::FromStr;
 
@@ -33,10 +35,25 @@ where
     }
 }
 
+impl<T> KmlReader<BufReader<File>, T>
+where
+    T: Float + FromStr + Default + Debug,
+{
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<KmlReader<BufReader<File>, T>, Error> {
+        Ok(KmlReader::<BufReader<File>, T>::from_xml_reader(
+            quick_xml::Reader::from_file(path)?,
+        ))
+    }
+}
+
 impl<B: BufRead, T> KmlReader<B, T>
 where
     T: Float + FromStr + Default + Debug,
 {
+    pub fn from_reader(r: B) -> KmlReader<B, T> {
+        KmlReader::<B, T>::from_xml_reader(quick_xml::Reader::from_reader(r))
+    }
+
     fn from_xml_reader(mut reader: quick_xml::Reader<B>) -> KmlReader<B, T> {
         reader.trim_text(true);
         reader.expand_empty_elements(true);

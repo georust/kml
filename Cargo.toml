@@ -12,16 +12,17 @@ keywords = ["geo", "geospatial", "kml"]
 exclude = [".github/*"]
 
 [dependencies]
-quick-xml = { version = "0.20" }
+quick-xml = "0.20"
 num-traits = "0.2"
 thiserror = "1.0"
 geo-types = { version = "0.6", optional = true }
+zip = { version = "0.5", optional = true }
 
 [dev-dependencies]
 criterion = "0.3"
 
 [features]
-default = ["geo-types"]
+default = ["geo-types", "zip"]
 
 [[bench]]
 name = "parse"
