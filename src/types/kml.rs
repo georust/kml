@@ -6,6 +6,10 @@ use num_traits::Float;
 use crate::errors::Error;
 use crate::types::{Element, LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon};
 
+/// Enum for representing the KML version being parsed.
+///
+/// According to http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#7 namespace for 2.3
+/// is unchanged since it should be backwards-compatible
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum KmlVersion {
@@ -35,6 +39,7 @@ impl FromStr for KmlVersion {
     }
 }
 
+/// Container for KML root element
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct KmlDocument<T: Float = f64> {
     pub version: KmlVersion,
@@ -42,7 +47,7 @@ pub struct KmlDocument<T: Float = f64> {
     pub elements: Vec<Kml<T>>,
 }
 
-// Should represent all potential top-level types, maybe all generally?
+/// Represents any KML element
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Kml<T: Float = f64> {

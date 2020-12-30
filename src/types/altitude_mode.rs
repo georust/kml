@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use crate::errors::Error;
 
-// reference docs TODO:
+/// Represents `kml:altitudeMode`, [9.20](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#322) in the KML specification
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum AltitudeMode {
     ClampToGround,

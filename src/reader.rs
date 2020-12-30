@@ -19,6 +19,7 @@ use crate::types::{
     LinearRing, MultiGeometry, Placemark, Point, Polygon,
 };
 
+/// Main struct for reading KML documents
 pub struct KmlReader<B: BufRead, T: Float + FromStr + Default + Debug = f64> {
     reader: quick_xml::Reader<B>,
     buf: Vec<u8>,

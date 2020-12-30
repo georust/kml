@@ -5,6 +5,8 @@ use num_traits::Float;
 use crate::types::altitude_mode::AltitudeMode;
 use crate::types::coord::Coord;
 
+/// Represents `kml:LinearRing`, [10.5](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#465)
+/// in the KML specification
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LinearRing<T: Float = f64> {
     pub coords: Vec<Coord<T>>,

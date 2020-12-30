@@ -5,8 +5,10 @@ use num_traits::Float;
 
 use crate::errors::Error;
 
-/// delimited by any whitespace and items within tuples separated by commas
-// TODO: Specific reference in spec
+/// KML coordinates described by `kml:coordinatesType`, [16.10](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#1212)
+/// in the KML specification
+///
+/// Coordinates are tuples with the third Z value for altitude being optional. Coordinate tuples are separated by any whitespace character
 #[derive(Copy, Clone, Default, Debug, PartialEq)]
 pub struct Coord<T: Float = f64> {
     pub x: T,
