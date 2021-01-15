@@ -1,20 +1,20 @@
 use std::collections::HashMap;
-use std::fmt::{self, Debug};
+use std::fmt;
 use std::io::Write;
 use std::marker::PhantomData;
 use std::str;
 use std::str::FromStr;
 
-use num_traits::Float;
 use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    Coord, Element, Geometry, Kml, LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon,
+    Coord, CoordType, Element, Geometry, Kml, LineString, LinearRing, MultiGeometry, Placemark,
+    Point, Polygon,
 };
 
-pub struct KmlWriter<W: Write, T: Float + FromStr + Default + Debug = f64> {
+pub struct KmlWriter<W: Write, T: CoordType + FromStr + Default = f64> {
     writer: quick_xml::Writer<W>,
     _phantom: PhantomData<T>,
 }
@@ -22,7 +22,7 @@ pub struct KmlWriter<W: Write, T: Float + FromStr + Default + Debug = f64> {
 impl<'a, W, T> KmlWriter<W, T>
 where
     W: Write,
-    T: Float + FromStr + Default + Debug + fmt::Display,
+    T: CoordType + FromStr + Default + fmt::Display,
 {
     pub fn new(writer: quick_xml::Writer<W>) -> KmlWriter<W, T> {
         KmlWriter {
@@ -246,7 +246,7 @@ where
 
 impl<T> fmt::Display for Kml<T>
 where
-    T: Float + Default + Debug + FromStr + fmt::Display,
+    T: CoordType + Default + FromStr + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = Vec::new();

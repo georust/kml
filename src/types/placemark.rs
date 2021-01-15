@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use num_traits::Float;
-
+use crate::types::coord::CoordType;
 use crate::types::element::Element;
 use crate::types::geometry::Geometry;
 
@@ -13,7 +12,7 @@ use crate::types::geometry::Geometry;
 ///
 /// Currently leaving optional.
 #[derive(Clone, Default, Debug, PartialEq)]
-pub struct Placemark<T: Float = f64> {
+pub struct Placemark<T: CoordType = f64> {
     pub name: Option<String>,
     pub description: Option<String>,
     pub geometry: Option<Geometry<T>>,

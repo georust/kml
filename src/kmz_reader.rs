@@ -1,19 +1,18 @@
-use std::fmt::Debug;
 use std::fs::File;
 use std::io::Cursor;
 use std::path::Path;
 use std::str::FromStr;
 
-use num_traits::Float;
 use zip::ZipArchive;
 
 use crate::errors::Error;
 use crate::reader::KmlReader;
+use crate::types::CoordType;
 
 #[cfg_attr(docsrs, doc(cfg(feature = "zip")))]
 impl<T> KmlReader<Cursor<Vec<u8>>, T>
 where
-    T: Float + FromStr + Default + Debug,
+    T: CoordType + FromStr + Default,
 {
     pub fn from_kmz_file<P: AsRef<Path>>(path: P) -> Result<KmlReader<Cursor<Vec<u8>>, T>, Error> {
         let file = File::open(path)?;

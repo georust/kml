@@ -1,5 +1,4 @@
-use num_traits::Float;
-
+use crate::types::coord::CoordType;
 use crate::types::element::Element;
 use crate::types::line_string::LineString;
 use crate::types::linear_ring::LinearRing;
@@ -13,7 +12,7 @@ use crate::types::polygon::Polygon;
 /// `kml:Model` is currently represented by a placeholder element
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
-pub enum Geometry<T: Float = f64> {
+pub enum Geometry<T: CoordType = f64> {
     Point(Point<T>),
     LineString(LineString<T>),
     LinearRing(LinearRing<T>),

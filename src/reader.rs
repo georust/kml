@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::marker::PhantomData;
@@ -8,19 +7,18 @@ use std::path::Path;
 use std::str;
 use std::str::FromStr;
 
-use num_traits::Float;
 use quick_xml::events::attributes::Attributes;
 use quick_xml::events::{BytesStart, Event};
 
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    self, coords_from_str, Coord, Element, Geometry, Kml, KmlDocument, KmlVersion, LineString,
-    LinearRing, MultiGeometry, Placemark, Point, Polygon,
+    self, coords_from_str, Coord, CoordType, Element, Geometry, Kml, KmlDocument, KmlVersion,
+    LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon,
 };
 
 /// Main struct for reading KML documents
-pub struct KmlReader<B: BufRead, T: Float + FromStr + Default + Debug = f64> {
+pub struct KmlReader<B: BufRead, T: CoordType + FromStr + Default = f64> {
     reader: quick_xml::Reader<B>,
     buf: Vec<u8>,
     _version: KmlVersion, // TODO: How to incorporate this so it can be set before parsing?
@@ -29,7 +27,7 @@ pub struct KmlReader<B: BufRead, T: Float + FromStr + Default + Debug = f64> {
 
 impl<'a, T> KmlReader<&'a [u8], T>
 where
-    T: Float + FromStr + Default + Debug,
+    T: CoordType + FromStr + Default,
 {
     pub fn from_string(s: &str) -> KmlReader<&[u8], T> {
         KmlReader::<&[u8], T>::from_xml_reader(quick_xml::Reader::<&[u8]>::from_str(s))
@@ -38,7 +36,7 @@ where
 
 impl<T> KmlReader<BufReader<File>, T>
 where
-    T: Float + FromStr + Default + Debug,
+    T: CoordType + FromStr + Default,
 {
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<KmlReader<BufReader<File>, T>, Error> {
         Ok(KmlReader::<BufReader<File>, T>::from_xml_reader(
@@ -49,7 +47,7 @@ where
 
 impl<B: BufRead, T> KmlReader<B, T>
 where
-    T: Float + FromStr + Default + Debug,
+    T: CoordType + FromStr + Default,
 {
     pub fn from_reader(r: B) -> KmlReader<B, T> {
         KmlReader::<B, T>::from_xml_reader(quick_xml::Reader::from_reader(r))
@@ -430,7 +428,7 @@ where
 
 impl<T> FromStr for Kml<T>
 where
-    T: Float + FromStr + Default + Debug,
+    T: CoordType + FromStr + Default,
 {
     type Err = Error;
 

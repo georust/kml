@@ -15,7 +15,7 @@ exclude = [".github/*"]
 quick-xml = "0.20"
 num-traits = "0.2"
 thiserror = "1.0"
-geo-types = { version = "0.6", optional = true }
+geo-types = { version = ">=0.6, <0.8", optional = true }
 zip = { version = "0.5", optional = true }
 
 [dev-dependencies]

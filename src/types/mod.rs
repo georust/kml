@@ -2,7 +2,7 @@ mod altitude_mode;
 mod coord;
 
 pub use altitude_mode::AltitudeMode;
-pub use coord::{coords_from_str, Coord};
+pub use coord::{coords_from_str, Coord, CoordType};
 
 mod line_string;
 mod linear_ring;

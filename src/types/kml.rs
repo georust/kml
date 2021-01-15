@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use num_traits::Float;
-
 use crate::errors::Error;
-use crate::types::{Element, LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon};
+use crate::types::{
+    CoordType, Element, LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon,
+};
 
-/// Enum for representing the KML version being parsed.
+/// Enum for representing the KML version being parsed
 ///
 /// According to http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#7 namespace for 2.3
 /// is unchanged since it should be backwards-compatible
@@ -41,7 +41,7 @@ impl FromStr for KmlVersion {
 
 /// Container for KML root element
 #[derive(Clone, Default, PartialEq, Debug)]
-pub struct KmlDocument<T: Float = f64> {
+pub struct KmlDocument<T: CoordType = f64> {
     pub version: KmlVersion,
     pub attrs: HashMap<String, String>,
     pub elements: Vec<Kml<T>>,
@@ -50,7 +50,7 @@ pub struct KmlDocument<T: Float = f64> {
 /// Represents any KML element
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
-pub enum Kml<T: Float = f64> {
+pub enum Kml<T: CoordType = f64> {
     KmlDocument(KmlDocument<T>),
     Point(Point<T>),
     LineString(LineString<T>),

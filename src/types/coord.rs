@@ -5,12 +5,16 @@ use num_traits::Float;
 
 use crate::errors::Error;
 
+/// Coordinate type compatible with `geo-types`
+pub trait CoordType: Float + Debug {}
+impl<T: Float + Debug> CoordType for T {}
+
 /// KML coordinates described by `kml:coordinatesType`, [16.10](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#1212)
 /// in the KML specification
 ///
 /// Coordinates are tuples with the third Z value for altitude being optional. Coordinate tuples are separated by any whitespace character
 #[derive(Copy, Clone, Default, Debug, PartialEq)]
-pub struct Coord<T: Float = f64> {
+pub struct Coord<T: CoordType = f64> {
     pub x: T,
     pub y: T,
     pub z: Option<T>,
@@ -18,7 +22,7 @@ pub struct Coord<T: Float = f64> {
 
 impl<T> Coord<T>
 where
-    T: Float,
+    T: CoordType,
 {
     pub fn new(x: T, y: T, z: Option<T>) -> Self {
         Coord { x, y, z }
@@ -27,7 +31,7 @@ where
 
 impl<T> From<(T, T)> for Coord<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(coord: (T, T)) -> Self {
         Coord::new(coord.0, coord.1, None)
@@ -36,7 +40,7 @@ where
 
 impl<T> From<[T; 2]> for Coord<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(coord: [T; 2]) -> Self {
         Coord::new(coord[0], coord[1], None)
@@ -45,7 +49,7 @@ where
 
 impl<T> From<(T, T, Option<T>)> for Coord<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(coord: (T, T, Option<T>)) -> Self {
         Coord::new(coord.0, coord.1, coord.2)
@@ -54,7 +58,7 @@ where
 
 impl<T> From<(T, T, T)> for Coord<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(coord: (T, T, T)) -> Self {
         Coord::new(coord.0, coord.1, Some(coord.2))
@@ -63,7 +67,7 @@ where
 
 impl<T> From<[T; 3]> for Coord<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(coord: [T; 3]) -> Self {
         Coord::new(coord[0], coord[1], Some(coord[2]))
@@ -72,7 +76,7 @@ where
 
 impl<T> FromStr for Coord<T>
 where
-    T: Float + FromStr + Debug,
+    T: CoordType + FromStr,
 {
     type Err = Error;
 
@@ -100,7 +104,7 @@ where
 
 impl<T> fmt::Display for Coord<T>
 where
-    T: fmt::Display + Float,
+    T: fmt::Display + CoordType,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(z) = self.z {
@@ -121,7 +125,7 @@ where
 /// let coords_str = "1,1,0\n\n1,2,0  2,2,0";
 /// let coords: Vec<Coord> = coords_from_str(coords_str).unwrap();
 /// ```
-pub fn coords_from_str<T: Float + FromStr + Debug>(s: &str) -> Result<Vec<Coord<T>>, Error> {
+pub fn coords_from_str<T: CoordType + FromStr>(s: &str) -> Result<Vec<Coord<T>>, Error> {
     s.split_whitespace().map(Coord::from_str).collect()
 }
 

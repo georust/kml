@@ -1,13 +1,14 @@
-use num_traits::Float;
 use std::convert::TryFrom;
 
 use crate::errors::Error;
-use crate::types::{Coord, Geometry, Kml, LineString, LinearRing, MultiGeometry, Point, Polygon};
+use crate::types::{
+    Coord, CoordType, Geometry, Kml, LineString, LinearRing, MultiGeometry, Point, Polygon,
+};
 
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<Coord<T>> for geo_types::Coordinate<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(val: Coord<T>) -> geo_types::Coordinate<T> {
         geo_types::Coordinate::from((val.x, val.y))
@@ -17,7 +18,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<Point<T>> for geo_types::Point<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(val: Point<T>) -> geo_types::Point<T> {
         geo_types::Point::from(geo_types::Coordinate::from(val.coord))
@@ -27,7 +28,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<LineString<T>> for geo_types::LineString<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(val: LineString<T>) -> geo_types::LineString<T> {
         geo_types::LineString(
@@ -42,7 +43,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<LinearRing<T>> for geo_types::LineString<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(val: LinearRing<T>) -> geo_types::LineString<T> {
         geo_types::LineString(
@@ -57,7 +58,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<Polygon<T>> for geo_types::Polygon<T>
 where
-    T: Float,
+    T: CoordType,
 {
     fn from(val: Polygon<T>) -> geo_types::Polygon<T> {
         geo_types::Polygon::new(
@@ -73,7 +74,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> TryFrom<MultiGeometry<T>> for geo_types::GeometryCollection<T>
 where
-    T: Float,
+    T: CoordType,
 {
     type Error = Error;
 
@@ -90,7 +91,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> TryFrom<Geometry<T>> for geo_types::Geometry<T>
 where
-    T: Float,
+    T: CoordType,
 {
     type Error = Error;
 
@@ -114,7 +115,7 @@ where
 
 fn process_kml<T>(k: Kml<T>) -> Result<Vec<geo_types::Geometry<T>>, Error>
 where
-    T: Float,
+    T: CoordType,
 {
     match k {
         Kml::KmlDocument(d) => Ok(d
@@ -192,7 +193,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 pub fn quick_collection<T>(k: Kml<T>) -> Result<geo_types::GeometryCollection<T>, Error>
 where
-    T: Float,
+    T: CoordType,
 {
     Ok(geo_types::GeometryCollection(process_kml(k)?))
 }
