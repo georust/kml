@@ -7,14 +7,16 @@ use std::path::Path;
 use std::str;
 use std::str::FromStr;
 
+use num_traits::Float;
 use quick_xml::events::attributes::Attributes;
 use quick_xml::events::{BytesStart, Event};
 
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    self, coords_from_str, Coord, CoordType, Element, Geometry, Kml, KmlDocument, KmlVersion,
-    LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon,
+    self, coords_from_str, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry, Icon,
+    IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
+    ListStyle, MultiGeometry, Pair, Placemark, Point, PolyStyle, Polygon, Style, StyleMap,
 };
 
 /// Main struct for reading KML documents
@@ -106,6 +108,28 @@ where
                             attrs,
                             elements: self.parse_elements()?,
                         }),
+                        b"Style" => elements.push(Kml::Style(self.parse_style(attrs)?)),
+                        b"StyleMap" => elements.push(Kml::StyleMap(self.parse_style_map(attrs)?)),
+                        b"Pair" => elements.push(Kml::Pair(self.parse_pair(attrs)?)),
+                        b"BalloonStyle" => {
+                            elements.push(Kml::BalloonStyle(self.parse_balloon_style(attrs)?))
+                        }
+                        b"IconStyle" => {
+                            elements.push(Kml::IconStyle(self.parse_icon_style(attrs)?))
+                        }
+                        b"Icon" => elements.push(Kml::Icon(self.parse_icon()?)),
+                        b"LabelStyle" => {
+                            elements.push(Kml::LabelStyle(self.parse_label_style(attrs)?))
+                        }
+                        b"LineStyle" => {
+                            elements.push(Kml::LineStyle(self.parse_line_style(attrs)?))
+                        }
+                        b"PolyStyle" => {
+                            elements.push(Kml::PolyStyle(self.parse_poly_style(attrs)?))
+                        }
+                        b"ListStyle" => {
+                            elements.push(Kml::ListStyle(self.parse_list_style(attrs)?))
+                        }
                         _ => {
                             let start = e.to_owned();
                             elements.push(Kml::Element(self.parse_element(&start, attrs)?));
@@ -306,6 +330,297 @@ where
         })
     }
 
+    fn parse_style(&mut self, attrs: HashMap<String, String>) -> Result<Style, Error> {
+        let mut style = Style::default();
+        if let Some(id_str) = attrs.get("id") {
+            style.id = id_str.to_string();
+        }
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => {
+                    let attrs = Self::parse_attrs(e.attributes());
+                    match e.local_name() {
+                        b"BalloonStyle" => style.balloon = Some(self.parse_balloon_style(attrs)?),
+                        b"IconStyle" => style.icon = Some(self.parse_icon_style(attrs)?),
+                        b"LabelStyle" => style.label = Some(self.parse_label_style(attrs)?),
+                        b"LineStyle" => style.line = Some(self.parse_line_style(attrs)?),
+                        b"PolyStyle" => style.poly = Some(self.parse_poly_style(attrs)?),
+                        b"ListStyle" => style.list = Some(self.parse_list_style(attrs)?),
+                        _ => {}
+                    }
+                }
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Style" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(style)
+    }
+
+    fn parse_style_map(&mut self, attrs: HashMap<String, String>) -> Result<StyleMap, Error> {
+        let mut style_map = StyleMap::default();
+        if let Some(id_str) = attrs.get("id") {
+            style_map.id = id_str.to_string();
+        }
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => {
+                    if e.local_name() == b"Pair" {
+                        let pair_attrs = Self::parse_attrs(e.attributes());
+                        style_map.pairs.push(self.parse_pair(pair_attrs)?);
+                    }
+                }
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"StyleMap" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(style_map)
+    }
+
+    fn parse_pair(&mut self, attrs: HashMap<String, String>) -> Result<Pair, Error> {
+        let mut pair = Pair {
+            attrs,
+            ..Pair::default()
+        };
+
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"key" => pair.key = self.parse_str()?,
+                    b"styleUrl" => pair.style_url = self.parse_str()?,
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Pair" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(pair)
+    }
+
+    fn parse_icon_style(&mut self, attrs: HashMap<String, String>) -> Result<IconStyle, Error> {
+        let mut icon_style = IconStyle::default();
+        if let Some(id_str) = attrs.get("id") {
+            icon_style.id = id_str.to_string();
+        }
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"scale" => icon_style.scale = self.parse_float()?,
+                    b"heading" => icon_style.heading = self.parse_float()?,
+                    b"hot_spot" => {
+                        let hot_spot_attrs = Self::parse_attrs(e.attributes());
+                        let x_val = hot_spot_attrs.get("x");
+                        let y_val = hot_spot_attrs.get("y");
+                        if let (Some(x_str), Some(y_str)) = (x_val, y_val) {
+                            let x: f64 = x_str
+                                .parse()
+                                .map_err(|_| Error::NumParse(x_str.to_string()))?;
+                            let y: f64 = y_str
+                                .parse()
+                                .map_err(|_| Error::NumParse(y_str.to_string()))?;
+                            icon_style.hot_spot = Some((x, y));
+                        }
+                    }
+                    b"Icon" => icon_style.icon = self.parse_icon()?,
+                    b"color" => icon_style.color = self.parse_str()?,
+                    b"colorMode" => {
+                        icon_style.color_mode = self.parse_str()?.parse::<ColorMode>()?
+                    }
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"IconStyle" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(icon_style)
+    }
+
+    fn parse_icon(&mut self) -> Result<Icon, Error> {
+        let mut href = String::new();
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => {
+                    if e.local_name() == b"href" {
+                        href = self.parse_str()?;
+                    }
+                }
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Icon" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(Icon { href })
+    }
+
+    fn parse_balloon_style(
+        &mut self,
+        attrs: HashMap<String, String>,
+    ) -> Result<BalloonStyle, Error> {
+        let mut balloon_style = BalloonStyle::default();
+        if let Some(id_str) = attrs.get("id") {
+            balloon_style.id = id_str.to_string();
+        }
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"bgColor" => balloon_style.bg_color = Some(self.parse_str()?),
+                    b"textColor" => balloon_style.text_color = self.parse_str()?,
+                    b"text" => balloon_style.text = Some(self.parse_str()?),
+                    b"displayMode" => balloon_style.display = self.parse_str()? != "hide",
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"BalloonStyle" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(balloon_style)
+    }
+
+    fn parse_label_style(&mut self, attrs: HashMap<String, String>) -> Result<LabelStyle, Error> {
+        let mut label_style = LabelStyle::default();
+        if let Some(id_str) = attrs.get("id") {
+            label_style.id = id_str.to_string();
+        }
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"color" => label_style.color = self.parse_str()?,
+                    b"colorMode" => {
+                        label_style.color_mode = self.parse_str()?.parse::<ColorMode>()?;
+                    }
+                    b"scale" => label_style.scale = self.parse_float()?,
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"LabelStyle" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(label_style)
+    }
+
+    fn parse_line_style(&mut self, attrs: HashMap<String, String>) -> Result<LineStyle, Error> {
+        let mut line_style = LineStyle::default();
+        if let Some(id_str) = attrs.get("id") {
+            line_style.id = id_str.to_string();
+        }
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"color" => line_style.color = self.parse_str()?,
+                    b"colorMode" => {
+                        line_style.color_mode = self.parse_str()?.parse::<ColorMode>()?;
+                    }
+                    b"width" => line_style.width = self.parse_float()?,
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"LineStyle" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(line_style)
+    }
+
+    fn parse_list_style(&mut self, attrs: HashMap<String, String>) -> Result<ListStyle, Error> {
+        let mut list_style = ListStyle::default();
+        if let Some(id_str) = attrs.get("id") {
+            list_style.id = id_str.to_string();
+        }
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"bgColor" => list_style.bg_color = self.parse_str()?,
+                    b"maxSnippetLines" => {
+                        let line_str = self.parse_str()?;
+                        list_style.max_snippet_lines = line_str
+                            .parse::<u32>()
+                            .map_err(|_| Error::NumParse(line_str))?;
+                    }
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"ListStyle" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(list_style)
+    }
+
+    fn parse_poly_style(&mut self, attrs: HashMap<String, String>) -> Result<PolyStyle, Error> {
+        let mut poly_style = PolyStyle::default();
+        if let Some(id_str) = attrs.get("id") {
+            poly_style.id = id_str.to_string();
+        }
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"color" => poly_style.color = self.parse_str()?,
+                    b"colorMode" => {
+                        poly_style.color_mode = self.parse_str()?.parse::<ColorMode>()?;
+                    }
+                    b"fill" => {
+                        let fill_str = self.parse_str()?;
+                        poly_style.fill = fill_str != "false" && fill_str != "0"
+                    }
+                    b"outline" => {
+                        let outline_str = self.parse_str()?;
+                        poly_style.outline = outline_str != "false" && outline_str != "0"
+                    }
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"PolyStyle" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(poly_style)
+    }
+
     fn parse_element(
         &mut self,
         start: &BytesStart,
@@ -403,12 +718,20 @@ where
         }
     }
 
+    fn parse_float<F: Float + FromStr>(&mut self) -> Result<F, Error> {
+        let float_str = self.parse_str()?;
+        float_str
+            .parse::<F>()
+            .map_err(|_| Error::NumParse(float_str))
+    }
+
     fn parse_str(&mut self) -> Result<String, Error> {
         let e = self.reader.read_event(&mut self.buf)?;
         match e {
             Event::Text(e) | Event::CData(e) => {
                 Ok(e.unescape_and_decode(&self.reader).expect("Error"))
             }
+            Event::End(_) => Ok("".to_string()),
             e => Err(Error::InvalidXmlEvent(format!("{:?}", e))),
         }
     }

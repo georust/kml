@@ -162,7 +162,7 @@ where
             .flat_map(process_kml)
             .flatten()
             .collect()),
-        Kml::Element(_) => Ok(vec![]),
+        _ => Ok(vec![]),
     }
 }
 

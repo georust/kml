@@ -13,7 +13,7 @@ pub enum Error {
     #[error("No KML elements found")]
     NoElements,
     #[error("Error parsing number from: {0}")]
-    FloatParse(String),
+    NumParse(String),
     #[error("Invalid KML version: {0}")]
     InvalidKmlVersion(String),
     #[error("Invalid KML element: {0}")]
@@ -22,6 +22,10 @@ pub enum Error {
     InvalidGeometry(String),
     #[error("Invalid altitude mode: {0}")]
     InvalidAltitudeMode(String),
+    #[error("Invalid color mode: {0}")]
+    InvalidColorMode(String),
+    #[error("Invalid list item type: {0}")]
+    InvalidListItemType(String),
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
     #[error("ZIP error: {0}")]

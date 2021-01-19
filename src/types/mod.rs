@@ -27,6 +27,13 @@ mod geometry;
 
 pub use geometry::Geometry;
 
+mod style;
+
+pub use style::{
+    BalloonStyle, ColorMode, Icon, IconStyle, LabelStyle, LineStyle, ListStyle, Pair, PolyStyle,
+    Style, StyleMap,
+};
+
 mod kml;
 
 pub use self::kml::{Kml, KmlDocument, KmlVersion};

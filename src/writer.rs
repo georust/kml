@@ -10,8 +10,9 @@ use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    Coord, CoordType, Element, Geometry, Kml, LineString, LinearRing, MultiGeometry, Placemark,
-    Point, Polygon,
+    BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
+    LineString, LineStyle, LinearRing, ListStyle, MultiGeometry, Pair, Placemark, Point, PolyStyle,
+    Polygon, Style, StyleMap,
 };
 
 pub struct KmlWriter<W: Write, T: CoordType + FromStr + Default = f64> {
@@ -44,6 +45,16 @@ where
             Kml::Polygon(p) => self.write_polygon(p)?,
             Kml::MultiGeometry(g) => self.write_multi_geometry(g)?,
             Kml::Placemark(p) => self.write_placemark(p)?,
+            Kml::Style(s) => self.write_style(s)?,
+            Kml::StyleMap(s) => self.write_style_map(s)?,
+            Kml::Pair(p) => self.write_pair(p)?,
+            Kml::BalloonStyle(b) => self.write_balloon_style(b)?,
+            Kml::IconStyle(i) => self.write_icon_style(i)?,
+            Kml::Icon(i) => self.write_icon(i)?,
+            Kml::LabelStyle(l) => self.write_label_style(l)?,
+            Kml::LineStyle(l) => self.write_line_style(l)?,
+            Kml::PolyStyle(p) => self.write_poly_style(p)?,
+            Kml::ListStyle(l) => self.write_list_style(l)?,
             Kml::Document { attrs, elements } => {
                 self.write_container(b"Document", attrs, &elements)?
             }
@@ -178,6 +189,167 @@ where
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::borrowed(e.name.as_bytes())))?)
+    }
+
+    fn write_style(&mut self, style: &Style) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Style".to_vec()).with_attributes(vec![("id", &*style.id)]),
+        ))?;
+        if let Some(balloon) = &style.balloon {
+            self.write_balloon_style(&balloon)?;
+        }
+        if let Some(icon) = &style.icon {
+            self.write_icon_style(&icon)?;
+        }
+        if let Some(label) = &style.label {
+            self.write_label_style(&label)?;
+        }
+        if let Some(line) = &style.line {
+            self.write_line_style(&line)?;
+        }
+        if let Some(poly) = &style.poly {
+            self.write_poly_style(&poly)?;
+        }
+        if let Some(list) = &style.list {
+            self.write_list_style(&list)?;
+        }
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"Style")))?)
+    }
+
+    fn write_style_map(&mut self, style_map: &StyleMap) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"StyleMap".to_vec())
+                .with_attributes(vec![("id", &*style_map.id)]),
+        ))?;
+        for p in style_map.pairs.iter() {
+            self.write_pair(p)?;
+        }
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"StyleMap")))?)
+    }
+
+    fn write_pair(&mut self, pair: &Pair) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Pair".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&pair.attrs)),
+        ))?;
+        self.write_text_element(b"key", &pair.key)?;
+        self.write_text_element(b"styleUrl", &pair.style_url)?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"Pair")))?)
+    }
+
+    fn write_balloon_style(&mut self, balloon_style: &BalloonStyle) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"BalloonStyle".to_vec())
+                .with_attributes(vec![("id", &*balloon_style.id)]),
+        ))?;
+        if let Some(bg_color) = &balloon_style.bg_color {
+            self.write_text_element(b"bgColor", &bg_color)?;
+        }
+        self.write_text_element(b"textColor", &balloon_style.text_color)?;
+        if let Some(text) = &balloon_style.text {
+            self.write_text_element(b"text", &text)?;
+        }
+        if !balloon_style.display {
+            self.write_text_element(b"displayMode", "hide")?;
+        }
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"BalloonStyle")))?)
+    }
+
+    fn write_icon_style(&mut self, icon_style: &IconStyle) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"IconStyle".to_vec())
+                .with_attributes(vec![("id", &*icon_style.id)]),
+        ))?;
+        self.write_text_element(b"scale", &icon_style.scale.to_string())?;
+        self.write_text_element(b"heading", &icon_style.heading.to_string())?;
+        if let Some(hot_spot) = icon_style.hot_spot {
+            self.writer.write_event(Event::Start(
+                BytesStart::owned_name(b"hotSpot".to_vec()).with_attributes(vec![
+                    ("x", &*hot_spot.0.to_string()),
+                    ("y", &*hot_spot.1.to_string()),
+                ]),
+            ))?;
+            self.writer
+                .write_event(Event::End(BytesEnd::borrowed(b"hotSpot")))?;
+        }
+        self.write_text_element(b"color", &icon_style.color)?;
+        self.write_text_element(b"colorMode", &icon_style.color_mode.to_string())?;
+        self.write_icon(&icon_style.icon)?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"IconStyle")))?)
+    }
+
+    fn write_icon(&mut self, icon: &Icon) -> Result<(), Error> {
+        self.writer
+            .write_event(Event::Start(BytesStart::owned_name(b"Icon".to_vec())))?;
+        self.write_text_element(b"href", &icon.href)?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"Icon")))?)
+    }
+
+    fn write_label_style(&mut self, label_style: &LabelStyle) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"LabelStyle".to_vec())
+                .with_attributes(vec![("id", &*label_style.id)]),
+        ))?;
+        self.write_text_element(b"color", &label_style.color)?;
+        self.write_text_element(b"colorMode", &label_style.color_mode.to_string())?;
+        self.write_text_element(b"scale", &label_style.scale.to_string())?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"LabelStyle")))?)
+    }
+
+    fn write_line_style(&mut self, line_style: &LineStyle) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"LineStyle".to_vec())
+                .with_attributes(vec![("id", &*line_style.id)]),
+        ))?;
+        self.write_text_element(b"color", &line_style.color)?;
+        self.write_text_element(b"colorMode", &line_style.color_mode.to_string())?;
+        self.write_text_element(b"width", &line_style.width.to_string())?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"LineStyle")))?)
+    }
+
+    fn write_poly_style(&mut self, poly_style: &PolyStyle) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"PolyStyle".to_vec())
+                .with_attributes(vec![("id", &*poly_style.id)]),
+        ))?;
+        self.write_text_element(b"color", &poly_style.color)?;
+        self.write_text_element(b"colorMode", &poly_style.color_mode.to_string())?;
+        self.write_text_element(b"fill", &poly_style.fill.to_string())?;
+        self.write_text_element(b"outline", &poly_style.outline.to_string())?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"PolyStyle")))?)
+    }
+
+    fn write_list_style(&mut self, list_style: &ListStyle) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"ListStyle".to_vec())
+                .with_attributes(vec![("id", &*list_style.id)]),
+        ))?;
+        self.write_text_element(b"bgColor", &list_style.bg_color)?;
+        self.write_text_element(
+            b"maxSnippetLines",
+            &list_style.max_snippet_lines.to_string(),
+        )?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"ListStyle")))?)
     }
 
     fn write_geometry(&mut self, geometry: &Geometry<T>) -> Result<(), Error> {

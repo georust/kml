@@ -85,16 +85,13 @@ where
         let x_str = parts.next().ok_or(Error::CoordEmpty)?;
         let x: T = x_str
             .parse()
-            .map_err(|_| Error::FloatParse(x_str.to_string()))?;
+            .map_err(|_| Error::NumParse(x_str.to_string()))?;
         let y_str = parts.next().ok_or(Error::CoordEmpty)?;
         let y: T = y_str
             .parse()
-            .map_err(|_| Error::FloatParse(y_str.to_string()))?;
+            .map_err(|_| Error::NumParse(y_str.to_string()))?;
         let z = if let Some(z) = parts.next() {
-            Some(
-                z.parse::<T>()
-                    .map_err(|_| Error::FloatParse(z.to_string()))?,
-            )
+            Some(z.parse::<T>().map_err(|_| Error::NumParse(z.to_string()))?)
         } else {
             None
         };

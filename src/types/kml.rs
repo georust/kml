@@ -3,7 +3,9 @@ use std::str::FromStr;
 
 use crate::errors::Error;
 use crate::types::{
-    CoordType, Element, LineString, LinearRing, MultiGeometry, Placemark, Point, Polygon,
+    BalloonStyle, CoordType, Element, Icon, IconStyle, LabelStyle, LineString, LineStyle,
+    LinearRing, ListStyle, MultiGeometry, Pair, Placemark, Point, PolyStyle, Polygon, Style,
+    StyleMap,
 };
 
 /// Enum for representing the KML version being parsed
@@ -48,6 +50,7 @@ pub struct KmlDocument<T: CoordType = f64> {
 }
 
 /// Represents any KML element
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Kml<T: CoordType = f64> {
@@ -66,5 +69,15 @@ pub enum Kml<T: CoordType = f64> {
         attrs: HashMap<String, String>,
         elements: Vec<Kml<T>>,
     },
+    Style(Style),
+    StyleMap(StyleMap),
+    Pair(Pair),
+    BalloonStyle(BalloonStyle),
+    IconStyle(IconStyle),
+    Icon(Icon),
+    LabelStyle(LabelStyle),
+    LineStyle(LineStyle),
+    PolyStyle(PolyStyle),
+    ListStyle(ListStyle),
     Element(Element),
 }

@@ -95,11 +95,9 @@
     </Style>
     <Style id="noDrivingDirections">
       <BalloonStyle>
-        <text><![CDATA[
-          <b>$[name]</b>
+        <text><![CDATA[<b>$[name]</b>
           <br /><br />
-          $[description]
-        ]]></text>
+          $[description]]]></text>
       </BalloonStyle>
     </Style>
     <Folder>
