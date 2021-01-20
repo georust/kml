@@ -32,6 +32,29 @@ where
         }
     }
 
+    /// Writes KML to a `Writer`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::str;
+    /// use quick_xml;
+    /// use kml::{Kml, KmlWriter, types::{AltitudeMode, Coord, Point}};
+    ///
+    /// let kml = Kml::Point(Point {
+    ///     coord: Coord {
+    ///         x: 1.,
+    ///         y: 1.,
+    ///         z: Some(1.),
+    ///     },
+    ///     altitude_mode: AltitudeMode::RelativeToGround,
+    ///     ..Default::default()
+    /// });
+    ///
+    /// let mut buf = Vec::new();
+    /// let mut writer = KmlWriter::new(quick_xml::Writer::new(&mut buf));
+    /// writer.write(&kml).unwrap();
+    /// ```
     pub fn write(&mut self, kml: &Kml<T>) -> Result<(), Error> {
         self.write_kml(kml)
     }

@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use crate::types::altitude_mode::AltitudeMode;
 use crate::types::coord::{Coord, CoordType};
 
-/// Represents `kml:LinearRing`, [10.5](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#465)
-/// in the KML specification
+/// `kml:LinearRing`, [10.5](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#465) in the
+/// KML specification
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LinearRing<T: CoordType = f64> {
     pub coords: Vec<Coord<T>>,

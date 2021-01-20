@@ -57,7 +57,8 @@ impl Default for BalloonStyle {
     }
 }
 
-/// Represents `kml:colorMode`, [12.11](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#879) in the KML specification
+/// `kml:colorMode`, [12.11](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#879) in the
+/// KML specification
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ColorMode {
     Default,
@@ -95,8 +96,8 @@ impl fmt::Display for ColorMode {
     }
 }
 
-/// `kml:IconStyle`, [12.12](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#883) in the KML
-/// specification
+/// `kml:IconStyle`, [12.12](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#883) in the
+/// KML specification
 #[derive(Clone, Debug, PartialEq)]
 pub struct IconStyle {
     pub id: String,
@@ -122,8 +123,8 @@ impl Default for IconStyle {
     }
 }
 
-/// Represents `kml:Icon`, [12.13](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#900)
-/// in the KML specification.
+/// `kml:Icon`, [12.13](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#900) in the KML
+/// specification.
 ///
 /// Implements on `kml:BasicLinkType`
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -131,8 +132,8 @@ pub struct Icon {
     pub href: String,
 }
 
-/// Represents `kml:LabelStyle`, [12.14](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#909)
-/// in the KML specification.
+/// `kml:LabelStyle`, [12.14](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#909) in the
+/// KML specification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LabelStyle {
     pub id: String,
@@ -152,8 +153,8 @@ impl Default for LabelStyle {
     }
 }
 
-/// Represents `kml:LineStyle`, [12.15](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#917)
-/// in the KML specification.
+/// `kml:LineStyle`, [12.15](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#917) in the
+/// KML specification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineStyle {
     pub id: String,
@@ -173,8 +174,8 @@ impl Default for LineStyle {
     }
 }
 
-/// Represents `kml:PolyStyle`, [12.16](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#927)
-/// in the KML specification.
+/// `kml:PolyStyle`, [12.16](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#927) in the
+/// KML specification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolyStyle {
     pub id: String,
@@ -196,8 +197,8 @@ impl Default for PolyStyle {
     }
 }
 
-/// Represents `kml:listItemType`, [12.18](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#955)
-/// in the KML specification.
+/// `kml:listItemType`, [12.18](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#955) in the
+/// KML specification.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ListItemType {
     Check,
@@ -241,8 +242,8 @@ impl fmt::Display for ListItemType {
     }
 }
 
-/// Represents `kml:ListStyle`, [12.17](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#940)
-/// in the KML specification.
+/// `kml:ListStyle`, [12.17](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#940) in the
+/// KML specification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ListStyle {
     pub id: String,

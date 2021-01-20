@@ -31,6 +31,16 @@ impl<'a, T> KmlReader<&'a [u8], T>
 where
     T: CoordType + FromStr + Default,
 {
+    /// Parse KML from string
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use kml::{Kml, KmlReader};
+    ///
+    /// let point_str = "<Point><coordinates>1,1,1</coordinates></Point>";
+    /// let kml_point: Kml<f64> = KmlReader::from_string(point_str).parse().unwrap();
+    /// ```
     pub fn from_string(s: &str) -> KmlReader<&[u8], T> {
         KmlReader::<&[u8], T>::from_xml_reader(quick_xml::Reader::<&[u8]>::from_str(s))
     }
@@ -40,6 +50,21 @@ impl<T> KmlReader<BufReader<File>, T>
 where
     T: CoordType + FromStr + Default,
 {
+    /// Parse from KML from a KMZ file
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use kml::KmlReader;
+    ///
+    /// let poly_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+    ///     .join("tests")
+    ///     .join("fixtures")
+    ///     .join("polygon.kml");
+    /// let mut kml_reader = KmlReader::<_, f64>::from_file(poly_path).unwrap();
+    /// let kml = kml_reader.parse().unwrap();
+    /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<KmlReader<BufReader<File>, T>, Error> {
         Ok(KmlReader::<BufReader<File>, T>::from_xml_reader(
             quick_xml::Reader::from_file(path)?,
@@ -51,6 +76,7 @@ impl<B: BufRead, T> KmlReader<B, T>
 where
     T: CoordType + FromStr + Default,
 {
+    /// Read from any generic reader type
     pub fn from_reader(r: B) -> KmlReader<B, T> {
         KmlReader::<B, T>::from_xml_reader(quick_xml::Reader::from_reader(r))
     }
@@ -66,6 +92,16 @@ where
         }
     }
 
+    /// Parse from KML a `KmlReader`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use kml::{Kml, KmlReader};
+    ///
+    /// let point_str = "<Point><coordinates>1,1,1</coordinates></Point>";
+    /// let kml_point: Kml<f64> = KmlReader::from_string(point_str).parse().unwrap();
+    /// ```
     pub fn parse(&mut self) -> Result<Kml<T>, Error> {
         let mut result = self.parse_elements()?;
         // Converts multiple items at the same level to KmlDocument

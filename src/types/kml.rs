@@ -49,7 +49,7 @@ pub struct KmlDocument<T: CoordType = f64> {
     pub elements: Vec<Kml<T>>,
 }
 
-/// Represents any KML element
+/// Enum for representing any KML element
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]

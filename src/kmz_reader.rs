@@ -14,6 +14,21 @@ impl<T> KmlReader<Cursor<Vec<u8>>, T>
 where
     T: CoordType + FromStr + Default,
 {
+    /// Parse from KML from a KMZ file
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use kml::KmlReader;
+    ///
+    /// let kmz_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+    ///     .join("tests")
+    ///     .join("fixtures")
+    ///     .join("polygon.kmz");
+    /// let mut kml_reader = KmlReader::<_, f64>::from_kmz_file(kmz_path).unwrap();
+    /// let kml = kml_reader.parse().unwrap();
+    /// ```
     pub fn from_kmz_file<P: AsRef<Path>>(path: P) -> Result<KmlReader<Cursor<Vec<u8>>, T>, Error> {
         let file = File::open(path)?;
         let mut archive = ZipArchive::new(file)?;

@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+/// Errors for KML reading and writing
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Invalid input supplied for XML")]

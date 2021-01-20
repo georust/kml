@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use crate::types::altitude_mode::AltitudeMode;
 use crate::types::coord::{Coord, CoordType};
 
-/// Represents `kml:Point`, [10.2](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#446) in
-/// the KML specification
+/// `kml:Point`, [10.2](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#446) in the KML
+/// specification
 ///
 /// Coord is required as of https://docs.opengeospatial.org/ts/14-068r2/14-068r2.html#atc-114
 #[derive(Clone, Default, Debug, PartialEq)]

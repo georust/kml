@@ -4,7 +4,7 @@
 [![Build status](https://github.com/pjsier/kml/workflows/CI/badge.svg)](https://github.com/pjsier/kml/actions?query=workflow%3ACI)
 [![Documentation](https://docs.rs/kml/badge.svg)](https://docs.rs/kml)
 
-KML support for Rust with a focus on conversion to [`geo-types`](https://github.com/georust/geo) primitives. Currently only partial read/write support is implemented.
+Rust support for reading and writing KML with a focus on conversion to [`geo-types`](https://github.com/georust/geo) primitives.
 
 ## Examples
 
