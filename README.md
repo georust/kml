@@ -38,16 +38,16 @@ let kml_path = Path::new(env!("CARGO_MANIFEST_DIR"))
     .join("tests")
     .join("fixtures")
     .join("polygon.kml");
-let mut kml_reader = KmlReader::<_, f64>::from_file(kml_path).unwrap();
-let kml_data = kml_reader.parse().unwrap();
+let mut kml_reader = KmlReader::<_, f64>::from_path(kml_path).unwrap();
+let kml_data = kml_reader.read().unwrap();
 
 // Read KMZ files with the `zip` feature or default features enabled
 let kmz_path = Path::new(env!("CARGO_MANIFEST_DIR"))
     .join("tests")
     .join("fixtures")
     .join("polygon.kmz");
-let mut kmz_reader = KmlReader::<_, f64>::from_kmz_file(kmz_path).unwrap();
-let kmz_data = kmz_reader.parse().unwrap();
+let mut kmz_reader = KmlReader::<_, f64>::from_kmz_path(kmz_path).unwrap();
+let kmz_data = kmz_reader.read().unwrap();
 ```
 
 ### Writing

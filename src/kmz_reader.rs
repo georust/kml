@@ -27,10 +27,10 @@ where
     ///     .join("tests")
     ///     .join("fixtures")
     ///     .join("polygon.kmz");
-    /// let mut kml_reader = KmlReader::<_, f64>::from_kmz_file(kmz_path).unwrap();
-    /// let kml = kml_reader.parse().unwrap();
+    /// let mut kml_reader = KmlReader::<_, f64>::from_kmz_path(kmz_path).unwrap();
+    /// let kml = kml_reader.read().unwrap();
     /// ```
-    pub fn from_kmz_file<P: AsRef<Path>>(path: P) -> Result<KmlReader<Cursor<Vec<u8>>, T>, Error> {
+    pub fn from_kmz_path<P: AsRef<Path>>(path: P) -> Result<KmlReader<Cursor<Vec<u8>>, T>, Error> {
         let file = File::open(path)?;
         let mut archive = ZipArchive::new(file)?;
 
@@ -55,13 +55,13 @@ mod tests {
     use crate::types::Kml;
 
     #[test]
-    fn test_parse_kmz() {
+    fn test_read_kmz() {
         let kmz_path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("tests")
             .join("fixtures")
             .join("polygon.kmz");
-        let mut kml_reader = KmlReader::<_, f64>::from_kmz_file(kmz_path).unwrap();
-        let kml = kml_reader.parse().unwrap();
+        let mut kml_reader = KmlReader::<_, f64>::from_kmz_path(kmz_path).unwrap();
+        let kml = kml_reader.read().unwrap();
 
         assert!(matches!(kml, Kml::Polygon(_)))
     }

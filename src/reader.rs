@@ -40,7 +40,7 @@ where
     /// use kml::{Kml, KmlReader};
     ///
     /// let point_str = "<Point><coordinates>1,1,1</coordinates></Point>";
-    /// let kml_point: Kml<f64> = KmlReader::from_string(point_str).parse().unwrap();
+    /// let kml_point: Kml<f64> = KmlReader::from_string(point_str).read().unwrap();
     /// ```
     pub fn from_string(s: &str) -> KmlReader<&[u8], T> {
         KmlReader::<&[u8], T>::from_xml_reader(quick_xml::Reader::<&[u8]>::from_str(s))
@@ -51,7 +51,7 @@ impl<T> KmlReader<BufReader<File>, T>
 where
     T: CoordType + FromStr + Default,
 {
-    /// Parse from KML from a KMZ file
+    /// Read KML from a file path
     ///
     /// # Example
     ///
@@ -63,10 +63,10 @@ where
     ///     .join("tests")
     ///     .join("fixtures")
     ///     .join("polygon.kml");
-    /// let mut kml_reader = KmlReader::<_, f64>::from_file(poly_path).unwrap();
-    /// let kml = kml_reader.parse().unwrap();
+    /// let mut kml_reader = KmlReader::<_, f64>::from_path(poly_path).unwrap();
+    /// let kml = kml_reader.read().unwrap();
     /// ```
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<KmlReader<BufReader<File>, T>, Error> {
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<KmlReader<BufReader<File>, T>, Error> {
         Ok(KmlReader::<BufReader<File>, T>::from_xml_reader(
             quick_xml::Reader::from_file(path)?,
         ))
@@ -93,7 +93,7 @@ where
         }
     }
 
-    /// Parse reader content into [`Kml`](enum.Kml.html)
+    /// Read content into [`Kml`](enum.Kml.html)
     ///
     /// # Example
     ///
@@ -101,10 +101,10 @@ where
     /// use kml::{Kml, KmlReader};
     ///
     /// let point_str = "<Point><coordinates>1,1,1</coordinates></Point>";
-    /// let kml_point: Kml<f64> = KmlReader::from_string(point_str).parse().unwrap();
+    /// let kml_point: Kml<f64> = KmlReader::from_string(point_str).read().unwrap();
     /// ```
-    pub fn parse(&mut self) -> Result<Kml<T>, Error> {
-        let mut result = self.parse_elements()?;
+    pub fn read(&mut self) -> Result<Kml<T>, Error> {
+        let mut result = self.read_elements()?;
         // Converts multiple items at the same level to KmlDocument
         match result.len().cmp(&1) {
             Ordering::Greater => Ok(Kml::KmlDocument(KmlDocument {
@@ -116,60 +116,52 @@ where
         }
     }
 
-    fn parse_elements(&mut self) -> Result<Vec<Kml<T>>, Error> {
+    fn read_elements(&mut self) -> Result<Vec<Kml<T>>, Error> {
         let mut elements: Vec<Kml<T>> = Vec::new();
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
-                    let attrs = Self::parse_attrs(e.attributes());
+                    let attrs = Self::read_attrs(e.attributes());
                     match e.local_name() {
-                        b"kml" => elements.push(Kml::KmlDocument(self.parse_kml_document()?)),
-                        b"Point" => elements.push(Kml::Point(self.parse_point(attrs)?)),
+                        b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document()?)),
+                        b"Point" => elements.push(Kml::Point(self.read_point(attrs)?)),
                         b"LineString" => {
-                            elements.push(Kml::LineString(self.parse_line_string(attrs)?))
+                            elements.push(Kml::LineString(self.read_line_string(attrs)?))
                         }
                         b"LinearRing" => {
-                            elements.push(Kml::LinearRing(self.parse_linear_ring(attrs)?))
+                            elements.push(Kml::LinearRing(self.read_linear_ring(attrs)?))
                         }
-                        b"Polygon" => elements.push(Kml::Polygon(self.parse_polygon(attrs)?)),
+                        b"Polygon" => elements.push(Kml::Polygon(self.read_polygon(attrs)?)),
                         b"MultiGeometry" => {
-                            elements.push(Kml::MultiGeometry(self.parse_multi_geometry(attrs)?))
+                            elements.push(Kml::MultiGeometry(self.read_multi_geometry(attrs)?))
                         }
-                        b"Placemark" => elements.push(Kml::Placemark(self.parse_placemark(attrs)?)),
+                        b"Placemark" => elements.push(Kml::Placemark(self.read_placemark(attrs)?)),
                         b"Document" => elements.push(Kml::Document {
                             attrs,
-                            elements: self.parse_elements()?,
+                            elements: self.read_elements()?,
                         }),
                         b"Folder" => elements.push(Kml::Folder {
                             attrs,
-                            elements: self.parse_elements()?,
+                            elements: self.read_elements()?,
                         }),
-                        b"Style" => elements.push(Kml::Style(self.parse_style(attrs)?)),
-                        b"StyleMap" => elements.push(Kml::StyleMap(self.parse_style_map(attrs)?)),
-                        b"Pair" => elements.push(Kml::Pair(self.parse_pair(attrs)?)),
+                        b"Style" => elements.push(Kml::Style(self.read_style(attrs)?)),
+                        b"StyleMap" => elements.push(Kml::StyleMap(self.read_style_map(attrs)?)),
+                        b"Pair" => elements.push(Kml::Pair(self.read_pair(attrs)?)),
                         b"BalloonStyle" => {
-                            elements.push(Kml::BalloonStyle(self.parse_balloon_style(attrs)?))
+                            elements.push(Kml::BalloonStyle(self.read_balloon_style(attrs)?))
                         }
-                        b"IconStyle" => {
-                            elements.push(Kml::IconStyle(self.parse_icon_style(attrs)?))
-                        }
-                        b"Icon" => elements.push(Kml::Icon(self.parse_icon()?)),
+                        b"IconStyle" => elements.push(Kml::IconStyle(self.read_icon_style(attrs)?)),
+                        b"Icon" => elements.push(Kml::Icon(self.read_icon()?)),
                         b"LabelStyle" => {
-                            elements.push(Kml::LabelStyle(self.parse_label_style(attrs)?))
+                            elements.push(Kml::LabelStyle(self.read_label_style(attrs)?))
                         }
-                        b"LineStyle" => {
-                            elements.push(Kml::LineStyle(self.parse_line_style(attrs)?))
-                        }
-                        b"PolyStyle" => {
-                            elements.push(Kml::PolyStyle(self.parse_poly_style(attrs)?))
-                        }
-                        b"ListStyle" => {
-                            elements.push(Kml::ListStyle(self.parse_list_style(attrs)?))
-                        }
+                        b"LineStyle" => elements.push(Kml::LineStyle(self.read_line_style(attrs)?)),
+                        b"PolyStyle" => elements.push(Kml::PolyStyle(self.read_poly_style(attrs)?)),
+                        b"ListStyle" => elements.push(Kml::ListStyle(self.read_list_style(attrs)?)),
                         _ => {
                             let start = e.to_owned();
-                            elements.push(Kml::Element(self.parse_element(&start, attrs)?));
+                            elements.push(Kml::Element(self.read_element(&start, attrs)?));
                         }
                     };
                 }
@@ -186,16 +178,16 @@ where
         Ok(elements)
     }
 
-    fn parse_kml_document(&mut self) -> Result<KmlDocument<T>, Error> {
+    fn read_kml_document(&mut self) -> Result<KmlDocument<T>, Error> {
         // TODO: Should parse version, change version based on NS
         Ok(KmlDocument {
-            elements: self.parse_elements()?,
+            elements: self.read_elements()?,
             ..Default::default()
         })
     }
 
-    fn parse_point(&mut self, attrs: HashMap<String, String>) -> Result<Point<T>, Error> {
-        let mut props = self.parse_geom_props(b"Point")?;
+    fn read_point(&mut self, attrs: HashMap<String, String>) -> Result<Point<T>, Error> {
+        let mut props = self.read_geom_props(b"Point")?;
         Ok(Point {
             coord: props.coords.remove(0),
             altitude_mode: props.altitude_mode,
@@ -204,11 +196,8 @@ where
         })
     }
 
-    fn parse_line_string(
-        &mut self,
-        attrs: HashMap<String, String>,
-    ) -> Result<LineString<T>, Error> {
-        let props = self.parse_geom_props(b"LineString")?;
+    fn read_line_string(&mut self, attrs: HashMap<String, String>) -> Result<LineString<T>, Error> {
+        let props = self.read_geom_props(b"LineString")?;
         Ok(LineString {
             coords: props.coords,
             altitude_mode: props.altitude_mode,
@@ -218,11 +207,8 @@ where
         })
     }
 
-    fn parse_linear_ring(
-        &mut self,
-        attrs: HashMap<String, String>,
-    ) -> Result<LinearRing<T>, Error> {
-        let props = self.parse_geom_props(b"LinearRing")?;
+    fn read_linear_ring(&mut self, attrs: HashMap<String, String>) -> Result<LinearRing<T>, Error> {
+        let props = self.read_geom_props(b"LinearRing")?;
         Ok(LinearRing {
             coords: props.coords,
             altitude_mode: props.altitude_mode,
@@ -232,7 +218,7 @@ where
         })
     }
 
-    fn parse_polygon(&mut self, attrs: HashMap<String, String>) -> Result<Polygon<T>, Error> {
+    fn read_polygon(&mut self, attrs: HashMap<String, String>) -> Result<Polygon<T>, Error> {
         let mut outer: LinearRing<T> = LinearRing::default();
         let mut inner: Vec<LinearRing<T>> = Vec::new();
         let mut altitude_mode = types::AltitudeMode::default();
@@ -244,7 +230,7 @@ where
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
                     b"outerBoundaryIs" => {
-                        let mut outer_ring = self.parse_boundary(b"outerBoundaryIs")?;
+                        let mut outer_ring = self.read_boundary(b"outerBoundaryIs")?;
                         if outer_ring.is_empty() {
                             return Err(Error::InvalidGeometry(
                                 "Polygon must have an outer boundary".to_string(),
@@ -252,12 +238,12 @@ where
                         }
                         outer = outer_ring.remove(0);
                     }
-                    b"innerBoundaryIs" => inner = self.parse_boundary(b"innerBoundaryIs")?,
+                    b"innerBoundaryIs" => inner = self.read_boundary(b"innerBoundaryIs")?,
                     b"altitudeMode" => {
-                        altitude_mode = types::AltitudeMode::from_str(&self.parse_str()?)?
+                        altitude_mode = types::AltitudeMode::from_str(&self.read_str()?)?
                     }
-                    b"extrude" => extrude = self.parse_str()? == "1",
-                    b"tessellate" => tessellate = self.parse_str()? == "1",
+                    b"extrude" => extrude = self.read_str()? == "1",
+                    b"tessellate" => tessellate = self.read_str()? == "1",
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -278,7 +264,7 @@ where
         })
     }
 
-    fn parse_multi_geometry(
+    fn read_multi_geometry(
         &mut self,
         attrs: HashMap<String, String>,
     ) -> Result<MultiGeometry<T>, Error> {
@@ -287,20 +273,18 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref e) => {
-                    let attrs = Self::parse_attrs(e.attributes());
+                    let attrs = Self::read_attrs(e.attributes());
                     match e.local_name() {
-                        b"Point" => geometries.push(Geometry::Point(self.parse_point(attrs)?)),
+                        b"Point" => geometries.push(Geometry::Point(self.read_point(attrs)?)),
                         b"LineString" => {
-                            geometries.push(Geometry::LineString(self.parse_line_string(attrs)?))
+                            geometries.push(Geometry::LineString(self.read_line_string(attrs)?))
                         }
                         b"LinearRing" => {
-                            geometries.push(Geometry::LinearRing(self.parse_linear_ring(attrs)?))
+                            geometries.push(Geometry::LinearRing(self.read_linear_ring(attrs)?))
                         }
-                        b"Polygon" => {
-                            geometries.push(Geometry::Polygon(self.parse_polygon(attrs)?))
-                        }
+                        b"Polygon" => geometries.push(Geometry::Polygon(self.read_polygon(attrs)?)),
                         b"MultiGeometry" => geometries
-                            .push(Geometry::MultiGeometry(self.parse_multi_geometry(attrs)?)),
+                            .push(Geometry::MultiGeometry(self.read_multi_geometry(attrs)?)),
                         _ => {}
                     }
                 }
@@ -315,7 +299,7 @@ where
         Ok(MultiGeometry { geometries, attrs })
     }
 
-    fn parse_placemark(&mut self, attrs: HashMap<String, String>) -> Result<Placemark<T>, Error> {
+    fn read_placemark(&mut self, attrs: HashMap<String, String>) -> Result<Placemark<T>, Error> {
         let mut name: Option<String> = None;
         let mut description: Option<String> = None;
         let mut geometry: Option<Geometry<T>> = None;
@@ -325,28 +309,26 @@ where
             let e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref e) => {
-                    let attrs = Self::parse_attrs(e.attributes());
+                    let attrs = Self::read_attrs(e.attributes());
                     match e.local_name() {
-                        b"name" => name = Some(self.parse_str()?),
-                        b"description" => description = Some(self.parse_str()?),
-                        b"Point" => geometry = Some(Geometry::Point(self.parse_point(attrs)?)),
+                        b"name" => name = Some(self.read_str()?),
+                        b"description" => description = Some(self.read_str()?),
+                        b"Point" => geometry = Some(Geometry::Point(self.read_point(attrs)?)),
                         b"LineString" => {
-                            geometry = Some(Geometry::LineString(self.parse_line_string(attrs)?))
+                            geometry = Some(Geometry::LineString(self.read_line_string(attrs)?))
                         }
                         b"LinearRing" => {
-                            geometry = Some(Geometry::LinearRing(self.parse_linear_ring(attrs)?))
+                            geometry = Some(Geometry::LinearRing(self.read_linear_ring(attrs)?))
                         }
-                        b"Polygon" => {
-                            geometry = Some(Geometry::Polygon(self.parse_polygon(attrs)?))
-                        }
+                        b"Polygon" => geometry = Some(Geometry::Polygon(self.read_polygon(attrs)?)),
                         b"MultiGeometry" => {
                             geometry =
-                                Some(Geometry::MultiGeometry(self.parse_multi_geometry(attrs)?))
+                                Some(Geometry::MultiGeometry(self.read_multi_geometry(attrs)?))
                         }
                         _ => {
                             let start = e.to_owned();
-                            let start_attrs = Self::parse_attrs(start.attributes());
-                            children.push(self.parse_element(&start, start_attrs)?);
+                            let start_attrs = Self::read_attrs(start.attributes());
+                            children.push(self.read_element(&start, start_attrs)?);
                         }
                     }
                 }
@@ -367,7 +349,7 @@ where
         })
     }
 
-    fn parse_style(&mut self, attrs: HashMap<String, String>) -> Result<Style, Error> {
+    fn read_style(&mut self, attrs: HashMap<String, String>) -> Result<Style, Error> {
         let mut style = Style::default();
         if let Some(id_str) = attrs.get("id") {
             style.id = id_str.to_string();
@@ -376,14 +358,14 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
-                    let attrs = Self::parse_attrs(e.attributes());
+                    let attrs = Self::read_attrs(e.attributes());
                     match e.local_name() {
-                        b"BalloonStyle" => style.balloon = Some(self.parse_balloon_style(attrs)?),
-                        b"IconStyle" => style.icon = Some(self.parse_icon_style(attrs)?),
-                        b"LabelStyle" => style.label = Some(self.parse_label_style(attrs)?),
-                        b"LineStyle" => style.line = Some(self.parse_line_style(attrs)?),
-                        b"PolyStyle" => style.poly = Some(self.parse_poly_style(attrs)?),
-                        b"ListStyle" => style.list = Some(self.parse_list_style(attrs)?),
+                        b"BalloonStyle" => style.balloon = Some(self.read_balloon_style(attrs)?),
+                        b"IconStyle" => style.icon = Some(self.read_icon_style(attrs)?),
+                        b"LabelStyle" => style.label = Some(self.read_label_style(attrs)?),
+                        b"LineStyle" => style.line = Some(self.read_line_style(attrs)?),
+                        b"PolyStyle" => style.poly = Some(self.read_poly_style(attrs)?),
+                        b"ListStyle" => style.list = Some(self.read_list_style(attrs)?),
                         _ => {}
                     }
                 }
@@ -398,7 +380,7 @@ where
         Ok(style)
     }
 
-    fn parse_style_map(&mut self, attrs: HashMap<String, String>) -> Result<StyleMap, Error> {
+    fn read_style_map(&mut self, attrs: HashMap<String, String>) -> Result<StyleMap, Error> {
         let mut style_map = StyleMap::default();
         if let Some(id_str) = attrs.get("id") {
             style_map.id = id_str.to_string();
@@ -408,8 +390,8 @@ where
             match e {
                 Event::Start(ref mut e) => {
                     if e.local_name() == b"Pair" {
-                        let pair_attrs = Self::parse_attrs(e.attributes());
-                        style_map.pairs.push(self.parse_pair(pair_attrs)?);
+                        let pair_attrs = Self::read_attrs(e.attributes());
+                        style_map.pairs.push(self.read_pair(pair_attrs)?);
                     }
                 }
                 Event::End(ref mut e) => {
@@ -423,7 +405,7 @@ where
         Ok(style_map)
     }
 
-    fn parse_pair(&mut self, attrs: HashMap<String, String>) -> Result<Pair, Error> {
+    fn read_pair(&mut self, attrs: HashMap<String, String>) -> Result<Pair, Error> {
         let mut pair = Pair {
             attrs,
             ..Pair::default()
@@ -433,8 +415,8 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
-                    b"key" => pair.key = self.parse_str()?,
-                    b"styleUrl" => pair.style_url = self.parse_str()?,
+                    b"key" => pair.key = self.read_str()?,
+                    b"styleUrl" => pair.style_url = self.read_str()?,
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -448,7 +430,7 @@ where
         Ok(pair)
     }
 
-    fn parse_icon_style(&mut self, attrs: HashMap<String, String>) -> Result<IconStyle, Error> {
+    fn read_icon_style(&mut self, attrs: HashMap<String, String>) -> Result<IconStyle, Error> {
         let mut icon_style = IconStyle::default();
         if let Some(id_str) = attrs.get("id") {
             icon_style.id = id_str.to_string();
@@ -457,10 +439,10 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
-                    b"scale" => icon_style.scale = self.parse_float()?,
-                    b"heading" => icon_style.heading = self.parse_float()?,
+                    b"scale" => icon_style.scale = self.read_float()?,
+                    b"heading" => icon_style.heading = self.read_float()?,
                     b"hot_spot" => {
-                        let hot_spot_attrs = Self::parse_attrs(e.attributes());
+                        let hot_spot_attrs = Self::read_attrs(e.attributes());
                         let x_val = hot_spot_attrs.get("x");
                         let y_val = hot_spot_attrs.get("y");
                         if let (Some(x_str), Some(y_str)) = (x_val, y_val) {
@@ -473,10 +455,10 @@ where
                             icon_style.hot_spot = Some((x, y));
                         }
                     }
-                    b"Icon" => icon_style.icon = self.parse_icon()?,
-                    b"color" => icon_style.color = self.parse_str()?,
+                    b"Icon" => icon_style.icon = self.read_icon()?,
+                    b"color" => icon_style.color = self.read_str()?,
                     b"colorMode" => {
-                        icon_style.color_mode = self.parse_str()?.parse::<ColorMode>()?
+                        icon_style.color_mode = self.read_str()?.parse::<ColorMode>()?
                     }
                     _ => {}
                 },
@@ -491,14 +473,14 @@ where
         Ok(icon_style)
     }
 
-    fn parse_icon(&mut self) -> Result<Icon, Error> {
+    fn read_icon(&mut self) -> Result<Icon, Error> {
         let mut href = String::new();
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
                     if e.local_name() == b"href" {
-                        href = self.parse_str()?;
+                        href = self.read_str()?;
                     }
                 }
                 Event::End(ref mut e) => {
@@ -512,7 +494,7 @@ where
         Ok(Icon { href })
     }
 
-    fn parse_balloon_style(
+    fn read_balloon_style(
         &mut self,
         attrs: HashMap<String, String>,
     ) -> Result<BalloonStyle, Error> {
@@ -524,10 +506,10 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
-                    b"bgColor" => balloon_style.bg_color = Some(self.parse_str()?),
-                    b"textColor" => balloon_style.text_color = self.parse_str()?,
-                    b"text" => balloon_style.text = Some(self.parse_str()?),
-                    b"displayMode" => balloon_style.display = self.parse_str()? != "hide",
+                    b"bgColor" => balloon_style.bg_color = Some(self.read_str()?),
+                    b"textColor" => balloon_style.text_color = self.read_str()?,
+                    b"text" => balloon_style.text = Some(self.read_str()?),
+                    b"displayMode" => balloon_style.display = self.read_str()? != "hide",
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -541,7 +523,7 @@ where
         Ok(balloon_style)
     }
 
-    fn parse_label_style(&mut self, attrs: HashMap<String, String>) -> Result<LabelStyle, Error> {
+    fn read_label_style(&mut self, attrs: HashMap<String, String>) -> Result<LabelStyle, Error> {
         let mut label_style = LabelStyle::default();
         if let Some(id_str) = attrs.get("id") {
             label_style.id = id_str.to_string();
@@ -550,11 +532,11 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
-                    b"color" => label_style.color = self.parse_str()?,
+                    b"color" => label_style.color = self.read_str()?,
                     b"colorMode" => {
-                        label_style.color_mode = self.parse_str()?.parse::<ColorMode>()?;
+                        label_style.color_mode = self.read_str()?.parse::<ColorMode>()?;
                     }
-                    b"scale" => label_style.scale = self.parse_float()?,
+                    b"scale" => label_style.scale = self.read_float()?,
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -568,7 +550,7 @@ where
         Ok(label_style)
     }
 
-    fn parse_line_style(&mut self, attrs: HashMap<String, String>) -> Result<LineStyle, Error> {
+    fn read_line_style(&mut self, attrs: HashMap<String, String>) -> Result<LineStyle, Error> {
         let mut line_style = LineStyle::default();
         if let Some(id_str) = attrs.get("id") {
             line_style.id = id_str.to_string();
@@ -577,11 +559,11 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
-                    b"color" => line_style.color = self.parse_str()?,
+                    b"color" => line_style.color = self.read_str()?,
                     b"colorMode" => {
-                        line_style.color_mode = self.parse_str()?.parse::<ColorMode>()?;
+                        line_style.color_mode = self.read_str()?.parse::<ColorMode>()?;
                     }
-                    b"width" => line_style.width = self.parse_float()?,
+                    b"width" => line_style.width = self.read_float()?,
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -595,7 +577,7 @@ where
         Ok(line_style)
     }
 
-    fn parse_list_style(&mut self, attrs: HashMap<String, String>) -> Result<ListStyle, Error> {
+    fn read_list_style(&mut self, attrs: HashMap<String, String>) -> Result<ListStyle, Error> {
         let mut list_style = ListStyle::default();
         if let Some(id_str) = attrs.get("id") {
             list_style.id = id_str.to_string();
@@ -604,9 +586,9 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
-                    b"bgColor" => list_style.bg_color = self.parse_str()?,
+                    b"bgColor" => list_style.bg_color = self.read_str()?,
                     b"maxSnippetLines" => {
-                        let line_str = self.parse_str()?;
+                        let line_str = self.read_str()?;
                         list_style.max_snippet_lines = line_str
                             .parse::<u32>()
                             .map_err(|_| Error::NumParse(line_str))?;
@@ -624,7 +606,7 @@ where
         Ok(list_style)
     }
 
-    fn parse_poly_style(&mut self, attrs: HashMap<String, String>) -> Result<PolyStyle, Error> {
+    fn read_poly_style(&mut self, attrs: HashMap<String, String>) -> Result<PolyStyle, Error> {
         let mut poly_style = PolyStyle::default();
         if let Some(id_str) = attrs.get("id") {
             poly_style.id = id_str.to_string();
@@ -633,16 +615,16 @@ where
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
-                    b"color" => poly_style.color = self.parse_str()?,
+                    b"color" => poly_style.color = self.read_str()?,
                     b"colorMode" => {
-                        poly_style.color_mode = self.parse_str()?.parse::<ColorMode>()?;
+                        poly_style.color_mode = self.read_str()?.parse::<ColorMode>()?;
                     }
                     b"fill" => {
-                        let fill_str = self.parse_str()?;
+                        let fill_str = self.read_str()?;
                         poly_style.fill = fill_str != "false" && fill_str != "0"
                     }
                     b"outline" => {
-                        let outline_str = self.parse_str()?;
+                        let outline_str = self.read_str()?;
                         poly_style.outline = outline_str != "false" && outline_str != "0"
                     }
                     _ => {}
@@ -658,7 +640,7 @@ where
         Ok(poly_style)
     }
 
-    fn parse_element(
+    fn read_element(
         &mut self,
         start: &BytesStart,
         attrs: HashMap<String, String>,
@@ -672,10 +654,10 @@ where
             match e {
                 Event::Start(e) => {
                     let start = e.to_owned();
-                    let start_attrs = Self::parse_attrs(start.attributes());
+                    let start_attrs = Self::read_attrs(start.attributes());
                     element
                         .children
-                        .push(self.parse_element(&start, start_attrs)?);
+                        .push(self.read_element(&start, start_attrs)?);
                 }
                 Event::Text(ref mut e) => {
                     element.content = Some(e.unescape_and_decode(&self.reader).expect("Error"))
@@ -691,15 +673,15 @@ where
         Ok(element)
     }
 
-    fn parse_boundary(&mut self, end_tag: &[u8]) -> Result<Vec<LinearRing<T>>, Error> {
+    fn read_boundary(&mut self, end_tag: &[u8]) -> Result<Vec<LinearRing<T>>, Error> {
         let mut boundary: Vec<LinearRing<T>> = Vec::new();
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
-                    let attrs = Self::parse_attrs(e.attributes());
+                    let attrs = Self::read_attrs(e.attributes());
                     if e.local_name() == b"LinearRing" {
-                        boundary.push(self.parse_linear_ring(attrs)?);
+                        boundary.push(self.read_linear_ring(attrs)?);
                     }
                 }
                 Event::End(ref mut e) => {
@@ -713,7 +695,7 @@ where
         Ok(boundary)
     }
 
-    fn parse_geom_props(&mut self, end_tag: &[u8]) -> Result<GeomProps<T>, Error> {
+    fn read_geom_props(&mut self, end_tag: &[u8]) -> Result<GeomProps<T>, Error> {
         let mut coords: Vec<Coord<T>> = Vec::new();
         let mut altitude_mode = types::AltitudeMode::default();
         let mut extrude = false;
@@ -724,13 +706,13 @@ where
             match e {
                 Event::Start(ref mut e) => match e.local_name() {
                     b"coordinates" => {
-                        coords = coords_from_str(&self.parse_str()?)?;
+                        coords = coords_from_str(&self.read_str()?)?;
                     }
                     b"altitudeMode" => {
-                        altitude_mode = types::AltitudeMode::from_str(&self.parse_str()?)?
+                        altitude_mode = types::AltitudeMode::from_str(&self.read_str()?)?
                     }
-                    b"extrude" => extrude = self.parse_str()? == "1",
-                    b"tessellate" => tessellate = self.parse_str()? == "1",
+                    b"extrude" => extrude = self.read_str()? == "1",
+                    b"tessellate" => tessellate = self.read_str()? == "1",
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -755,14 +737,14 @@ where
         }
     }
 
-    fn parse_float<F: Float + FromStr>(&mut self) -> Result<F, Error> {
-        let float_str = self.parse_str()?;
+    fn read_float<F: Float + FromStr>(&mut self) -> Result<F, Error> {
+        let float_str = self.read_str()?;
         float_str
             .parse::<F>()
             .map_err(|_| Error::NumParse(float_str))
     }
 
-    fn parse_str(&mut self) -> Result<String, Error> {
+    fn read_str(&mut self) -> Result<String, Error> {
         let e = self.reader.read_event(&mut self.buf)?;
         match e {
             Event::Text(e) | Event::CData(e) => {
@@ -773,7 +755,7 @@ where
         }
     }
 
-    fn parse_attrs(attrs: Attributes) -> HashMap<String, String> {
+    fn read_attrs(attrs: Attributes) -> HashMap<String, String> {
         attrs
             .filter_map(Result::ok)
             .map(|a| {
@@ -793,7 +775,7 @@ where
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        KmlReader::<&[u8], T>::from_string(s).parse()
+        KmlReader::<&[u8], T>::from_string(s).read()
     }
 }
 
@@ -869,7 +851,7 @@ mod tests {
       </Polygon>"#;
         let mut r = KmlReader::from_string(poly_str);
 
-        let p: Kml = r.parse().unwrap();
+        let p: Kml = r.read().unwrap();
         assert_eq!(
             p,
             Kml::Polygon(Polygon {
