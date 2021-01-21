@@ -1,3 +1,15 @@
+//! Module for converting KML geometry elements to and from `geo-types` primitives
+//!
+//! # Example
+//!
+//! ```
+//! use kml::types::Coord;
+//! use geo_types;
+//!
+//! let kml_coord = Coord::new(1.0, 1.0, None);
+//! let geo_coord = geo_types::Coordinate::from(kml_coord);
+//! let kml_coord: Coord = Coord::from(geo_coord);
+//! ```
 use std::convert::TryFrom;
 
 use crate::errors::Error;
@@ -6,12 +18,32 @@ use crate::types::{
 };
 
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::Coordinate<T>> for Coord<T>
+where
+    T: CoordType,
+{
+    fn from(val: geo_types::Coordinate<T>) -> Coord<T> {
+        Coord::from((val.x, val.y))
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<Coord<T>> for geo_types::Coordinate<T>
 where
     T: CoordType,
 {
     fn from(val: Coord<T>) -> geo_types::Coordinate<T> {
         geo_types::Coordinate::from((val.x, val.y))
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::Point<T>> for Point<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::Point<T>) -> Point<T> {
+        Point::from(Coord::from(val.0))
     }
 }
 
@@ -26,6 +58,31 @@ where
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::Line<T>> for LineString<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::Line<T>) -> LineString<T> {
+        LineString::from(vec![Coord::from(val.start), Coord::from(val.end)])
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::LineString<T>> for LineString<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::LineString<T>) -> LineString<T> {
+        LineString::from(
+            val.0
+                .into_iter()
+                .map(Coord::from)
+                .collect::<Vec<Coord<T>>>(),
+        )
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<LineString<T>> for geo_types::LineString<T>
 where
     T: CoordType,
@@ -36,6 +93,21 @@ where
                 .into_iter()
                 .map(geo_types::Coordinate::from)
                 .collect(),
+        )
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::LineString<T>> for LinearRing<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::LineString<T>) -> LinearRing<T> {
+        LinearRing::from(
+            val.0
+                .into_iter()
+                .map(Coord::from)
+                .collect::<Vec<Coord<T>>>(),
         )
     }
 }
@@ -56,6 +128,43 @@ where
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::Polygon<T>> for Polygon<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::Polygon<T>) -> Polygon<T> {
+        let (outer, inner) = val.into_inner();
+        Polygon::new(
+            LinearRing::from(outer),
+            inner
+                .into_iter()
+                .map(LinearRing::from)
+                .collect::<Vec<LinearRing<T>>>(),
+        )
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::Rect<T>> for Polygon<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::Rect<T>) -> Polygon<T> {
+        Polygon::from(val.to_polygon())
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::Triangle<T>> for Polygon<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::Triangle<T>) -> Polygon<T> {
+        Polygon::from(val.to_polygon())
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<Polygon<T>> for geo_types::Polygon<T>
 where
     T: CoordType,
@@ -67,6 +176,62 @@ where
                 .into_iter()
                 .map(geo_types::LineString::from)
                 .collect::<Vec<geo_types::LineString<T>>>(),
+        )
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::MultiPoint<T>> for MultiGeometry<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::MultiPoint<T>) -> MultiGeometry<T> {
+        MultiGeometry::new(
+            val.into_iter()
+                .map(|p| Geometry::Point(Point::from(p)))
+                .collect::<Vec<Geometry<T>>>(),
+        )
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::MultiLineString<T>> for MultiGeometry<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::MultiLineString<T>) -> MultiGeometry<T> {
+        MultiGeometry::new(
+            val.into_iter()
+                .map(|l| Geometry::LineString(LineString::from(l)))
+                .collect::<Vec<Geometry<T>>>(),
+        )
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::MultiPolygon<T>> for MultiGeometry<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::MultiPolygon<T>) -> MultiGeometry<T> {
+        MultiGeometry::new(
+            val.into_iter()
+                .map(|p| Geometry::Polygon(Polygon::from(p)))
+                .collect::<Vec<Geometry<T>>>(),
+        )
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::GeometryCollection<T>> for MultiGeometry<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::GeometryCollection<T>) -> MultiGeometry<T> {
+        MultiGeometry::new(
+            val.into_iter()
+                .map(Geometry::from)
+                .collect::<Vec<Geometry<T>>>(),
         )
     }
 }
@@ -85,6 +250,31 @@ where
                 .map(geo_types::Geometry::try_from)
                 .collect::<Result<Vec<geo_types::Geometry<T>>, _>>()?,
         ))
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> From<geo_types::Geometry<T>> for Geometry<T>
+where
+    T: CoordType + Default,
+{
+    fn from(val: geo_types::Geometry<T>) -> Geometry<T> {
+        match val {
+            geo_types::Geometry::Point(p) => Geometry::Point(Point::from(p)),
+            geo_types::Geometry::Line(l) => Geometry::LineString(LineString::from(l)),
+            geo_types::Geometry::LineString(l) => Geometry::LineString(LineString::from(l)),
+            geo_types::Geometry::Polygon(p) => Geometry::Polygon(Polygon::from(p)),
+            geo_types::Geometry::MultiPoint(p) => Geometry::MultiGeometry(MultiGeometry::from(p)),
+            geo_types::Geometry::MultiLineString(l) => {
+                Geometry::MultiGeometry(MultiGeometry::from(l))
+            }
+            geo_types::Geometry::MultiPolygon(p) => Geometry::MultiGeometry(MultiGeometry::from(p)),
+            geo_types::Geometry::GeometryCollection(g) => {
+                Geometry::MultiGeometry(MultiGeometry::from(g))
+            }
+            geo_types::Geometry::Rect(r) => Geometry::Polygon(Polygon::from(r)),
+            geo_types::Geometry::Triangle(t) => Geometry::Polygon(Polygon::from(t)),
+        }
     }
 }
 
@@ -166,7 +356,7 @@ where
     }
 }
 
-/// A shortcut for producing `geo_types` [GeometryCollection](../geo_types/struct.GeometryCollection.html)
+/// A shortcut for producing `geo-types` [GeometryCollection](../geo_types/struct.GeometryCollection.html)
 /// from valid KML input.
 ///
 /// # Example

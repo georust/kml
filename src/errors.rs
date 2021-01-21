@@ -1,3 +1,4 @@
+//! Module for all KML-related errors
 use thiserror::Error;
 
 /// Errors for KML reading and writing

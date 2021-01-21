@@ -1,3 +1,4 @@
+//! Module containing types for KML elements
 mod altitude_mode;
 mod coord;
 

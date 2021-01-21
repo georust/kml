@@ -15,3 +15,16 @@ pub struct Polygon<T: CoordType = f64> {
     pub altitude_mode: AltitudeMode,
     pub attrs: HashMap<String, String>,
 }
+
+impl<T> Polygon<T>
+where
+    T: CoordType + Default,
+{
+    pub fn new(outer: LinearRing<T>, inner: Vec<LinearRing<T>>) -> Self {
+        Polygon {
+            outer,
+            inner,
+            ..Default::default()
+        }
+    }
+}

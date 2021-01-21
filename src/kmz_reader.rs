@@ -14,7 +14,8 @@ impl<T> KmlReader<Cursor<Vec<u8>>, T>
 where
     T: CoordType + FromStr + Default,
 {
-    /// Parse from KML from a KMZ file
+    #[cfg_attr(docsrs, doc(cfg(feature = "zip")))]
+    /// Create a [`KmlReader`](struct.KmlReader.html) from a KMZ file path
     ///
     /// # Example
     ///

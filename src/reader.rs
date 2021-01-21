@@ -1,3 +1,4 @@
+//! Module for reading KML sources into Rust types
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fs::File;
@@ -92,7 +93,7 @@ where
         }
     }
 
-    /// Parse from KML a `KmlReader`
+    /// Parse reader content into [`Kml`](enum.Kml.html)
     ///
     /// # Example
     ///

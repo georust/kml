@@ -1,3 +1,4 @@
+//! Module for writing KML types
 use std::collections::HashMap;
 use std::fmt;
 use std::io::Write;
@@ -15,6 +16,7 @@ use crate::types::{
     Polygon, Style, StyleMap,
 };
 
+/// Struct for managing writing KML
 pub struct KmlWriter<W: Write, T: CoordType + FromStr + Default = f64> {
     writer: quick_xml::Writer<W>,
     _phantom: PhantomData<T>,
@@ -47,7 +49,6 @@ where
     ///         y: 1.,
     ///         z: Some(1.),
     ///     },
-    ///     altitude_mode: AltitudeMode::RelativeToGround,
     ///     ..Default::default()
     /// });
     ///

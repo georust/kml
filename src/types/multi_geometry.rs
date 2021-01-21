@@ -10,3 +10,15 @@ pub struct MultiGeometry<T: CoordType = f64> {
     pub geometries: Vec<Geometry<T>>,
     pub attrs: HashMap<String, String>,
 }
+
+impl<T> MultiGeometry<T>
+where
+    T: CoordType + Default,
+{
+    pub fn new(geometries: Vec<Geometry<T>>) -> Self {
+        MultiGeometry {
+            geometries,
+            ..Default::default()
+        }
+    }
+}

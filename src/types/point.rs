@@ -26,3 +26,12 @@ where
         }
     }
 }
+
+impl<T> Point<T>
+where
+    T: CoordType + Default,
+{
+    pub fn new(x: T, y: T, z: Option<T>) -> Self {
+        Point::from(Coord::new(x, y, z))
+    }
+}
