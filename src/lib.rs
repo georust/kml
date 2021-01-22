@@ -57,7 +57,7 @@
 //! let kml = Kml::Point(Point::new(1., 1., None));
 //!
 //! let mut buf = Vec::new();
-//! let mut writer = KmlWriter::new(quick_xml::Writer::new(&mut buf));
+//! let mut writer = KmlWriter::from_writer(&mut buf);
 //! writer.write(&kml).unwrap();
 //! ```
 //!

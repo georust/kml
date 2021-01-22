@@ -27,6 +27,24 @@ where
     W: Write,
     T: CoordType + FromStr + Default + fmt::Display,
 {
+    /// Creates `KmlWriter` from an input that implements `Write`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::str;
+    /// use quick_xml;
+    /// use kml::{Kml, KmlWriter, types::{AltitudeMode, Coord, Point}};
+    ///
+    /// let kml = Kml::Point(Point::new(1., 1., None));
+    ///
+    /// let mut buf = Vec::new();
+    /// let mut writer = KmlWriter::<_, f64>::from_writer(&mut buf);
+    /// ```
+    pub fn from_writer(w: W) -> KmlWriter<W, T> {
+        KmlWriter::new(quick_xml::Writer::new(w))
+    }
+
     pub fn new(writer: quick_xml::Writer<W>) -> KmlWriter<W, T> {
         KmlWriter {
             writer,
@@ -46,7 +64,7 @@ where
     /// let kml = Kml::Point(Point::new(1., 1., None));
     ///
     /// let mut buf = Vec::new();
-    /// let mut writer = KmlWriter::new(quick_xml::Writer::new(&mut buf));
+    /// let mut writer = KmlWriter::from_writer(&mut buf);
     /// writer.write(&kml).unwrap();
     /// ```
     pub fn write(&mut self, kml: &Kml<T>) -> Result<(), Error> {
@@ -439,7 +457,7 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = Vec::new();
-        KmlWriter::new(quick_xml::Writer::new(&mut buf))
+        KmlWriter::from_writer(&mut buf)
             .write(self)
             .map_err(|_| fmt::Error)
             .and_then(|_| f.write_str(str::from_utf8(&buf).unwrap()))
