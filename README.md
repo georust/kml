@@ -1,7 +1,7 @@
 # kml
 
 [![crates.io](https://img.shields.io/crates/v/kml.svg)](https://crates.io/crates/kml)
-[![Build status](https://github.com/pjsier/kml/workflows/CI/badge.svg)](https://github.com/pjsier/kml/actions?query=workflow%3ACI)
+[![Build status](https://github.com/georust/kml/workflows/CI/badge.svg)](https://github.com/georust/kml/actions?query=workflow%3ACI)
 [![Documentation](https://docs.rs/kml/badge.svg)](https://docs.rs/kml)
 
 Rust support for reading and writing KML with a focus on conversion to [`geo-types`](https://github.com/georust/geo) primitives.
@@ -92,3 +92,20 @@ let kml_folder: Kml<f64> = kml_folder_str.parse().unwrap();
 // Use the quick_collection helper to convert Kml to a geo_types::GeometryCollection
 let geom_coll: GeometryCollection<f64> = quick_collection(kml_folder).unwrap();
 ```
+
+## Code of Conduct
+
+All contributors are expected to follow the [GeoRust Code of Conduct](https://github.com/georust/.github/blob/main/CODE_OF_CONDUCT.md)
+
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
