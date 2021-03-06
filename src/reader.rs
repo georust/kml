@@ -660,7 +660,10 @@ where
                         .push(self.read_element(&start, start_attrs)?);
                 }
                 Event::Text(ref mut e) => {
-                    element.content = Some(e.unescape_and_decode(&self.reader).expect("Error"))
+                    element.content = Some(
+                        e.unescape_and_decode(&self.reader)
+                            .unwrap_or_else(|_| String::from_utf8_lossy(e.escaped()).to_string()),
+                    )
                 }
                 Event::End(ref mut e) => {
                     if e.local_name() == tag {
@@ -747,9 +750,9 @@ where
     fn read_str(&mut self) -> Result<String, Error> {
         let e = self.reader.read_event(&mut self.buf)?;
         match e {
-            Event::Text(e) | Event::CData(e) => {
-                Ok(e.unescape_and_decode(&self.reader).expect("Error"))
-            }
+            Event::Text(e) | Event::CData(e) => Ok(e
+                .unescape_and_decode(&self.reader)
+                .unwrap_or_else(|_| String::from_utf8_lossy(e.escaped()).to_string())),
             Event::End(_) => Ok("".to_string()),
             e => Err(Error::InvalidXmlEvent(format!("{:?}", e))),
         }
@@ -926,6 +929,29 @@ mod tests {
                 },
             _ => false,
         }))
+    }
+
+    #[test]
+    fn test_read_str_lossy() {
+        let kml_str = r#"
+            <Placemark>
+            <name><![CDATA[Test & Test]]></name>
+            <description>1¼ miles</description>
+            <Point>
+            <coordinates>
+                -1.0,1.0,0
+            </coordinates>
+            </Point>
+        </Placemark>"#;
+        let p: Kml = kml_str.parse().unwrap();
+        assert!(matches!(p, Kml::Placemark(_)));
+        let placemark: Placemark = match p {
+            Kml::Placemark(p) => Some(p),
+            _ => None,
+        }
+        .unwrap();
+        assert_eq!(placemark.name, Some("Test & Test".to_string()));
+        assert_eq!(placemark.description, Some("1¼ miles".to_string()));
     }
 
     #[test]
