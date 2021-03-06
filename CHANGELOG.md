@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Handle UTF-8 decoding issues without a panic, fixing [#1](https://github.com/georust/kml/issues/1)
+
 ## [v0.3.0](https://github.com/georust/kml/releases/tag/v0.3.0)
 
 - Cleaned up method names (i.e. "parse*" to "read*")
