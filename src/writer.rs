@@ -91,9 +91,9 @@ where
             Kml::PolyStyle(p) => self.write_poly_style(p)?,
             Kml::ListStyle(l) => self.write_list_style(l)?,
             Kml::Document { attrs, elements } => {
-                self.write_container(b"Document", attrs, &elements)?
+                self.write_container(b"Document", attrs, elements)?
             }
-            Kml::Folder { attrs, elements } => self.write_container(b"Folder", attrs, &elements)?,
+            Kml::Folder { attrs, elements } => self.write_container(b"Folder", attrs, elements)?,
             Kml::Element(e) => self.write_element(e)?,
         }
 
@@ -194,10 +194,10 @@ where
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(b"Placemark".to_vec())))?;
         if let Some(name) = &placemark.name {
-            self.write_text_element(b"name", &name)?;
+            self.write_text_element(b"name", name)?;
         }
         if let Some(description) = &placemark.description {
-            self.write_text_element(b"description", &description)?;
+            self.write_text_element(b"description", description)?;
         }
         if let Some(geometry) = &placemark.geometry {
             self.write_geometry(geometry)?;
@@ -216,7 +216,7 @@ where
         self.writer.write_event(Event::Start(start))?;
         if let Some(content) = &e.content {
             self.writer
-                .write_event(Event::Text(BytesText::from_plain_str(&content)))?;
+                .write_event(Event::Text(BytesText::from_plain_str(content)))?;
         }
         for c in e.children.iter() {
             self.write_element(c)?;
@@ -231,22 +231,22 @@ where
             BytesStart::owned_name(b"Style".to_vec()).with_attributes(vec![("id", &*style.id)]),
         ))?;
         if let Some(balloon) = &style.balloon {
-            self.write_balloon_style(&balloon)?;
+            self.write_balloon_style(balloon)?;
         }
         if let Some(icon) = &style.icon {
-            self.write_icon_style(&icon)?;
+            self.write_icon_style(icon)?;
         }
         if let Some(label) = &style.label {
-            self.write_label_style(&label)?;
+            self.write_label_style(label)?;
         }
         if let Some(line) = &style.line {
-            self.write_line_style(&line)?;
+            self.write_line_style(line)?;
         }
         if let Some(poly) = &style.poly {
-            self.write_poly_style(&poly)?;
+            self.write_poly_style(poly)?;
         }
         if let Some(list) = &style.list {
-            self.write_list_style(&list)?;
+            self.write_list_style(list)?;
         }
         Ok(self
             .writer
@@ -284,11 +284,11 @@ where
                 .with_attributes(vec![("id", &*balloon_style.id)]),
         ))?;
         if let Some(bg_color) = &balloon_style.bg_color {
-            self.write_text_element(b"bgColor", &bg_color)?;
+            self.write_text_element(b"bgColor", bg_color)?;
         }
         self.write_text_element(b"textColor", &balloon_style.text_color)?;
         if let Some(text) = &balloon_style.text {
-            self.write_text_element(b"text", &text)?;
+            self.write_text_element(b"text", text)?;
         }
         if !balloon_style.display {
             self.write_text_element(b"displayMode", "hide")?;
