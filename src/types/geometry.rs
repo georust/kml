@@ -2,6 +2,7 @@ use crate::types::coord::CoordType;
 use crate::types::element::Element;
 use crate::types::line_string::LineString;
 use crate::types::linear_ring::LinearRing;
+use crate::types::location::Location;
 use crate::types::multi_geometry::MultiGeometry;
 use crate::types::point::Point;
 use crate::types::polygon::Polygon;
@@ -14,6 +15,7 @@ use crate::types::polygon::Polygon;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Geometry<T: CoordType = f64> {
     Point(Point<T>),
+    Location(Location<T>),
     LineString(LineString<T>),
     LinearRing(LinearRing<T>),
     Polygon(Polygon<T>),

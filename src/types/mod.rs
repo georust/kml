@@ -7,12 +7,14 @@ pub use coord::{coords_from_str, Coord, CoordType};
 
 mod line_string;
 mod linear_ring;
+mod location;
 mod multi_geometry;
 mod point;
 mod polygon;
 
 pub use line_string::LineString;
 pub use linear_ring::LinearRing;
+pub use location::Location;
 pub use multi_geometry::MultiGeometry;
 pub use point::Point;
 pub use polygon::Polygon;
