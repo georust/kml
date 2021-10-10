@@ -202,7 +202,6 @@ where
         let mut longitude = Zero::zero();
         let mut latitude = Zero::zero();
         let mut altitude = Zero::zero();
-        let mut altitude_mode = types::AltitudeMode::default();
 
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
@@ -211,9 +210,6 @@ where
                     b"longitude" => longitude = self.read_float()?,
                     b"latitude" => latitude = self.read_float()?,
                     b"altitude" => altitude = self.read_float()?,
-                    b"altitudeMode" => {
-                        altitude_mode = types::AltitudeMode::from_str(&self.read_str()?)?
-                    }
                     _ => {}
                 },
                 Event::End(ref mut e) => {
@@ -228,7 +224,6 @@ where
             longitude,
             latitude,
             altitude,
-            altitude_mode,
             attrs,
         })
     }
@@ -313,9 +308,6 @@ where
                     let attrs = Self::read_attrs(e.attributes());
                     match e.local_name() {
                         b"Point" => geometries.push(Geometry::Point(self.read_point(attrs)?)),
-                        b"Location" => {
-                            geometries.push(Geometry::Location(self.read_location(attrs)?))
-                        }
                         b"LineString" => {
                             geometries.push(Geometry::LineString(self.read_line_string(attrs)?))
                         }

@@ -118,7 +118,6 @@ where
         self.write_text_element(b"longitude", &location.longitude.to_string())?;
         self.write_text_element(b"latitude", &location.latitude.to_string())?;
         self.write_text_element(b"altitude", &location.altitude.to_string())?;
-        self.write_text_element(b"altitudeMode", &location.altitude_mode.to_string())?;
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::owned(b"Location".to_vec())))?)
@@ -403,7 +402,6 @@ where
     fn write_geometry(&mut self, geometry: &Geometry<T>) -> Result<(), Error> {
         match geometry {
             Geometry::Point(p) => self.write_point(p),
-            Geometry::Location(l) => self.write_location(l),
             Geometry::LineString(l) => self.write_line_string(l),
             Geometry::LinearRing(l) => self.write_linear_ring(l),
             Geometry::Polygon(p) => self.write_polygon(p),
@@ -503,14 +501,12 @@ mod tests {
             longitude: 17.27,
             latitude: -93.09,
             altitude: 350.1,
-            altitude_mode: types::AltitudeMode::RelativeToGround,
             ..Default::default()
         });
         let expected_string = "<Location>\
             <longitude>17.27</longitude>\
             <latitude>-93.09</latitude>\
             <altitude>350.1</altitude>\
-            <altitudeMode>relativeToGround</altitudeMode>\
         </Location>";
         assert_eq!(expected_string, kml.to_string());
     }

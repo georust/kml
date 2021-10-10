@@ -1,16 +1,13 @@
 use std::collections::HashMap;
 
-use crate::types::altitude_mode::AltitudeMode;
 use crate::types::coord::CoordType;
 
 /// `kml:Location`, [10.10](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#542) in the KML
-
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Location<T: CoordType = f64> {
     pub latitude: T,
     pub longitude: T,
     pub altitude: T,
-    pub altitude_mode: AltitudeMode,
     pub attrs: HashMap<String, String>,
 }
 
