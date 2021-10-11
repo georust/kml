@@ -4,8 +4,8 @@ use std::str::FromStr;
 use crate::errors::Error;
 use crate::types::{
     BalloonStyle, CoordType, Element, Icon, IconStyle, LabelStyle, LineString, LineStyle,
-    LinearRing, ListStyle, Location, MultiGeometry, Pair, Placemark, Point, PolyStyle, Polygon,
-    Scale, Style, StyleMap,
+    LinearRing, ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle,
+    Polygon, Scale, Style, StyleMap,
 };
 
 /// Enum for representing the KML version being parsed
@@ -56,6 +56,7 @@ pub struct KmlDocument<T: CoordType = f64> {
 pub enum Kml<T: CoordType = f64> {
     KmlDocument(KmlDocument<T>),
     Scale(Scale<T>),
+    Orientation(Orientation<T>),
     Point(Point<T>),
     Location(Location<T>),
     LineString(LineString<T>),
