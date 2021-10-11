@@ -8,7 +8,7 @@ use std::path::Path;
 use std::str;
 use std::str::FromStr;
 
-use num_traits::{Float, Zero};
+use num_traits::{Float, One, Zero};
 use quick_xml::events::attributes::Attributes;
 use quick_xml::events::{BytesStart, Event};
 
@@ -17,7 +17,7 @@ use crate::types::geom_props::GeomProps;
 use crate::types::{
     self, coords_from_str, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry, Icon,
     IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
-    ListStyle, Location, MultiGeometry, Pair, Placemark, Point, PolyStyle, Polygon, Style,
+    ListStyle, Location, MultiGeometry, Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style,
     StyleMap,
 };
 
@@ -126,6 +126,7 @@ where
                     let attrs = Self::read_attrs(e.attributes());
                     match e.local_name() {
                         b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document()?)),
+                        b"Scale" => elements.push(Kml::Scale(self.read_scale(attrs)?)),
                         b"Point" => elements.push(Kml::Point(self.read_point(attrs)?)),
                         b"Location" => elements.push(Kml::Location(self.read_location(attrs)?)),
                         b"LineString" => {
@@ -186,6 +187,31 @@ where
             elements: self.read_elements()?,
             ..Default::default()
         })
+    }
+
+    fn read_scale(&mut self, attrs: HashMap<String, String>) -> Result<Scale<T>, Error> {
+        let mut x = One::one();
+        let mut y = One::one();
+        let mut z = One::one();
+
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"x" => x = self.read_float()?,
+                    b"y" => y = self.read_float()?,
+                    b"z" => z = self.read_float()?,
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Scale" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(Scale { x, y, z, attrs })
     }
 
     fn read_point(&mut self, attrs: HashMap<String, String>) -> Result<Point<T>, Error> {
@@ -852,6 +878,25 @@ mod tests {
                 longitude: 39.55,
                 latitude: -118.98,
                 altitude: 1223.,
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_scale() {
+        let kml_str = r#"<Scale>
+            <x>1.2</x>
+            <y>3.5</y>
+            <z>2.5</z>
+        </Scale>"#;
+        let s: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            s,
+            Kml::Scale(Scale {
+                x: 1.2,
+                y: 3.5,
+                z: 2.5,
                 ..Default::default()
             })
         );
