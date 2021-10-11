@@ -12,8 +12,8 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
-    LineString, LineStyle, LinearRing, ListStyle, MultiGeometry, Pair, Placemark, Point, PolyStyle,
-    Polygon, Style, StyleMap,
+    LineString, LineStyle, LinearRing, ListStyle, Location, MultiGeometry, Pair, Placemark, Point,
+    PolyStyle, Polygon, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -75,6 +75,7 @@ where
         match k {
             Kml::KmlDocument(d) => self.write_container(b"kml", &d.attrs, &d.elements)?,
             Kml::Point(p) => self.write_point(p)?,
+            Kml::Location(l) => self.write_location(l)?,
             Kml::LineString(l) => self.write_line_string(l)?,
             Kml::LinearRing(l) => self.write_linear_ring(l)?,
             Kml::Polygon(p) => self.write_polygon(p)?,
@@ -109,6 +110,17 @@ where
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::owned(b"Point".to_vec())))?)
+    }
+
+    fn write_location(&mut self, location: &Location<T>) -> Result<(), Error> {
+        self.writer
+            .write_event(Event::Start(BytesStart::owned_name(b"Location".to_vec())))?;
+        self.write_text_element(b"longitude", &location.longitude.to_string())?;
+        self.write_text_element(b"latitude", &location.latitude.to_string())?;
+        self.write_text_element(b"altitude", &location.altitude.to_string())?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::owned(b"Location".to_vec())))?)
     }
 
     fn write_line_string(&mut self, line_string: &LineString<T>) -> Result<(), Error> {
@@ -481,6 +493,22 @@ mod tests {
             ..Default::default()
         });
         assert_eq!("<Point><coordinates>1,1,1</coordinates><altitudeMode>relativeToGround</altitudeMode><extrude>0</extrude></Point>", kml.to_string());
+    }
+
+    #[test]
+    fn test_write_location() {
+        let kml = Kml::Location(Location {
+            longitude: 17.27,
+            latitude: -93.09,
+            altitude: 350.1,
+            ..Default::default()
+        });
+        let expected_string = "<Location>\
+            <longitude>17.27</longitude>\
+            <latitude>-93.09</latitude>\
+            <altitude>350.1</altitude>\
+        </Location>";
+        assert_eq!(expected_string, kml.to_string());
     }
 
     #[test]

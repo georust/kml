@@ -8,7 +8,7 @@ use std::path::Path;
 use std::str;
 use std::str::FromStr;
 
-use num_traits::Float;
+use num_traits::{Float, Zero};
 use quick_xml::events::attributes::Attributes;
 use quick_xml::events::{BytesStart, Event};
 
@@ -17,7 +17,8 @@ use crate::types::geom_props::GeomProps;
 use crate::types::{
     self, coords_from_str, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry, Icon,
     IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
-    ListStyle, MultiGeometry, Pair, Placemark, Point, PolyStyle, Polygon, Style, StyleMap,
+    ListStyle, Location, MultiGeometry, Pair, Placemark, Point, PolyStyle, Polygon, Style,
+    StyleMap,
 };
 
 /// Main struct for reading KML documents
@@ -126,6 +127,7 @@ where
                     match e.local_name() {
                         b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document()?)),
                         b"Point" => elements.push(Kml::Point(self.read_point(attrs)?)),
+                        b"Location" => elements.push(Kml::Location(self.read_location(attrs)?)),
                         b"LineString" => {
                             elements.push(Kml::LineString(self.read_line_string(attrs)?))
                         }
@@ -192,6 +194,36 @@ where
             coord: props.coords.remove(0),
             altitude_mode: props.altitude_mode,
             extrude: props.extrude,
+            attrs,
+        })
+    }
+
+    fn read_location(&mut self, attrs: HashMap<String, String>) -> Result<Location<T>, Error> {
+        let mut longitude = Zero::zero();
+        let mut latitude = Zero::zero();
+        let mut altitude = Zero::zero();
+
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"longitude" => longitude = self.read_float()?,
+                    b"latitude" => latitude = self.read_float()?,
+                    b"altitude" => altitude = self.read_float()?,
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Location" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(Location {
+            longitude,
+            latitude,
+            altitude,
             attrs,
         })
     }
@@ -799,6 +831,27 @@ mod tests {
                     z: Some(1.)
                 },
                 altitude_mode: types::AltitudeMode::RelativeToGround,
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_location() {
+        let poly_str = r#"<Location>
+            <longitude>39.55</longitude>
+            <latitude>-118.98</latitude>
+            <altitude>1223</altitude>
+        </Location>"#;
+        let mut r = KmlReader::from_string(poly_str);
+
+        let p: Kml = r.read().unwrap();
+        assert_eq!(
+            p,
+            Kml::Location(Location {
+                longitude: 39.55,
+                latitude: -118.98,
+                altitude: 1223.,
                 ..Default::default()
             })
         );
