@@ -11,6 +11,7 @@ mod location;
 mod multi_geometry;
 mod point;
 mod polygon;
+mod scale;
 
 pub use line_string::LineString;
 pub use linear_ring::LinearRing;
@@ -18,6 +19,7 @@ pub use location::Location;
 pub use multi_geometry::MultiGeometry;
 pub use point::Point;
 pub use polygon::Polygon;
+pub use scale::Scale;
 
 mod element;
 pub(crate) mod geom_props;

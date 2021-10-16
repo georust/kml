@@ -13,7 +13,7 @@ use crate::types::geom_props::GeomProps;
 use crate::types::{
     BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
     LineString, LineStyle, LinearRing, ListStyle, Location, MultiGeometry, Pair, Placemark, Point,
-    PolyStyle, Polygon, Style, StyleMap,
+    PolyStyle, Polygon, Scale, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -74,6 +74,7 @@ where
     fn write_kml(&mut self, k: &Kml<T>) -> Result<(), Error> {
         match k {
             Kml::KmlDocument(d) => self.write_container(b"kml", &d.attrs, &d.elements)?,
+            Kml::Scale(s) => self.write_scale(s)?,
             Kml::Point(p) => self.write_point(p)?,
             Kml::Location(l) => self.write_location(l)?,
             Kml::LineString(l) => self.write_line_string(l)?,
@@ -99,6 +100,17 @@ where
         }
 
         Ok(())
+    }
+
+    fn write_scale(&mut self, scale: &Scale<T>) -> Result<(), Error> {
+        self.writer
+            .write_event(Event::Start(BytesStart::owned_name(b"Scale".to_vec())))?;
+        self.write_text_element(b"x", &scale.x.to_string())?;
+        self.write_text_element(b"y", &scale.y.to_string())?;
+        self.write_text_element(b"z", &scale.z.to_string())?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::owned(b"Scale".to_vec())))?)
     }
 
     fn write_point(&mut self, point: &Point<T>) -> Result<(), Error> {
@@ -508,6 +520,21 @@ mod tests {
             <latitude>-93.09</latitude>\
             <altitude>350.1</altitude>\
         </Location>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_scale() {
+        let kml = Kml::Scale(Scale {
+            x: 3.5,
+            y: 2.,
+            ..Default::default()
+        });
+        let expected_string = "<Scale>\
+            <x>3.5</x>\
+            <y>2</y>\
+            <z>1</z>\
+        </Scale>";
         assert_eq!(expected_string, kml.to_string());
     }
 
