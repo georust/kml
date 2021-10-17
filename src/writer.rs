@@ -12,8 +12,8 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
-    LineString, LineStyle, LinearRing, ListStyle, Location, MultiGeometry, Pair, Placemark, Point,
-    PolyStyle, Polygon, Scale, Style, StyleMap,
+    LineString, LineStyle, LinearRing, ListStyle, Location, MultiGeometry, Orientation, Pair,
+    Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -75,6 +75,7 @@ where
         match k {
             Kml::KmlDocument(d) => self.write_container(b"kml", &d.attrs, &d.elements)?,
             Kml::Scale(s) => self.write_scale(s)?,
+            Kml::Orientation(o) => self.write_orientation(o)?,
             Kml::Point(p) => self.write_point(p)?,
             Kml::Location(l) => self.write_location(l)?,
             Kml::LineString(l) => self.write_line_string(l)?,
@@ -111,6 +112,19 @@ where
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::owned(b"Scale".to_vec())))?)
+    }
+
+    fn write_orientation(&mut self, orientation: &Orientation<T>) -> Result<(), Error> {
+        self.writer
+            .write_event(Event::Start(BytesStart::owned_name(
+                b"Orientation".to_vec(),
+            )))?;
+        self.write_text_element(b"roll", &orientation.roll.to_string())?;
+        self.write_text_element(b"tilt", &orientation.tilt.to_string())?;
+        self.write_text_element(b"heading", &orientation.heading.to_string())?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::owned(b"Orientation".to_vec())))?)
     }
 
     fn write_point(&mut self, point: &Point<T>) -> Result<(), Error> {
@@ -535,6 +549,22 @@ mod tests {
             <y>2</y>\
             <z>1</z>\
         </Scale>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_orientation() {
+        let kml = Kml::Orientation(Orientation {
+            roll: -170.279,
+            tilt: 13.,
+            heading: 45.07,
+            ..Default::default()
+        });
+        let expected_string = "<Orientation>\
+            <roll>-170.279</roll>\
+            <tilt>13</tilt>\
+            <heading>45.07</heading>\
+        </Orientation>";
         assert_eq!(expected_string, kml.to_string());
     }
 

@@ -17,8 +17,8 @@ use crate::types::geom_props::GeomProps;
 use crate::types::{
     self, coords_from_str, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry, Icon,
     IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
-    ListStyle, Location, MultiGeometry, Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style,
-    StyleMap,
+    ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle, Polygon,
+    Scale, Style, StyleMap,
 };
 
 /// Main struct for reading KML documents
@@ -127,6 +127,9 @@ where
                     match e.local_name() {
                         b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document()?)),
                         b"Scale" => elements.push(Kml::Scale(self.read_scale(attrs)?)),
+                        b"Orientation" => {
+                            elements.push(Kml::Orientation(self.read_orientation(attrs)?))
+                        }
                         b"Point" => elements.push(Kml::Point(self.read_point(attrs)?)),
                         b"Location" => elements.push(Kml::Location(self.read_location(attrs)?)),
                         b"LineString" => {
@@ -212,6 +215,39 @@ where
             }
         }
         Ok(Scale { x, y, z, attrs })
+    }
+
+    fn read_orientation(
+        &mut self,
+        attrs: HashMap<String, String>,
+    ) -> Result<Orientation<T>, Error> {
+        let mut roll = Zero::zero();
+        let mut tilt = Zero::zero();
+        let mut heading = Zero::zero();
+
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"roll" => roll = self.read_float()?,
+                    b"tilt" => tilt = self.read_float()?,
+                    b"heading" => heading = self.read_float()?,
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Orientation" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(Orientation {
+            roll,
+            tilt,
+            heading,
+            attrs,
+        })
     }
 
     fn read_point(&mut self, attrs: HashMap<String, String>) -> Result<Point<T>, Error> {
@@ -897,6 +933,25 @@ mod tests {
                 x: 1.2,
                 y: 3.5,
                 z: 2.5,
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_orientation() {
+        let kml_str = r#"<Orientation>
+            <heading>45.01</heading>
+            <tilt>-10.02</tilt>
+            <roll>0.0</roll>
+        </Orientation>"#;
+        let l: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            l,
+            Kml::Orientation(Orientation {
+                roll: 0.,
+                tilt: -10.02,
+                heading: 45.01,
                 ..Default::default()
             })
         );
