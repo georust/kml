@@ -32,4 +32,6 @@ pub enum Error {
     IoError(#[from] std::io::Error),
     #[error("ZIP error: {0}")]
     ZipError(#[from] zip::result::ZipError),
+    #[error("Invalid units: {0}")]
+    InvalidUnits(String),
 }
