@@ -349,7 +349,7 @@ where
                     ("x", &*hot_spot.x.to_string()),
                     ("y", &*hot_spot.y.to_string()),
                     ("xunits", &*hot_spot.xunits.to_string()),
-                    ("yunits", &*hot_spot.yunits.to_string())
+                    ("yunits", &*hot_spot.yunits.to_string()),
                 ]),
             ))?;
             self.writer
