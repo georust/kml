@@ -43,7 +43,7 @@ impl FromStr for Units {
             "fraction" => Ok(Self::Fraction),
             "pixels" => Ok(Self::Pixels),
             "insetPixels" => Ok(Self::InsetPixels),
-            v => Err(Error::InvalidAltitudeMode(v.to_string())),
+            v => Err(Error::InvalidUnits(v.to_string())),
         }
     }
 }

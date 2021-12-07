@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use crate::errors::Error;
 
-use super::Vec2;
+use crate::types::Vec2;
 
 /// `kml:Style`, [12.2](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#798) in the KML
 /// specification
