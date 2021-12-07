@@ -23,7 +23,7 @@ pub use orientation::Orientation;
 pub use point::Point;
 pub use polygon::Polygon;
 pub use scale::Scale;
-pub use vec2::{Vec2, Units};
+pub use vec2::{Units, Vec2};
 
 mod element;
 pub(crate) mod geom_props;
