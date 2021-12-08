@@ -18,7 +18,7 @@ use crate::types::{
     self, coords_from_str, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry, Icon,
     IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
     ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle, Polygon,
-    Scale, Style, StyleMap,
+    Scale, Style, StyleMap, Units, Vec2,
 };
 
 /// Main struct for reading KML documents
@@ -539,6 +539,8 @@ where
                         let hot_spot_attrs = Self::read_attrs(e.attributes());
                         let x_val = hot_spot_attrs.get("x");
                         let y_val = hot_spot_attrs.get("y");
+                        let xunits = hot_spot_attrs.get("xunits");
+                        let yunits = hot_spot_attrs.get("yunits");
                         if let (Some(x_str), Some(y_str)) = (x_val, y_val) {
                             let x: f64 = x_str
                                 .parse()
@@ -546,7 +548,16 @@ where
                             let y: f64 = y_str
                                 .parse()
                                 .map_err(|_| Error::NumParse(y_str.to_string()))?;
-                            icon_style.hot_spot = Some((x, y));
+                            let xunits = xunits
+                                .map_or_else(|| Ok(Units::default()), |units| units.parse())?;
+                            let yunits = yunits
+                                .map_or_else(|| Ok(Units::default()), |units| units.parse())?;
+                            icon_style.hot_spot = Some(Vec2 {
+                                x,
+                                y,
+                                xunits,
+                                yunits,
+                            });
                         }
                     }
                     b"Icon" => icon_style.icon = self.read_icon()?,

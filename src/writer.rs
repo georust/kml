@@ -343,11 +343,13 @@ where
         ))?;
         self.write_text_element(b"scale", &icon_style.scale.to_string())?;
         self.write_text_element(b"heading", &icon_style.heading.to_string())?;
-        if let Some(hot_spot) = icon_style.hot_spot {
+        if let Some(hot_spot) = &icon_style.hot_spot {
             self.writer.write_event(Event::Start(
                 BytesStart::owned_name(b"hotSpot".to_vec()).with_attributes(vec![
-                    ("x", &*hot_spot.0.to_string()),
-                    ("y", &*hot_spot.1.to_string()),
+                    ("x", &*hot_spot.x.to_string()),
+                    ("y", &*hot_spot.y.to_string()),
+                    ("xunits", &*hot_spot.xunits.to_string()),
+                    ("yunits", &*hot_spot.yunits.to_string()),
                 ]),
             ))?;
             self.writer

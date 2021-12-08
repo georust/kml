@@ -4,6 +4,8 @@ use std::str::FromStr;
 
 use crate::errors::Error;
 
+use crate::types::Vec2;
+
 /// `kml:Style`, [12.2](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#798) in the KML
 /// specification
 #[derive(Clone, Default, Debug, PartialEq)]
@@ -103,7 +105,7 @@ pub struct IconStyle {
     pub id: String,
     pub scale: f64,
     pub heading: f64,
-    pub hot_spot: Option<(f64, f64)>,
+    pub hot_spot: Option<Vec2>,
     pub icon: Icon,
     pub color: String,
     pub color_mode: ColorMode,

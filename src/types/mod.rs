@@ -13,6 +13,7 @@ mod orientation;
 mod point;
 mod polygon;
 mod scale;
+mod vec2;
 
 pub use line_string::LineString;
 pub use linear_ring::LinearRing;
@@ -22,6 +23,7 @@ pub use orientation::Orientation;
 pub use point::Point;
 pub use polygon::Polygon;
 pub use scale::Scale;
+pub use vec2::{Units, Vec2};
 
 mod element;
 pub(crate) mod geom_props;
