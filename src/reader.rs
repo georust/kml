@@ -171,11 +171,11 @@ where
                         }
                     };
                 }
-                Event::Decl(_)
-                | Event::CData(_)
-                | Event::Empty(_)
-                | Event::Text(_)
-                | Event::End(_) => {}
+                Event::End(ref mut e) => match e.local_name() {
+                    b"Folder" | b"Document" => break,
+                    _ => {}
+                },
+                Event::Decl(_) | Event::CData(_) | Event::Empty(_) | Event::Text(_) => {}
                 Event::Eof => break,
                 _ => return Err(Error::InvalidInput),
             };
@@ -1116,6 +1116,72 @@ mod tests {
         .unwrap();
         assert_eq!(placemark.name, Some("Test & Test".to_string()));
         assert_eq!(placemark.description, Some("1¼ miles".to_string()));
+    }
+
+    #[test]
+    fn test_parse_sibling_folders() {
+        let kml_str = r#"
+    <Folder>
+        <name>Folder 1</name>
+    </Folder>
+    <Folder>
+        <name>Folder 2</name>
+    </Folder>
+    "#;
+        let f: Kml = kml_str.parse().unwrap();
+        assert!(matches!(f, Kml::KmlDocument(_)));
+
+        let doc: Option<KmlDocument> = match f {
+            Kml::KmlDocument(d) => Some(d),
+            _ => None,
+        };
+        let doc = doc.unwrap();
+
+        assert_eq!(doc.elements.len(), 2);
+        assert!(doc.elements.iter().all(|e| matches!(
+            e,
+            Kml::Folder {
+                attrs: _,
+                elements: _
+            }
+        )));
+    }
+
+    #[test]
+    fn test_parse_doc_with_sibling_folders() {
+        let kml_str = r#"
+    <?xml version="1.0" encoding="UTF-8"?>
+    <kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document>
+    <Folder>
+        <name>Folder 1</name>
+    </Folder>
+    <Folder>
+        <name>Folder 2</name>
+    </Folder>
+    </Document>
+    </kml>
+    "#;
+        let f: Kml = kml_str.parse().unwrap();
+        assert!(matches!(f, Kml::KmlDocument(_)));
+
+        let elements: Option<Vec<Kml<_>>> = match f {
+            Kml::KmlDocument(d) => match &d.elements[0] {
+                Kml::Document { attrs: _, elements } => Some(elements.to_vec()),
+                _ => None,
+            },
+            _ => None,
+        };
+
+        let elements = elements.unwrap();
+        assert_eq!(elements.len(), 2);
+        assert!(elements.iter().all(|e| matches!(
+            e,
+            Kml::Folder {
+                attrs: _,
+                elements: _
+            }
+        )));
     }
 
     #[test]
