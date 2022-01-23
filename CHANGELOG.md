@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.4.1](https://github.com/georust/kml/releases/tag/v0.4.1)
+
+- Fix issue with sibling `kml:Folder` or `kml:Document` elements nesting ([#19](https://github.com/georust/kml/pull/19))
+
 ## [v0.4.0](https://github.com/georust/kml/releases/tag/v0.4.0)
 
 - Clippy cleanup ([#3](https://github.com/georust/kml/pull/3))
