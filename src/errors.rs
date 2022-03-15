@@ -30,6 +30,7 @@ pub enum Error {
     InvalidListItemType(String),
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+    #[cfg(feature = "zip")]
     #[error("ZIP error: {0}")]
     ZipError(#[from] zip::result::ZipError),
     #[error("Invalid units: {0}")]
