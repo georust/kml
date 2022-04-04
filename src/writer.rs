@@ -451,7 +451,7 @@ where
                     .map(Coord::to_string)
                     .collect::<Vec<String>>()
                     .join("\n"),
-            )
+            )?
         }
         Ok(())
     }
