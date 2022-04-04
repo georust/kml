@@ -439,6 +439,9 @@ where
     }
 
     fn write_geom_props(&mut self, props: GeomProps<T>) -> Result<(), Error> {
+        self.write_text_element(b"extrude", if props.extrude { "1" } else { "0" })?;
+        self.write_text_element(b"tessellate", if props.tessellate { "1" } else { "0" })?;
+        self.write_text_element(b"altitudeMode", &props.altitude_mode.to_string())?;
         if !props.coords.is_empty() {
             self.write_text_element(
                 b"coordinates",
@@ -448,11 +451,8 @@ where
                     .map(Coord::to_string)
                     .collect::<Vec<String>>()
                     .join("\n"),
-            )?;
+            )
         }
-        self.write_text_element(b"extrude", if props.extrude { "1" } else { "0" })?;
-        self.write_text_element(b"tessellate", if props.tessellate { "1" } else { "0" })?;
-        self.write_text_element(b"altitudeMode", &props.altitude_mode.to_string())
     }
 
     fn write_container(
