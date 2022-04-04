@@ -237,11 +237,11 @@ where
         if let Some(description) = &placemark.description {
             self.write_text_element(b"description", description)?;
         }
-        for c in placemark.children.iter() {
-            self.write_element(c)?;
-        }
         if let Some(geometry) = &placemark.geometry {
             self.write_geometry(geometry)?;
+        }
+        for c in placemark.children.iter() {
+            self.write_element(c)?;
         }
         Ok(self
             .writer
