@@ -453,6 +453,7 @@ where
                     .join("\n"),
             )
         }
+        Ok(())
     }
 
     fn write_container(
