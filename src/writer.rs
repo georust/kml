@@ -521,7 +521,7 @@ mod tests {
             altitude_mode: types::AltitudeMode::RelativeToGround,
             ..Default::default()
         });
-        assert_eq!("<Point><coordinates>1,1,1</coordinates><altitudeMode>relativeToGround</altitudeMode><extrude>0</extrude></Point>", kml.to_string());
+    assert_eq!("<Point><extrude>0</extrude><altitudeMode>relativeToGround</altitudeMode><coordinates>1,1,1</coordinates></Point>", kml.to_string());
     }
 
     #[test]
@@ -605,10 +605,10 @@ mod tests {
         });
 
         assert_eq!(
-            r#"<Polygon><outerBoundaryIs><LinearRing><coordinates>-1,2,0
+            r#"<Polygon><extrude>0</extrude><tessellate>0</tessellate><altitudeMode>clampToGround</altitudeMode><outerBoundaryIs><LinearRing><extrude>0</extrude><tessellate>1</tessellate><altitudeMode>clampToGround</altitudeMode><coordinates>-1,2,0
 -1.5,3,0
 -1.5,2,0
--1,2,0</coordinates><altitudeMode>clampToGround</altitudeMode><extrude>0</extrude><tessellate>1</tessellate></LinearRing></outerBoundaryIs><altitudeMode>clampToGround</altitudeMode><extrude>0</extrude><tessellate>0</tessellate></Polygon>"#,
+-1,2,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"#,
             kml.to_string()
         );
     }
