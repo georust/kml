@@ -184,6 +184,12 @@ where
             BytesStart::owned_name(b"Polygon".to_vec())
                 .with_attributes(self.hash_map_as_attrs(&polygon.attrs)),
         ))?;
+        self.write_geom_props(GeomProps {
+            coords: Vec::new(),
+            altitude_mode: polygon.altitude_mode,
+            extrude: polygon.extrude,
+            tessellate: polygon.tessellate,
+        })?;
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(
                 b"outerBoundaryIs".to_vec(),
@@ -203,12 +209,6 @@ where
             self.writer
                 .write_event(Event::End(BytesEnd::borrowed(b"innerBoundaryIs")))?;
         }
-        self.write_geom_props(GeomProps {
-            coords: Vec::new(),
-            altitude_mode: polygon.altitude_mode,
-            extrude: polygon.extrude,
-            tessellate: polygon.tessellate,
-        })?;
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::borrowed(b"Polygon")))?)
@@ -521,7 +521,7 @@ mod tests {
             altitude_mode: types::AltitudeMode::RelativeToGround,
             ..Default::default()
         });
-    assert_eq!("<Point><extrude>0</extrude><altitudeMode>relativeToGround</altitudeMode><coordinates>1,1,1</coordinates></Point>", kml.to_string());
+        assert_eq!("<Point><extrude>0</extrude><altitudeMode>relativeToGround</altitudeMode><coordinates>1,1,1</coordinates></Point>", kml.to_string());
     }
 
     #[test]
