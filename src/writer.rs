@@ -130,9 +130,9 @@ where
     fn write_point(&mut self, point: &Point<T>) -> Result<(), Error> {
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(b"Point".to_vec())))?;
-        self.write_text_element(b"coordinates", &point.coord.to_string())?;
-        self.write_text_element(b"altitudeMode", &point.altitude_mode.to_string())?;
         self.write_text_element(b"extrude", if point.extrude { "1" } else { "0" })?;
+        self.write_text_element(b"altitudeMode", &point.altitude_mode.to_string())?;
+        self.write_text_element(b"coordinates", &point.coord.to_string())?;
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::owned(b"Point".to_vec())))?)
@@ -184,6 +184,12 @@ where
             BytesStart::owned_name(b"Polygon".to_vec())
                 .with_attributes(self.hash_map_as_attrs(&polygon.attrs)),
         ))?;
+        self.write_geom_props(GeomProps {
+            coords: Vec::new(),
+            altitude_mode: polygon.altitude_mode,
+            extrude: polygon.extrude,
+            tessellate: polygon.tessellate,
+        })?;
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(
                 b"outerBoundaryIs".to_vec(),
@@ -203,12 +209,6 @@ where
             self.writer
                 .write_event(Event::End(BytesEnd::borrowed(b"innerBoundaryIs")))?;
         }
-        self.write_geom_props(GeomProps {
-            coords: Vec::new(),
-            altitude_mode: polygon.altitude_mode,
-            extrude: polygon.extrude,
-            tessellate: polygon.tessellate,
-        })?;
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::borrowed(b"Polygon")))?)
@@ -237,11 +237,11 @@ where
         if let Some(description) = &placemark.description {
             self.write_text_element(b"description", description)?;
         }
-        if let Some(geometry) = &placemark.geometry {
-            self.write_geometry(geometry)?;
-        }
         for c in placemark.children.iter() {
             self.write_element(c)?;
+        }
+        if let Some(geometry) = &placemark.geometry {
+            self.write_geometry(geometry)?;
         }
         Ok(self
             .writer
@@ -439,6 +439,9 @@ where
     }
 
     fn write_geom_props(&mut self, props: GeomProps<T>) -> Result<(), Error> {
+        self.write_text_element(b"extrude", if props.extrude { "1" } else { "0" })?;
+        self.write_text_element(b"tessellate", if props.tessellate { "1" } else { "0" })?;
+        self.write_text_element(b"altitudeMode", &props.altitude_mode.to_string())?;
         if !props.coords.is_empty() {
             self.write_text_element(
                 b"coordinates",
@@ -448,11 +451,9 @@ where
                     .map(Coord::to_string)
                     .collect::<Vec<String>>()
                     .join("\n"),
-            )?;
+            )?
         }
-        self.write_text_element(b"altitudeMode", &props.altitude_mode.to_string())?;
-        self.write_text_element(b"extrude", if props.extrude { "1" } else { "0" })?;
-        self.write_text_element(b"tessellate", if props.tessellate { "1" } else { "0" })
+        Ok(())
     }
 
     fn write_container(
@@ -520,7 +521,7 @@ mod tests {
             altitude_mode: types::AltitudeMode::RelativeToGround,
             ..Default::default()
         });
-        assert_eq!("<Point><coordinates>1,1,1</coordinates><altitudeMode>relativeToGround</altitudeMode><extrude>0</extrude></Point>", kml.to_string());
+        assert_eq!("<Point><extrude>0</extrude><altitudeMode>relativeToGround</altitudeMode><coordinates>1,1,1</coordinates></Point>", kml.to_string());
     }
 
     #[test]
@@ -604,10 +605,10 @@ mod tests {
         });
 
         assert_eq!(
-            r#"<Polygon><outerBoundaryIs><LinearRing><coordinates>-1,2,0
+            r#"<Polygon><extrude>0</extrude><tessellate>0</tessellate><altitudeMode>clampToGround</altitudeMode><outerBoundaryIs><LinearRing><extrude>0</extrude><tessellate>1</tessellate><altitudeMode>clampToGround</altitudeMode><coordinates>-1,2,0
 -1.5,3,0
 -1.5,2,0
--1,2,0</coordinates><altitudeMode>clampToGround</altitudeMode><extrude>0</extrude><tessellate>1</tessellate></LinearRing></outerBoundaryIs><altitudeMode>clampToGround</altitudeMode><extrude>0</extrude><tessellate>0</tessellate></Polygon>"#,
+-1,2,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"#,
             kml.to_string()
         );
     }
