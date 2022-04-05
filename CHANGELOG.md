@@ -2,10 +2,14 @@
 
 ## Unreleased
 
+## [v0.4.3](https://github.com/georust/kml/releases/tag/v0.4.3)
+
+- Fixes serialization order of some geometry elements to match the sequence in the [specification](http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd) ([#25](https://github.com/georust/kml/pull/25)) from [@blipmusic](https://github.com/blipmusic)
+
 ## [v0.4.2](https://github.com/georust/kml/releases/tag/v0.4.2)
 
 - Updates `quick-xml` to [v0.22](https://github.com/tafia/quick-xml/blob/master/Changelog.md#0220) which doesn't expose any breaking changes for this API
-- Fix compilation issue when `zip` feature is disabled ([#22](https://github.com/georust/kml/pull/7)) from [@vilaureu](https://github.com/vilaureu)
+- Fix compilation issue when `zip` feature is disabled ([#22](https://github.com/georust/kml/pull/22)) from [@vilaureu](https://github.com/vilaureu)
 
 ## [v0.4.1](https://github.com/georust/kml/releases/tag/v0.4.1)
 
