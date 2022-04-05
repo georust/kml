@@ -513,12 +513,12 @@ mod tests {
     #[test]
     fn test_write_point() {
         let kml = Kml::Point(Point {
+            altitude_mode: types::AltitudeMode::RelativeToGround,
             coord: Coord {
                 x: 1.,
                 y: 1.,
                 z: Some(1.),
             },
-            altitude_mode: types::AltitudeMode::RelativeToGround,
             ..Default::default()
         });
     assert_eq!("<Point><extrude>0</extrude><altitudeMode>relativeToGround</altitudeMode><coordinates>1,1,1</coordinates></Point>", kml.to_string());
@@ -575,6 +575,7 @@ mod tests {
     fn test_write_polygon() {
         let kml = Kml::Polygon(Polygon {
             outer: LinearRing {
+                tessellate: true,
                 coords: vec![
                     Coord {
                         x: -1.,
@@ -597,7 +598,6 @@ mod tests {
                         z: Some(0.),
                     },
                 ],
-                tessellate: true,
                 ..Default::default()
             },
             inner: vec![],
