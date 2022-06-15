@@ -1,6 +1,12 @@
 name: CI
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  pull_request:
+    types: [opened, synchronized]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -32,8 +38,8 @@ jobs:
           command: build
           args: --verbose
 
-  test:
-    name: Test
+  bench:
+    name: Bench
     runs-on: ubuntu-latest
 
     steps:
@@ -53,11 +59,29 @@ jobs:
           command: bench
           args: --no-run
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        features: ["--no-default-features", "--all-features"]
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --verbose
+          args: ${{ matrix.features }} --verbose
 
   clippy:
     name: Clippy

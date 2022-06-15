@@ -10,7 +10,7 @@ use crate::types::{
 
 /// Enum for representing the KML version being parsed
 ///
-/// According to http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#7 namespace for 2.3
+/// According to <http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#7> namespace for 2.3
 /// is unchanged since it should be backwards-compatible
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
