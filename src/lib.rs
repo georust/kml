@@ -39,12 +39,14 @@
 //! let kml_data = kml_reader.read().unwrap();
 //!
 //! // Read KMZ files with the `zip` feature or default features enabled
+//! # #[cfg(feature = "zip")] {
 //! let kmz_path = Path::new(env!("CARGO_MANIFEST_DIR"))
 //!     .join("tests")
 //!     .join("fixtures")
 //!     .join("polygon.kmz");
 //! let mut kmz_reader = KmlReader::<_, f64>::from_kmz_path(kmz_path).unwrap();
 //! let kmz_data = kmz_reader.read().unwrap();
+//! # }
 //! ```
 //!
 //! ### Writing
@@ -64,6 +66,7 @@
 //! ### Conversion
 //!
 //! ```
+//! # #[cfg(feature = "geo-types")] {
 //! use geo_types::{self, GeometryCollection};
 //! use kml::{quick_collection, Kml, types::Point};
 //!
@@ -88,6 +91,7 @@
 //!
 //! // Use the quick_collection helper to convert Kml to a geo_types::GeometryCollection
 //! let geom_coll: GeometryCollection<f64> = quick_collection(kml_folder).unwrap();
+//! # }
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
