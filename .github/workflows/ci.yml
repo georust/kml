@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        features: ["--no-default-features", "--all-features"]
+        features: ["", "--no-default-features", "--all-features"]
 
     steps:
       - name: Checkout sources
