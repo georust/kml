@@ -38,7 +38,7 @@ pub use geometry::Geometry;
 
 mod link;
 
-pub use link::{Link, RefreshMode, ViewRefreshMode};
+pub use link::{LinkModel, LinkType, RefreshMode, ViewRefreshMode};
 
 mod style;
 

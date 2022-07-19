@@ -3,10 +3,9 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
-/// `kml:Link`, [13.1](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#974) in the KML specification.
+/// Common model for `kml:LinkType`, [13.1](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#974) in the KML specification.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Link {
-    pub is_icon: bool,
+pub struct LinkModel {
     pub href: String,
     pub refresh_mode: Option<RefreshMode>,
     pub refresh_interval: f64,
@@ -18,10 +17,9 @@ pub struct Link {
     pub attrs: HashMap<String, String>,
 }
 
-impl Default for Link {
-    fn default() -> Link {
-        Link {
-            is_icon: false,
+impl Default for LinkModel {
+    fn default() -> LinkModel {
+        LinkModel {
             href: "".to_string(),
             refresh_mode: None,
             refresh_interval: 4.0,
@@ -35,14 +33,11 @@ impl Default for Link {
     }
 }
 
-impl Link {
-    pub fn new(is_icon: bool, href: String) -> Self {
-        Link {
-            is_icon,
-            href,
-            ..Default::default()
-        }
-    }
+/// `kml:Link` and `kml:Icon`, [13.1](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#974) in the KML specification.
+#[derive(Clone, Debug, PartialEq)]
+pub enum LinkType {
+    Icon(LinkModel),
+    Link(LinkModel),
 }
 
 /// `kml:refreshModeEnumType`, [16.21](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#1239) in the KML specification.

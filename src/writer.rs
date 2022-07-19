@@ -12,8 +12,8 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
-    LineString, LineStyle, LinearRing, Link, ListStyle, Location, MultiGeometry, Orientation, Pair,
-    Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
+    LineString, LineStyle, LinearRing, LinkType, ListStyle, Location,
+    MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -93,7 +93,7 @@ where
             Kml::LineStyle(l) => self.write_line_style(l)?,
             Kml::PolyStyle(p) => self.write_poly_style(p)?,
             Kml::ListStyle(l) => self.write_list_style(l)?,
-            Kml::Link(l) => self.write_link(l)?,
+            Kml::LinkType(l) => self.write_link_type(l)?,
             Kml::Document { attrs, elements } => {
                 self.write_container(b"Document", attrs, elements)?
             }
@@ -428,22 +428,28 @@ where
             .write_event(Event::End(BytesEnd::borrowed(b"ListStyle")))?)
     }
 
-    fn write_link(&mut self, link: &Link) -> Result<(), Error> {
-        let tag_name = if link.is_icon { b"Icon" } else { b"Link" };
+    fn write_link_type(&mut self, link: &LinkType) -> Result<(), Error> {
+        let (tag_name, link_model) = match link {
+            LinkType::Icon(model) => (b"Icon", &*model),
+            LinkType::Link(model) => (b"Link", &*model),
+        };
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(tag_name.to_vec())))?;
-        self.write_text_element(b"href", &link.href)?;
-        if let Some(refresh_mode) = &link.refresh_mode {
+        self.write_text_element(b"href", &link_model.href)?;
+        if let Some(refresh_mode) = &link_model.refresh_mode {
             self.write_text_element(b"refreshMode", &refresh_mode.to_string())?;
         }
-        self.write_text_element(b"refreshInterval", &link.refresh_interval.to_string())?;
-        if let Some(view_refresh_mode) = &link.view_refresh_mode {
+        self.write_text_element(b"refreshInterval", &link_model.refresh_interval.to_string())?;
+        if let Some(view_refresh_mode) = &link_model.view_refresh_mode {
             self.write_text_element(b"viewRefreshMode", &view_refresh_mode.to_string())?;
         }
-        self.write_text_element(b"viewRefreshTime", &link.view_refresh_time.to_string())?;
-        self.write_text_element(b"viewBoundScale", &link.view_bound_scale.to_string())?;
-        self.write_text_element(b"viewFormat", &link.view_format.to_string())?;
-        self.write_text_element(b"httpQuery", &link.http_query.to_string())?;
+        self.write_text_element(
+            b"viewRefreshTime",
+            &link_model.view_refresh_time.to_string(),
+        )?;
+        self.write_text_element(b"viewBoundScale", &link_model.view_bound_scale.to_string())?;
+        self.write_text_element(b"viewFormat", &link_model.view_format.to_string())?;
+        self.write_text_element(b"httpQuery", &link_model.http_query.to_string())?;
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::borrowed(tag_name)))?)
@@ -530,7 +536,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types;
+    use crate::types::{self, LinkModel};
 
     #[test]
     fn test_write_point() {
@@ -564,13 +570,12 @@ mod tests {
 
     #[test]
     fn test_write_link() {
-        let kml: Kml<f64> = Kml::Link(Link {
-            is_icon: false,
+        let kml: Kml<f64> = Kml::LinkType(LinkType::Link(LinkModel {
             href: "/path/to/local/resource".to_string(),
             refresh_mode: Some(types::RefreshMode::OnChange),
             view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
             ..Default::default()
-        });
+        }));
         let expected_string = "<Link>\
             <href>/path/to/local/resource</href>\
             <refreshMode>onChange</refreshMode>\
@@ -586,13 +591,12 @@ mod tests {
 
     #[test]
     fn test_write_link_icon() {
-        let kml: Kml<f64> = Kml::Link(Link {
-            is_icon: true,
+        let kml: Kml<f64> = Kml::LinkType(LinkType::Icon(LinkModel {
             href: "/path/to/local/resource".to_string(),
             refresh_mode: Some(types::RefreshMode::OnChange),
             view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
             ..Default::default()
-        });
+        }));
         let expected_string = "<Icon>\
             <href>/path/to/local/resource</href>\
             <refreshMode>onChange</refreshMode>\
