@@ -12,7 +12,7 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
-    LineString, LineStyle, LinearRing, ListStyle, Location, MultiGeometry, Orientation, Pair,
+    LineString, LineStyle, LinearRing, Link, ListStyle, Location, MultiGeometry, Orientation, Pair,
     Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
 };
 
@@ -93,6 +93,7 @@ where
             Kml::LineStyle(l) => self.write_line_style(l)?,
             Kml::PolyStyle(p) => self.write_poly_style(p)?,
             Kml::ListStyle(l) => self.write_list_style(l)?,
+            Kml::Link(l) => self.write_link(l)?,
             Kml::Document { attrs, elements } => {
                 self.write_container(b"Document", attrs, elements)?
             }
@@ -427,6 +428,27 @@ where
             .write_event(Event::End(BytesEnd::borrowed(b"ListStyle")))?)
     }
 
+    fn write_link(&mut self, link: &Link) -> Result<(), Error> {
+        let tag_name = if link.is_icon { b"Icon" } else { b"Link" };
+        self.writer
+            .write_event(Event::Start(BytesStart::owned_name(tag_name.to_vec())))?;
+        self.write_text_element(b"href", &link.href)?;
+        if let Some(refresh_mode) = &link.refresh_mode {
+            self.write_text_element(b"refreshMode", &refresh_mode.to_string())?;
+        }
+        self.write_text_element(b"refreshInterval", &link.refresh_interval.to_string())?;
+        if let Some(view_refresh_mode) = &link.view_refresh_mode {
+            self.write_text_element(b"viewRefreshMode", &view_refresh_mode.to_string())?;
+        }
+        self.write_text_element(b"viewRefreshTime", &link.view_refresh_time.to_string())?;
+        self.write_text_element(b"viewBoundScale", &link.view_bound_scale.to_string())?;
+        self.write_text_element(b"viewFormat", &link.view_format.to_string())?;
+        self.write_text_element(b"httpQuery", &link.http_query.to_string())?;
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(tag_name)))?)
+    }
+
     fn write_geometry(&mut self, geometry: &Geometry<T>) -> Result<(), Error> {
         match geometry {
             Geometry::Point(p) => self.write_point(p),
@@ -537,6 +559,50 @@ mod tests {
             <latitude>-93.09</latitude>\
             <altitude>350.1</altitude>\
         </Location>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_link() {
+        let kml: Kml<f64> = Kml::Link(Link {
+            is_icon: false,
+            href: "/path/to/local/resource".to_string(),
+            refresh_mode: Some(types::RefreshMode::OnChange),
+            view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
+            ..Default::default()
+        });
+        let expected_string = "<Link>\
+            <href>/path/to/local/resource</href>\
+            <refreshMode>onChange</refreshMode>\
+            <refreshInterval>4</refreshInterval>\
+            <viewRefreshMode>onStop</viewRefreshMode>\
+            <viewRefreshTime>4</viewRefreshTime>\
+            <viewBoundScale>1</viewBoundScale>\
+            <viewFormat></viewFormat>\
+            <httpQuery></httpQuery>\
+        </Link>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_link_icon() {
+        let kml: Kml<f64> = Kml::Link(Link {
+            is_icon: true,
+            href: "/path/to/local/resource".to_string(),
+            refresh_mode: Some(types::RefreshMode::OnChange),
+            view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
+            ..Default::default()
+        });
+        let expected_string = "<Icon>\
+            <href>/path/to/local/resource</href>\
+            <refreshMode>onChange</refreshMode>\
+            <refreshInterval>4</refreshInterval>\
+            <viewRefreshMode>onStop</viewRefreshMode>\
+            <viewRefreshTime>4</viewRefreshTime>\
+            <viewBoundScale>1</viewBoundScale>\
+            <viewFormat></viewFormat>\
+            <httpQuery></httpQuery>\
+        </Icon>";
         assert_eq!(expected_string, kml.to_string());
     }
 
