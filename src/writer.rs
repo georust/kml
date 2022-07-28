@@ -12,8 +12,8 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
-    LineString, LineStyle, LinearRing, LinkType, ListStyle, Location,
-    MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
+    LineString, LineStyle, LinearRing, LinkType, ListStyle, Location, MultiGeometry, Orientation,
+    Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
