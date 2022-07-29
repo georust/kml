@@ -3,41 +3,64 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
-/// Common model for `kml:LinkType`, [13.1](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#974) in the KML specification.
+/// `kml:Link`, [13.1](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#974) in the KML specification.
 #[derive(Clone, Debug, PartialEq)]
-pub struct LinkModel {
-    pub href: String,
+pub struct Link {
+    pub href: Option<String>,
     pub refresh_mode: Option<RefreshMode>,
     pub refresh_interval: f64,
     pub view_refresh_mode: Option<ViewRefreshMode>,
     pub view_refresh_time: f64,
     pub view_bound_scale: f64,
-    pub view_format: String,
-    pub http_query: String,
+    pub view_format: Option<String>,
+    pub http_query: Option<String>,
     pub attrs: HashMap<String, String>,
 }
 
-impl Default for LinkModel {
-    fn default() -> LinkModel {
-        LinkModel {
-            href: "".to_string(),
+impl Default for Link {
+    fn default() -> Self {
+        Self {
+            href: None,
             refresh_mode: None,
             refresh_interval: 4.0,
             view_refresh_mode: None,
             view_refresh_time: 4.0,
             view_bound_scale: 1.0,
-            view_format: "".to_string(),
-            http_query: "".to_string(),
+            view_format: None,
+            http_query: None,
             attrs: HashMap::new(),
         }
     }
 }
 
-/// `kml:Link` and `kml:Icon`, [13.1](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#974) in the KML specification.
+/// `kml:Icon`, [13.1](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#974) in the KML specification.
 #[derive(Clone, Debug, PartialEq)]
-pub enum LinkType {
-    Icon(LinkModel),
-    Link(LinkModel),
+pub struct Icon {
+    pub href: Option<String>,
+    pub refresh_mode: Option<RefreshMode>,
+    pub refresh_interval: f64,
+    pub view_refresh_mode: Option<ViewRefreshMode>,
+    pub view_refresh_time: f64,
+    pub view_bound_scale: f64,
+    pub view_format: Option<String>,
+    pub http_query: Option<String>,
+    pub attrs: HashMap<String, String>,
+}
+
+impl Default for Icon {
+    fn default() -> Self {
+        Self {
+            href: None,
+            refresh_mode: None,
+            refresh_interval: 4.0,
+            view_refresh_mode: None,
+            view_refresh_time: 4.0,
+            view_bound_scale: 1.0,
+            view_format: None,
+            http_query: None,
+            attrs: HashMap::new(),
+        }
+    }
 }
 
 /// `kml:refreshModeEnumType`, [16.21](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#1239) in the KML specification.
