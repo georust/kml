@@ -4,7 +4,7 @@ use std::str::FromStr;
 use crate::errors::Error;
 use crate::types::{
     BalloonStyle, CoordType, Element, Icon, IconStyle, LabelStyle, LineString, LineStyle,
-    LinearRing, LinkTypeIcon, LinkTypeLink, ListStyle, Location, MultiGeometry, Orientation, Pair,
+    LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair,
     Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
 };
 
@@ -83,6 +83,6 @@ pub enum Kml<T: CoordType = f64> {
     PolyStyle(PolyStyle),
     ListStyle(ListStyle),
     LinkTypeIcon(LinkTypeIcon),
-    LinkTypeLink(LinkTypeLink),
+    Link(Link),
     Element(Element),
 }

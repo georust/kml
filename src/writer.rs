@@ -12,8 +12,8 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
-    LineString, LineStyle, LinearRing, LinkTypeIcon, LinkTypeLink, ListStyle, Location,
-    MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
+    LineString, LineStyle, LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry,
+    Orientation, Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -94,7 +94,7 @@ where
             Kml::PolyStyle(p) => self.write_poly_style(p)?,
             Kml::ListStyle(l) => self.write_list_style(l)?,
             Kml::LinkTypeIcon(i) => self.write_link_type_icon(i)?,
-            Kml::LinkTypeLink(l) => self.write_link_type_link(l)?,
+            Kml::Link(l) => self.write_link(l)?,
             Kml::Document { attrs, elements } => {
                 self.write_container(b"Document", attrs, elements)?
             }
@@ -457,7 +457,7 @@ where
             .write_event(Event::End(BytesEnd::borrowed(b"Icon")))?)
     }
 
-    fn write_link_type_link(&mut self, link: &LinkTypeLink) -> Result<(), Error> {
+    fn write_link(&mut self, link: &Link) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
             BytesStart::owned_name(b"Link".to_vec())
                 .with_attributes(self.hash_map_as_attrs(&link.attrs)),
@@ -599,11 +599,11 @@ mod tests {
     }
 
     #[test]
-    fn test_write_link_type_link() {
+    fn test_write_link() {
         let mut attrs = HashMap::new();
         attrs.insert("id".to_string(), "Some ID".to_string());
 
-        let kml: Kml<f64> = Kml::LinkTypeLink(LinkTypeLink {
+        let kml: Kml<f64> = Kml::Link(Link {
             href: Some("/path/to/local/resource".to_string()),
             refresh_mode: Some(types::RefreshMode::OnChange),
             view_refresh_mode: Some(types::ViewRefreshMode::OnStop),

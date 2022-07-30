@@ -16,9 +16,9 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     self, coords_from_str, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry, Icon,
-    IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
-    LinkTypeIcon, LinkTypeLink, ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark,
-    Point, PolyStyle, Polygon, RefreshMode, Scale, Style, StyleMap, Units, Vec2, ViewRefreshMode,
+    IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing, Link,
+    LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point,
+    PolyStyle, Polygon, RefreshMode, Scale, Style, StyleMap, Units, Vec2, ViewRefreshMode,
 };
 
 /// Main struct for reading KML documents
@@ -158,9 +158,7 @@ where
                             elements.push(Kml::BalloonStyle(self.read_balloon_style(attrs)?))
                         }
                         b"IconStyle" => elements.push(Kml::IconStyle(self.read_icon_style(attrs)?)),
-                        b"Link" => {
-                            elements.push(Kml::LinkTypeLink(self.read_link_type_link(attrs)?))
-                        }
+                        b"Link" => elements.push(Kml::Link(self.read_link(attrs)?)),
                         b"Icon" => {
                             elements.push(Kml::LinkTypeIcon(self.read_link_type_icon(attrs)?))
                         }
@@ -652,11 +650,8 @@ where
         Ok(icon)
     }
 
-    fn read_link_type_link(
-        &mut self,
-        attrs: HashMap<String, String>,
-    ) -> Result<LinkTypeLink, Error> {
-        let mut link = LinkTypeLink {
+    fn read_link(&mut self, attrs: HashMap<String, String>) -> Result<Link, Error> {
+        let mut link = Link {
             attrs,
             ..Default::default()
         };
@@ -1032,7 +1027,7 @@ mod tests {
     }
 
     #[test]
-    fn test_read_link_type_link() {
+    fn test_read_link() {
         let kml_str = r#"<Link id="Some ID">
             <href>/path/to/local/resource</href>
             <refreshMode>onChange</refreshMode>
@@ -1049,7 +1044,7 @@ mod tests {
         let l: Kml = kml_str.parse().unwrap();
         assert_eq!(
             l,
-            Kml::LinkTypeLink(LinkTypeLink {
+            Kml::Link(Link {
                 href: Some("/path/to/local/resource".to_string()),
                 refresh_mode: Some(types::RefreshMode::OnChange),
                 view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
