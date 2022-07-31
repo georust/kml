@@ -28,6 +28,10 @@ pub enum Error {
     InvalidColorMode(String),
     #[error("Invalid list item type: {0}")]
     InvalidListItemType(String),
+    #[error("Invalid refresh mode: {0}")]
+    InvalidRefreshMode(String),
+    #[error("Invalid view refresh mode: {0}")]
+    InvalidViewRefreshMode(String),
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
     #[cfg(feature = "zip")]

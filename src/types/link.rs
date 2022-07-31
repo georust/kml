@@ -1,7 +1,8 @@
-use std::{
-    collections::HashMap,
-    fmt::{Display, Formatter, Result},
-};
+use std::collections::HashMap;
+use std::fmt;
+use std::str::FromStr;
+
+use crate::Error;
 
 /// `kml:Link`, [13.1](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#974) in the KML specification.
 #[derive(Clone, Debug, PartialEq)]
@@ -77,8 +78,21 @@ impl Default for RefreshMode {
     }
 }
 
-impl Display for RefreshMode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl FromStr for RefreshMode {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "onChange" => Ok(Self::OnChange),
+            "onInterval" => Ok(Self::OnInterval),
+            "onExpire" => Ok(Self::OnExpire),
+            v => Err(Error::InvalidRefreshMode(v.to_string())),
+        }
+    }
+}
+
+impl fmt::Display for RefreshMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             RefreshMode::OnChange => write!(f, "onChange"),
             RefreshMode::OnInterval => write!(f, "onInterval"),
@@ -102,13 +116,68 @@ impl Default for ViewRefreshMode {
     }
 }
 
-impl Display for ViewRefreshMode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl FromStr for ViewRefreshMode {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "never" => Ok(Self::Never),
+            "onRequest" => Ok(Self::OnRequest),
+            "onStop" => Ok(Self::OnStop),
+            "onRegion" => Ok(Self::OnRegion),
+            v => Err(Error::InvalidViewRefreshMode(v.to_string())),
+        }
+    }
+}
+
+impl fmt::Display for ViewRefreshMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ViewRefreshMode::Never => write!(f, "never"),
             ViewRefreshMode::OnRequest => write!(f, "onRequest"),
             ViewRefreshMode::OnStop => write!(f, "onStop"),
             ViewRefreshMode::OnRegion => write!(f, "onRegion"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_refresh_mode_from_str() {
+        assert_eq!(
+            RefreshMode::OnChange,
+            RefreshMode::from_str("onChange").unwrap()
+        );
+        assert_eq!(
+            RefreshMode::OnExpire,
+            RefreshMode::from_str("onExpire").unwrap()
+        );
+        assert_eq!(
+            RefreshMode::OnInterval,
+            RefreshMode::from_str("onInterval").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_view_refresh_mode_from_str() {
+        assert_eq!(
+            ViewRefreshMode::Never,
+            ViewRefreshMode::from_str("never").unwrap()
+        );
+        assert_eq!(
+            ViewRefreshMode::OnRegion,
+            ViewRefreshMode::from_str("onRegion").unwrap()
+        );
+        assert_eq!(
+            ViewRefreshMode::OnRequest,
+            ViewRefreshMode::from_str("onRequest").unwrap()
+        );
+        assert_eq!(
+            ViewRefreshMode::OnStop,
+            ViewRefreshMode::from_str("onStop").unwrap()
+        );
     }
 }

@@ -616,22 +616,11 @@ where
                 Event::Start(ref mut e) => match e.local_name() {
                     b"href" => icon.href = Some(self.read_str()?),
                     b"refreshMode" => {
-                        icon.refresh_mode = match self.read_str()?.as_str() {
-                            "onChange" => Some(RefreshMode::OnChange),
-                            "onInterval" => Some(RefreshMode::OnInterval),
-                            "onExpire" => Some(RefreshMode::OnExpire),
-                            _ => None,
-                        }
+                        icon.refresh_mode = Some(RefreshMode::from_str(&self.read_str()?)?);
                     }
                     b"refreshInterval" => icon.refresh_interval = self.read_float()?,
                     b"viewRefreshMode" => {
-                        icon.view_refresh_mode = match self.read_str()?.as_str() {
-                            "never" => Some(ViewRefreshMode::Never),
-                            "onRequest" => Some(ViewRefreshMode::OnRequest),
-                            "onStop" => Some(ViewRefreshMode::OnStop),
-                            "onRegion" => Some(ViewRefreshMode::OnRegion),
-                            _ => None,
-                        }
+                        icon.view_refresh_mode = Some(ViewRefreshMode::from_str(&self.read_str()?)?)
                     }
                     b"viewRefreshTime" => icon.view_refresh_time = self.read_float()?,
                     b"viewBoundScale" => icon.view_bound_scale = self.read_float()?,
@@ -661,22 +650,11 @@ where
                 Event::Start(ref mut e) => match e.local_name() {
                     b"href" => link.href = Some(self.read_str()?),
                     b"refreshMode" => {
-                        link.refresh_mode = match self.read_str()?.as_str() {
-                            "onChange" => Some(RefreshMode::OnChange),
-                            "onInterval" => Some(RefreshMode::OnInterval),
-                            "onExpire" => Some(RefreshMode::OnExpire),
-                            _ => None,
-                        }
+                        link.refresh_mode = Some(RefreshMode::from_str(&self.read_str()?)?);
                     }
                     b"refreshInterval" => link.refresh_interval = self.read_float()?,
                     b"viewRefreshMode" => {
-                        link.view_refresh_mode = match self.read_str()?.as_str() {
-                            "never" => Some(ViewRefreshMode::Never),
-                            "onRequest" => Some(ViewRefreshMode::OnRequest),
-                            "onStop" => Some(ViewRefreshMode::OnStop),
-                            "onRegion" => Some(ViewRefreshMode::OnRegion),
-                            _ => None,
-                        }
+                        link.view_refresh_mode = Some(ViewRefreshMode::from_str(&self.read_str()?)?)
                     }
                     b"viewRefreshTime" => link.view_refresh_time = self.read_float()?,
                     b"viewBoundScale" => link.view_bound_scale = self.read_float()?,
