@@ -12,8 +12,8 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
-    LineString, LineStyle, LinearRing, ListStyle, Location, MultiGeometry, Orientation, Pair,
-    Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
+    LineString, LineStyle, LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry,
+    Orientation, Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -93,6 +93,8 @@ where
             Kml::LineStyle(l) => self.write_line_style(l)?,
             Kml::PolyStyle(p) => self.write_poly_style(p)?,
             Kml::ListStyle(l) => self.write_list_style(l)?,
+            Kml::LinkTypeIcon(i) => self.write_link_type_icon(i)?,
+            Kml::Link(l) => self.write_link(l)?,
             Kml::Document { attrs, elements } => {
                 self.write_container(b"Document", attrs, elements)?
             }
@@ -427,6 +429,62 @@ where
             .write_event(Event::End(BytesEnd::borrowed(b"ListStyle")))?)
     }
 
+    fn write_link_type_icon(&mut self, icon: &LinkTypeIcon) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Icon".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&icon.attrs)),
+        ))?;
+        if let Some(href) = &icon.href {
+            self.write_text_element(b"href", href)?;
+        }
+        if let Some(refresh_mode) = &icon.refresh_mode {
+            self.write_text_element(b"refreshMode", &refresh_mode.to_string())?;
+        }
+        self.write_text_element(b"refreshInterval", &icon.refresh_interval.to_string())?;
+        if let Some(view_refresh_mode) = &icon.view_refresh_mode {
+            self.write_text_element(b"viewRefreshMode", &view_refresh_mode.to_string())?;
+        }
+        self.write_text_element(b"viewRefreshTime", &icon.view_refresh_time.to_string())?;
+        self.write_text_element(b"viewBoundScale", &icon.view_bound_scale.to_string())?;
+        if let Some(view_format) = &icon.view_format {
+            self.write_text_element(b"viewFormat", view_format)?;
+        }
+        if let Some(http_query) = &icon.http_query {
+            self.write_text_element(b"httpQuery", http_query)?;
+        }
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"Icon")))?)
+    }
+
+    fn write_link(&mut self, link: &Link) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Link".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&link.attrs)),
+        ))?;
+        if let Some(href) = &link.href {
+            self.write_text_element(b"href", href)?;
+        }
+        if let Some(refresh_mode) = &link.refresh_mode {
+            self.write_text_element(b"refreshMode", &refresh_mode.to_string())?;
+        }
+        self.write_text_element(b"refreshInterval", &link.refresh_interval.to_string())?;
+        if let Some(view_refresh_mode) = &link.view_refresh_mode {
+            self.write_text_element(b"viewRefreshMode", &view_refresh_mode.to_string())?;
+        }
+        self.write_text_element(b"viewRefreshTime", &link.view_refresh_time.to_string())?;
+        self.write_text_element(b"viewBoundScale", &link.view_bound_scale.to_string())?;
+        if let Some(view_format) = &link.view_format {
+            self.write_text_element(b"viewFormat", view_format)?;
+        }
+        if let Some(http_query) = &link.http_query {
+            self.write_text_element(b"httpQuery", http_query)?;
+        }
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"Link")))?)
+    }
+
     fn write_geometry(&mut self, geometry: &Geometry<T>) -> Result<(), Error> {
         match geometry {
             Geometry::Point(p) => self.write_point(p),
@@ -537,6 +595,52 @@ mod tests {
             <latitude>-93.09</latitude>\
             <altitude>350.1</altitude>\
         </Location>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_link() {
+        let mut attrs = HashMap::new();
+        attrs.insert("id".to_string(), "Some ID".to_string());
+
+        let kml: Kml<f64> = Kml::Link(Link {
+            href: Some("/path/to/local/resource".to_string()),
+            refresh_mode: Some(types::RefreshMode::OnChange),
+            view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
+            attrs,
+            ..Default::default()
+        });
+        let expected_string = "<Link id=\"Some ID\">\
+            <href>/path/to/local/resource</href>\
+            <refreshMode>onChange</refreshMode>\
+            <refreshInterval>4</refreshInterval>\
+            <viewRefreshMode>onStop</viewRefreshMode>\
+            <viewRefreshTime>4</viewRefreshTime>\
+            <viewBoundScale>1</viewBoundScale>\
+        </Link>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_link_icon() {
+        let mut attrs = HashMap::new();
+        attrs.insert("id".to_string(), "Some ID".to_string());
+
+        let kml: Kml<f64> = Kml::LinkTypeIcon(LinkTypeIcon {
+            href: Some("/path/to/local/resource".to_string()),
+            refresh_mode: Some(types::RefreshMode::OnChange),
+            view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
+            attrs,
+            ..Default::default()
+        });
+        let expected_string = "<Icon id=\"Some ID\">\
+            <href>/path/to/local/resource</href>\
+            <refreshMode>onChange</refreshMode>\
+            <refreshInterval>4</refreshInterval>\
+            <viewRefreshMode>onStop</viewRefreshMode>\
+            <viewRefreshTime>4</viewRefreshTime>\
+            <viewBoundScale>1</viewBoundScale>\
+        </Icon>";
         assert_eq!(expected_string, kml.to_string());
     }
 

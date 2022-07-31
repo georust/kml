@@ -16,9 +16,9 @@ use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
     self, coords_from_str, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry, Icon,
-    IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
-    ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle, Polygon,
-    Scale, Style, StyleMap, Units, Vec2,
+    IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing, Link,
+    LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point,
+    PolyStyle, Polygon, RefreshMode, Scale, Style, StyleMap, Units, Vec2, ViewRefreshMode,
 };
 
 /// Main struct for reading KML documents
@@ -158,7 +158,10 @@ where
                             elements.push(Kml::BalloonStyle(self.read_balloon_style(attrs)?))
                         }
                         b"IconStyle" => elements.push(Kml::IconStyle(self.read_icon_style(attrs)?)),
-                        b"Icon" => elements.push(Kml::Icon(self.read_icon()?)),
+                        b"Link" => elements.push(Kml::Link(self.read_link(attrs)?)),
+                        b"Icon" => {
+                            elements.push(Kml::LinkTypeIcon(self.read_link_type_icon(attrs)?))
+                        }
                         b"LabelStyle" => {
                             elements.push(Kml::LabelStyle(self.read_label_style(attrs)?))
                         }
@@ -560,7 +563,7 @@ where
                             });
                         }
                     }
-                    b"Icon" => icon_style.icon = self.read_icon()?,
+                    b"Icon" => icon_style.icon = self.read_basic_link_type_icon()?,
                     b"color" => icon_style.color = self.read_str()?,
                     b"colorMode" => {
                         icon_style.color_mode = self.read_str()?.parse::<ColorMode>()?
@@ -578,7 +581,7 @@ where
         Ok(icon_style)
     }
 
-    fn read_icon(&mut self) -> Result<Icon, Error> {
+    fn read_basic_link_type_icon(&mut self) -> Result<Icon, Error> {
         let mut href = String::new();
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
@@ -597,6 +600,77 @@ where
             }
         }
         Ok(Icon { href })
+    }
+
+    fn read_link_type_icon(
+        &mut self,
+        attrs: HashMap<String, String>,
+    ) -> Result<LinkTypeIcon, Error> {
+        let mut icon = LinkTypeIcon {
+            attrs,
+            ..Default::default()
+        };
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"href" => icon.href = Some(self.read_str()?),
+                    b"refreshMode" => {
+                        icon.refresh_mode = Some(RefreshMode::from_str(&self.read_str()?)?);
+                    }
+                    b"refreshInterval" => icon.refresh_interval = self.read_float()?,
+                    b"viewRefreshMode" => {
+                        icon.view_refresh_mode = Some(ViewRefreshMode::from_str(&self.read_str()?)?)
+                    }
+                    b"viewRefreshTime" => icon.view_refresh_time = self.read_float()?,
+                    b"viewBoundScale" => icon.view_bound_scale = self.read_float()?,
+                    b"viewFormat" => icon.view_format = Some(self.read_str()?),
+                    b"httpQuery" => icon.http_query = Some(self.read_str()?),
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Icon" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(icon)
+    }
+
+    fn read_link(&mut self, attrs: HashMap<String, String>) -> Result<Link, Error> {
+        let mut link = Link {
+            attrs,
+            ..Default::default()
+        };
+        loop {
+            let mut e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => match e.local_name() {
+                    b"href" => link.href = Some(self.read_str()?),
+                    b"refreshMode" => {
+                        link.refresh_mode = Some(RefreshMode::from_str(&self.read_str()?)?);
+                    }
+                    b"refreshInterval" => link.refresh_interval = self.read_float()?,
+                    b"viewRefreshMode" => {
+                        link.view_refresh_mode = Some(ViewRefreshMode::from_str(&self.read_str()?)?)
+                    }
+                    b"viewRefreshTime" => link.view_refresh_time = self.read_float()?,
+                    b"viewBoundScale" => link.view_bound_scale = self.read_float()?,
+                    b"viewFormat" => link.view_format = Some(self.read_str()?),
+                    b"httpQuery" => link.http_query = Some(self.read_str()?),
+                    _ => {}
+                },
+                Event::End(ref mut e) => {
+                    if e.local_name() == b"Link" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+        Ok(link)
     }
 
     fn read_balloon_style(
@@ -925,6 +999,64 @@ mod tests {
                 longitude: 39.55,
                 latitude: -118.98,
                 altitude: 1223.,
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn test_read_link() {
+        let kml_str = r#"<Link id="Some ID">
+            <href>/path/to/local/resource</href>
+            <refreshMode>onChange</refreshMode>
+            <refreshInterval>4</refreshInterval>
+            <viewRefreshMode>onStop</viewRefreshMode>
+            <viewRefreshTime>4</viewRefreshTime>
+            <viewBoundScale>1</viewBoundScale>
+            <viewFormat></viewFormat>
+        </Link>"#;
+
+        let mut attrs = HashMap::new();
+        attrs.insert("id".to_string(), "Some ID".to_string());
+
+        let l: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            l,
+            Kml::Link(Link {
+                href: Some("/path/to/local/resource".to_string()),
+                refresh_mode: Some(types::RefreshMode::OnChange),
+                view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
+                view_format: Some(String::new()),
+                attrs,
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn test_read_link_type_icon() {
+        let kml_str = r#"<Icon id="Some ID">
+            <href>/path/to/local/resource</href>
+            <refreshMode>onChange</refreshMode>
+            <refreshInterval>4</refreshInterval>
+            <viewRefreshMode>onStop</viewRefreshMode>
+            <viewRefreshTime>4</viewRefreshTime>
+            <viewBoundScale>1</viewBoundScale>
+            <viewFormat></viewFormat>
+        </Icon>"#;
+
+        let mut attrs = HashMap::new();
+        attrs.insert("id".to_string(), "Some ID".to_string());
+
+        let l: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            l,
+            Kml::LinkTypeIcon(LinkTypeIcon {
+                href: Some("/path/to/local/resource".to_string()),
+                refresh_mode: Some(types::RefreshMode::OnChange),
+                view_refresh_mode: Some(types::ViewRefreshMode::OnStop),
+                view_format: Some(String::new()),
+                attrs,
                 ..Default::default()
             })
         );
