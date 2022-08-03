@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [v0.5.0](https://github.com/georust/kml/releases/tag/v0.5.0)
+
+- Run tests without default features ([#26](https://github.com/georust/kml/pull/26))
+- Adds `kml:Link` and `kml:Icon` ([#28](https://github.com/georust/kml/pull/28)) from [@k-mack](https://github.com/k-mack)
+- Updates edition to 2021 ([#27](https://github.com/georust/kml/pull/27))
+
 ## [v0.4.3](https://github.com/georust/kml/releases/tag/v0.4.3)
 
 - Fixes serialization order of some geometry elements to match the sequence in the [specification](http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd) ([#25](https://github.com/georust/kml/pull/25)) from [@blipmusic](https://github.com/blipmusic)
