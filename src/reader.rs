@@ -706,9 +706,7 @@ where
             }
         }
 
-        if !aliases.is_empty() {
-            resource_map.aliases = Some(aliases);
-        }
+        resource_map.aliases = aliases;
 
         Ok(resource_map)
     }
@@ -1168,7 +1166,7 @@ mod tests {
         assert_eq!(
             kml_str.parse::<Kml>().unwrap(),
             Kml::ResourceMap(ResourceMap {
-                aliases: Some(vec![alias1, alias2]),
+                aliases: vec![alias1, alias2],
                 attrs: resource_map_attrs,
             })
         );
@@ -1177,7 +1175,7 @@ mod tests {
         assert_eq!(
             "<ResourceMap></ResourceMap>".parse::<Kml>().unwrap(),
             Kml::ResourceMap(ResourceMap {
-                aliases: None,
+                aliases: Vec::new(),
                 attrs: HashMap::new(),
             })
         );

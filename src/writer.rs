@@ -492,10 +492,8 @@ where
             BytesStart::owned_name(b"ResourceMap".to_vec())
                 .with_attributes(self.hash_map_as_attrs(&resource_map.attrs)),
         ))?;
-        if let Some(aliases) = &resource_map.aliases {
-            for alias in aliases.iter() {
-                self.write_alias(alias)?;
-            }
+        for alias in resource_map.aliases.iter() {
+            self.write_alias(alias)?;
         }
         Ok(self
             .writer
@@ -704,7 +702,7 @@ mod tests {
         resource_map_attrs.insert("id".to_string(), "ResourceMap ID".to_string());
 
         let kml: Kml<f64> = Kml::ResourceMap(ResourceMap {
-            aliases: Some(vec![alias1, alias2]),
+            aliases: vec![alias1, alias2],
             attrs: resource_map_attrs,
         });
 
@@ -725,7 +723,7 @@ mod tests {
         assert_eq!(
             "<ResourceMap></ResourceMap>",
             Kml::ResourceMap::<f64>(ResourceMap {
-                aliases: None,
+                aliases: Vec::new(),
                 attrs: HashMap::new(),
             })
             .to_string()
