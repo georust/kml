@@ -11,9 +11,9 @@ use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
+    Alias, BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
     LineString, LineStyle, LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry,
-    Orientation, Pair, Placemark, Point, PolyStyle, Polygon, Scale, Style, StyleMap,
+    Orientation, Pair, Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -95,6 +95,8 @@ where
             Kml::ListStyle(l) => self.write_list_style(l)?,
             Kml::LinkTypeIcon(i) => self.write_link_type_icon(i)?,
             Kml::Link(l) => self.write_link(l)?,
+            Kml::ResourceMap(r) => self.write_resource_map(r)?,
+            Kml::Alias(a) => self.write_alias(a)?,
             Kml::Document { attrs, elements } => {
                 self.write_container(b"Document", attrs, elements)?
             }
@@ -485,6 +487,37 @@ where
             .write_event(Event::End(BytesEnd::borrowed(b"Link")))?)
     }
 
+    fn write_resource_map(&mut self, resource_map: &ResourceMap) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"ResourceMap".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&resource_map.attrs)),
+        ))?;
+        if let Some(aliases) = &resource_map.aliases {
+            for alias in aliases.iter() {
+                self.write_alias(alias)?;
+            }
+        }
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"ResourceMap")))?)
+    }
+
+    fn write_alias(&mut self, alias: &Alias) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Alias".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&alias.attrs)),
+        ))?;
+        if let Some(href) = &alias.target_href {
+            self.write_text_element(b"targetHref", href)?;
+        }
+        if let Some(href) = &alias.source_href {
+            self.write_text_element(b"sourceHref", href)?;
+        }
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"Alias")))?)
+    }
+
     fn write_geometry(&mut self, geometry: &Geometry<T>) -> Result<(), Error> {
         match geometry {
             Geometry::Point(p) => self.write_point(p),
@@ -641,6 +674,79 @@ mod tests {
             <viewRefreshTime>4</viewRefreshTime>\
             <viewBoundScale>1</viewBoundScale>\
         </Icon>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_resource_map() {
+        // Alias 1
+        let mut alias1_attrs = HashMap::new();
+        alias1_attrs.insert("id".to_string(), "Alias ID 1".to_string());
+
+        let alias1 = Alias {
+            target_href: Some("../images/foo1.jpg".to_string()),
+            source_href: Some("in-geometry-file/foo1.jpg".to_string()),
+            attrs: alias1_attrs,
+        };
+
+        // Alias 2
+        let mut alias2_attrs = HashMap::new();
+        alias2_attrs.insert("id".to_string(), "Alias ID 2".to_string());
+
+        let alias2 = Alias {
+            target_href: Some("../images/foo2.jpg".to_string()),
+            source_href: Some("in-geometry-file/foo2.jpg".to_string()),
+            attrs: alias2_attrs,
+        };
+
+        // ResourceMap
+        let mut resource_map_attrs = HashMap::new();
+        resource_map_attrs.insert("id".to_string(), "ResourceMap ID".to_string());
+
+        let kml: Kml<f64> = Kml::ResourceMap(ResourceMap {
+            aliases: Some(vec![alias1, alias2]),
+            attrs: resource_map_attrs,
+        });
+
+        let expected_string = "<ResourceMap id=\"ResourceMap ID\">\
+            <Alias id=\"Alias ID 1\">\
+                <targetHref>../images/foo1.jpg</targetHref>\
+                <sourceHref>in-geometry-file/foo1.jpg</sourceHref>\
+            </Alias>\
+            <Alias id=\"Alias ID 2\">\
+                <targetHref>../images/foo2.jpg</targetHref>\
+                <sourceHref>in-geometry-file/foo2.jpg</sourceHref>\
+            </Alias>\
+        </ResourceMap>";
+
+        assert_eq!(expected_string, kml.to_string());
+
+        // Test a ResourceMap with `None` for its `aliases` field writes zero Aliases
+        assert_eq!(
+            "<ResourceMap></ResourceMap>",
+            Kml::ResourceMap::<f64>(ResourceMap {
+                aliases: None,
+                attrs: HashMap::new(),
+            })
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn test_write_alias() {
+        let mut attrs = HashMap::new();
+        attrs.insert("id".to_string(), "Some ID".to_string());
+
+        let kml: Kml<f64> = Kml::Alias(Alias {
+            target_href: Some("../images/foo.jpg".to_string()),
+            source_href: Some("in-geometry-file/foo.jpg".to_string()),
+            attrs,
+        });
+
+        let expected_string = "<Alias id=\"Some ID\">\
+            <targetHref>../images/foo.jpg</targetHref>\
+            <sourceHref>in-geometry-file/foo.jpg</sourceHref>\
+        </Alias>";
         assert_eq!(expected_string, kml.to_string());
     }
 
