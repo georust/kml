@@ -47,6 +47,14 @@ pub use style::{
     Style, StyleMap,
 };
 
+mod resource_map;
+
+pub use resource_map::ResourceMap;
+
+mod alias;
+
+pub use alias::Alias;
+
 mod kml;
 
 pub use self::kml::{Kml, KmlDocument, KmlVersion};

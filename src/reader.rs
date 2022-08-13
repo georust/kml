@@ -15,10 +15,11 @@ use quick_xml::events::{BytesStart, Event};
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    self, coords_from_str, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry, Icon,
-    IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing, Link,
-    LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point,
-    PolyStyle, Polygon, RefreshMode, Scale, Style, StyleMap, Units, Vec2, ViewRefreshMode,
+    self, coords_from_str, Alias, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry,
+    Icon, IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
+    Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point,
+    PolyStyle, Polygon, RefreshMode, ResourceMap, Scale, Style, StyleMap, Units, Vec2,
+    ViewRefreshMode,
 };
 
 /// Main struct for reading KML documents
@@ -162,6 +163,10 @@ where
                         b"Icon" => {
                             elements.push(Kml::LinkTypeIcon(self.read_link_type_icon(attrs)?))
                         }
+                        b"ResourceMap" => {
+                            elements.push(Kml::ResourceMap(self.read_resource_map(attrs)?))
+                        }
+                        b"Alias" => elements.push(Kml::Alias(self.read_alias(attrs)?)),
                         b"LabelStyle" => {
                             elements.push(Kml::LabelStyle(self.read_label_style(attrs)?))
                         }
@@ -673,6 +678,65 @@ where
         Ok(link)
     }
 
+    fn read_resource_map(&mut self, attrs: HashMap<String, String>) -> Result<ResourceMap, Error> {
+        let mut resource_map = ResourceMap {
+            attrs,
+            ..Default::default()
+        };
+
+        let mut aliases = Vec::new();
+
+        loop {
+            let e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(e) => {
+                    if e.local_name() == b"Alias" {
+                        let attrs = Self::read_attrs(e.attributes());
+                        if let Ok(alias) = self.read_alias(attrs) {
+                            aliases.push(alias);
+                        }
+                    }
+                }
+                Event::End(e) => {
+                    if e.local_name() == b"ResourceMap" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+
+        resource_map.aliases = aliases;
+
+        Ok(resource_map)
+    }
+
+    fn read_alias(&mut self, attrs: HashMap<String, String>) -> Result<Alias, Error> {
+        let mut alias = Alias {
+            attrs,
+            ..Default::default()
+        };
+
+        loop {
+            let e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(e) => match e.local_name() {
+                    b"targetHref" => alias.target_href = Some(self.read_str()?),
+                    b"sourceHref" => alias.source_href = Some(self.read_str()?),
+                    _ => {}
+                },
+                Event::End(e) => {
+                    if e.local_name() == b"Alias" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+
+        Ok(alias)
+    }
+
     fn read_balloon_style(
         &mut self,
         attrs: HashMap<String, String>,
@@ -1058,6 +1122,82 @@ mod tests {
                 view_format: Some(String::new()),
                 attrs,
                 ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn test_read_resource_map() {
+        let kml_str = r#"<ResourceMap id="ResourceMap ID">
+            <Alias id="Alias ID 1">
+                <targetHref>../images/foo1.jpg</targetHref>
+                <sourceHref>in-geometry-file/foo1.jpg</sourceHref>
+            </Alias>
+            <Alias id="Alias ID 2">
+                <targetHref>../images/foo2.jpg</targetHref>
+                <sourceHref>in-geometry-file/foo2.jpg</sourceHref>
+            </Alias>
+        </ResourceMap>"#;
+
+        // Expected Alias 1
+        let mut alias1_attrs = HashMap::new();
+        alias1_attrs.insert("id".to_string(), "Alias ID 1".to_string());
+
+        let alias1 = Alias {
+            target_href: Some("../images/foo1.jpg".to_string()),
+            source_href: Some("in-geometry-file/foo1.jpg".to_string()),
+            attrs: alias1_attrs,
+        };
+
+        // Expected Alias 2
+        let mut alias2_attrs = HashMap::new();
+        alias2_attrs.insert("id".to_string(), "Alias ID 2".to_string());
+
+        let alias2 = Alias {
+            target_href: Some("../images/foo2.jpg".to_string()),
+            source_href: Some("in-geometry-file/foo2.jpg".to_string()),
+            attrs: alias2_attrs,
+        };
+
+        // Expected ResourceMap
+        let mut resource_map_attrs = HashMap::new();
+        resource_map_attrs.insert("id".to_string(), "ResourceMap ID".to_string());
+
+        assert_eq!(
+            kml_str.parse::<Kml>().unwrap(),
+            Kml::ResourceMap(ResourceMap {
+                aliases: vec![alias1, alias2],
+                attrs: resource_map_attrs,
+            })
+        );
+
+        // Test a ResourceMap with no Aliases has `None` for its `aliases` field
+        assert_eq!(
+            "<ResourceMap></ResourceMap>".parse::<Kml>().unwrap(),
+            Kml::ResourceMap(ResourceMap {
+                aliases: Vec::new(),
+                attrs: HashMap::new(),
+            })
+        );
+    }
+
+    #[test]
+    fn test_read_alias() {
+        let kml_str = r#"<Alias id="Some ID">
+            <targetHref>../images/foo.jpg</targetHref>
+            <sourceHref>in-geometry-file/foo.jpg</sourceHref>
+        </Alias>"#;
+
+        let mut attrs = HashMap::new();
+        attrs.insert("id".to_string(), "Some ID".to_string());
+
+        let a: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            a,
+            Kml::Alias(Alias {
+                target_href: Some("../images/foo.jpg".to_string()),
+                source_href: Some("in-geometry-file/foo.jpg".to_string()),
+                attrs,
             })
         );
     }
