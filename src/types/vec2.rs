@@ -22,7 +22,7 @@ impl Default for Vec2 {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Units {
     Fraction,
     Pixels,

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::types::coord::CoordType;
 
 /// `kml:Orientation`, [10.11](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#558) in the KML
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct Orientation<T: CoordType = f64> {
     pub roll: T,
     pub tilt: T,

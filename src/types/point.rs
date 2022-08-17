@@ -7,7 +7,7 @@ use crate::types::coord::{Coord, CoordType};
 /// specification
 ///
 /// Coord is required as of <https://docs.opengeospatial.org/ts/14-068r2/14-068r2.html#atc-114>
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct Point<T: CoordType = f64> {
     pub coord: Coord<T>,
     pub extrude: bool,

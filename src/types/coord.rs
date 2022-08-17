@@ -14,7 +14,7 @@ impl<T: Float + Debug> CoordType for T {}
 ///
 /// Coordinates are tuples with the third Z value for altitude being optional. Coordinate tuples are
 /// separated by any whitespace character
-#[derive(Copy, Clone, Default, Debug, PartialEq)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq)]
 pub struct Coord<T: CoordType = f64> {
     pub x: T,
     pub y: T,

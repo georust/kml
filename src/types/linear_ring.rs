@@ -5,7 +5,7 @@ use crate::types::coord::{Coord, CoordType};
 
 /// `kml:LinearRing`, [10.5](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#465) in the
 /// KML specification
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct LinearRing<T: CoordType = f64> {
     pub coords: Vec<Coord<T>>,
     pub extrude: bool,

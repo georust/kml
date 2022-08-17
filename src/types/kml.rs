@@ -12,7 +12,7 @@ use crate::types::{
 ///
 /// According to <http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#7> namespace for 2.3
 /// is unchanged since it should be backwards-compatible
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum KmlVersion {
     Unknown,
