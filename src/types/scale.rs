@@ -4,7 +4,7 @@ use crate::types::coord::CoordType;
 use num_traits::One;
 
 /// `kml:Scale`, [10.12](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#575) in the KML
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Scale<T: CoordType = f64> {
     pub x: T,
     pub y: T,

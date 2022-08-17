@@ -21,7 +21,7 @@ pub struct Style {
 
 /// `kml:StyleMap`, [12.3](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#811) in the KML
 /// specification
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct StyleMap {
     pub id: String,
     pub pairs: Vec<Pair>,
@@ -29,7 +29,7 @@ pub struct StyleMap {
 
 /// `kml:Pair`, [12.4](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#819) in the KML
 /// specification
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct Pair {
     pub key: String,
     pub style_url: String,
@@ -38,7 +38,7 @@ pub struct Pair {
 
 /// `kml:BalloonStyle`, [12.7](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#841) in the
 /// KML specification
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BalloonStyle {
     pub id: String,
     pub bg_color: Option<String>,
@@ -61,7 +61,7 @@ impl Default for BalloonStyle {
 
 /// `kml:colorMode`, [12.11](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#879) in the
 /// KML specification
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ColorMode {
     Default,
     Random,
@@ -129,7 +129,7 @@ impl Default for IconStyle {
 /// specification.
 ///
 /// Implements on `kml:BasicLinkType`
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Icon {
     pub href: String,
 }
@@ -178,7 +178,7 @@ impl Default for LineStyle {
 
 /// `kml:PolyStyle`, [12.16](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#927) in the
 /// KML specification.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PolyStyle {
     pub id: String,
     pub color: String,
@@ -201,7 +201,7 @@ impl Default for PolyStyle {
 
 /// `kml:listItemType`, [12.18](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#955) in the
 /// KML specification.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ListItemType {
     Check,
     CheckOffOnly,
@@ -246,7 +246,7 @@ impl fmt::Display for ListItemType {
 
 /// `kml:ListStyle`, [12.17](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#940) in the
 /// KML specification.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ListStyle {
     pub id: String,
     pub bg_color: String,
