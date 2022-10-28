@@ -13,7 +13,8 @@ use crate::types::geom_props::GeomProps;
 use crate::types::{
     Alias, BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
     LineString, LineStyle, LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry,
-    Orientation, Pair, Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale, Style, StyleMap,
+    Orientation, Pair, Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale, SchemaData,
+    SimpleArrayData, SimpleData, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -97,6 +98,9 @@ where
             Kml::Link(l) => self.write_link(l)?,
             Kml::ResourceMap(r) => self.write_resource_map(r)?,
             Kml::Alias(a) => self.write_alias(a)?,
+            Kml::SchemaData(s) => self.write_schema_data(s)?,
+            Kml::SimpleArrayData(s) => self.write_simple_array_data(s)?,
+            Kml::SimpleData(s) => self.write_simple_data(s)?,
             Kml::Document { attrs, elements } => {
                 self.write_container(b"Document", attrs, elements)?
             }
@@ -516,6 +520,56 @@ where
             .write_event(Event::End(BytesEnd::borrowed(b"Alias")))?)
     }
 
+    fn write_schema_data(&mut self, schema_data: &SchemaData) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"SchemaData".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&schema_data.attrs)),
+        ))?;
+
+        for value in schema_data.data.iter() {
+            self.write_simple_data(value)?;
+        }
+
+        for value in schema_data.arrays.iter() {
+            self.write_simple_array_data(value)?;
+        }
+
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"SchemaData")))?)
+    }
+
+    fn write_simple_array_data(
+        &mut self,
+        simple_array_data: &SimpleArrayData,
+    ) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"SimpleArrayData".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&simple_array_data.attrs)),
+        ))?;
+
+        for value in simple_array_data.values.iter() {
+            self.write_text_element(b"value", value)?;
+        }
+
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"SimpleArrayData")))?)
+    }
+
+    fn write_simple_data(&mut self, simple_data: &SimpleData) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"SimpleData".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&simple_data.attrs)),
+        ))?;
+
+        self.writer.write(simple_data.value.as_bytes())?;
+
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::borrowed(b"SimpleData")))?)
+    }
+
     fn write_geometry(&mut self, geometry: &Geometry<T>) -> Result<(), Error> {
         match geometry {
             Geometry::Point(p) => self.write_point(p),
@@ -745,6 +799,63 @@ mod tests {
             <targetHref>../images/foo.jpg</targetHref>\
             <sourceHref>in-geometry-file/foo.jpg</sourceHref>\
         </Alias>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_schema_data() {
+        let kml: Kml<f64> = Kml::SchemaData(SchemaData {
+            data: vec![
+                SimpleData {
+                    value: "Pi in the sky".to_string(),
+                    attrs: [("name".to_string(), "TrailHeadName".to_string())]
+                        .iter()
+                        .cloned()
+                        .collect(),
+                },
+                SimpleData {
+                    value: "3.14159".to_string(),
+                    attrs: [("name".to_string(), "TrailLength".to_string())]
+                        .iter()
+                        .cloned()
+                        .collect(),
+                },
+            ],
+            arrays: vec![
+                SimpleArrayData {
+                    values: vec!["86".to_string(), "113".to_string(), "113".to_string()],
+                    attrs: [("name".to_string(), "cadence".to_string())]
+                        .iter()
+                        .cloned()
+                        .collect(),
+                },
+                SimpleArrayData {
+                    values: vec!["181".to_string()],
+                    attrs: [("name".to_string(), "heartrate".to_string())]
+                        .iter()
+                        .cloned()
+                        .collect(),
+                },
+            ],
+            attrs: [("schemaUrl".to_string(), "#TrailHeadTypeId".to_string())]
+                .iter()
+                .cloned()
+                .collect(),
+        });
+
+        let expected_string = "<SchemaData schemaUrl=\"#TrailHeadTypeId\">\
+            <SimpleData name=\"TrailHeadName\">Pi in the sky</SimpleData>\
+            <SimpleData name=\"TrailLength\">3.14159</SimpleData>\
+            <SimpleArrayData name=\"cadence\">\
+                <value>86</value>\
+                <value>113</value>\
+                <value>113</value>\
+            </SimpleArrayData>\
+            <SimpleArrayData name=\"heartrate\">\
+                <value>181</value>\
+            </SimpleArrayData>\
+        </SchemaData>";
+
         assert_eq!(expected_string, kml.to_string());
     }
 

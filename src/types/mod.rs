@@ -55,6 +55,10 @@ mod alias;
 
 pub use alias::Alias;
 
+mod data;
+
+pub use data::{SchemaData, SimpleArrayData, SimpleData};
+
 mod kml;
 
 pub use self::kml::{Kml, KmlDocument, KmlVersion};
