@@ -558,11 +558,19 @@ where
     }
 
     fn write_simple_data(&mut self, simple_data: &SimpleData) -> Result<(), Error> {
-        self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"SimpleData".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&simple_data.attrs)),
-        ))?;
+        let mut bytes_start = BytesStart::owned_name(b"SimpleData".to_vec())
+            .with_attributes(vec![("name", &*simple_data.name)]);
 
+        // Remove `name` attribute if present to avoid writing it twice
+        if simple_data.attrs.contains_key("name") {
+            let mut attrs_filtered = simple_data.attrs.clone();
+            attrs_filtered.remove("name");
+            bytes_start = bytes_start.with_attributes(self.hash_map_as_attrs(&attrs_filtered));
+        } else {
+            bytes_start = bytes_start.with_attributes(self.hash_map_as_attrs(&simple_data.attrs));
+        }
+
+        self.writer.write_event(Event::Start(bytes_start))?;
         self.writer.write(simple_data.value.as_bytes())?;
 
         Ok(self
@@ -807,15 +815,17 @@ mod tests {
         let kml: Kml<f64> = Kml::SchemaData(SchemaData {
             data: vec![
                 SimpleData {
+                    name: "TrailHeadName".to_string(),
                     value: "Pi in the sky".to_string(),
-                    attrs: [("name".to_string(), "TrailHeadName".to_string())]
+                    attrs: [("anyAttribute".to_string(), "anySimpleType".to_string())]
                         .iter()
                         .cloned()
                         .collect(),
                 },
                 SimpleData {
+                    name: "TrailLength".to_string(),
                     value: "3.14159".to_string(),
-                    attrs: [("name".to_string(), "TrailLength".to_string())]
+                    attrs: [("name".to_string(), "duplicate name attribute".to_string())]
                         .iter()
                         .cloned()
                         .collect(),
@@ -844,7 +854,7 @@ mod tests {
         });
 
         let expected_string = "<SchemaData schemaUrl=\"#TrailHeadTypeId\">\
-            <SimpleData name=\"TrailHeadName\">Pi in the sky</SimpleData>\
+            <SimpleData name=\"TrailHeadName\" anyAttribute=\"anySimpleType\">Pi in the sky</SimpleData>\
             <SimpleData name=\"TrailLength\">3.14159</SimpleData>\
             <SimpleArrayData name=\"cadence\">\
                 <value>86</value>\

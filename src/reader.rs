@@ -811,11 +811,20 @@ where
         Ok(simple_array_data)
     }
 
-    fn read_simple_data(&mut self, attrs: HashMap<String, String>) -> Result<SimpleData, Error> {
-        Ok(SimpleData {
-            value: self.read_str()?,
-            attrs,
-        })
+    fn read_simple_data(
+        &mut self,
+        mut attrs: HashMap<String, String>,
+    ) -> Result<SimpleData, Error> {
+        // Move required `name` attribute into designated field
+        if let Some(name) = attrs.remove("name") {
+            Ok(SimpleData {
+                name,
+                value: self.read_str()?,
+                attrs,
+            })
+        } else {
+            Err(Error::InvalidInput)
+        }
     }
 
     fn read_balloon_style(
@@ -1286,8 +1295,8 @@ mod tests {
     #[test]
     fn test_read_schema_data() {
         let kml_str = r###"<SchemaData schemaUrl="#TrailHeadTypeId">
-            <SimpleData name="TrailHeadName">Pi in the sky</SimpleData>
-            <SimpleData name="TrailLength">3.14159</SimpleData>
+            <SimpleData name="TrailHeadName" anyAttribute="anySimpleType">Pi in the sky</SimpleData>
+            <SimpleData name="TrailLength" anyAttribute="anySimpleType">3.14159</SimpleData>
             <SimpleArrayData name="cadence">
                 <value>86</value>
                 <value>113</value>
@@ -1304,15 +1313,17 @@ mod tests {
             Kml::SchemaData(SchemaData {
                 data: vec![
                     SimpleData {
+                        name: "TrailHeadName".to_string(),
                         value: "Pi in the sky".to_string(),
-                        attrs: [("name".to_string(), "TrailHeadName".to_string())]
+                        attrs: [("anyAttribute".to_string(), "anySimpleType".to_string())]
                             .iter()
                             .cloned()
                             .collect()
                     },
                     SimpleData {
+                        name: "TrailLength".to_string(),
                         value: "3.14159".to_string(),
-                        attrs: [("name".to_string(), "TrailLength".to_string())]
+                        attrs: [("anyAttribute".to_string(), "anySimpleType".to_string())]
                             .iter()
                             .cloned()
                             .collect()
