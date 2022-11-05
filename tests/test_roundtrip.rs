@@ -34,7 +34,7 @@ mod roundtrip_tests {
 
     // Confirms that parsing from KML and writing back doesn't drop any currently tracked data
     fn test_round_trip(file_path: &str) {
-        let mut file = File::open(&file_path).unwrap();
+        let mut file = File::open(file_path).unwrap();
         let mut file_contents = String::new();
         let _ = file.read_to_string(&mut file_contents);
 
