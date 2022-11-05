@@ -19,6 +19,7 @@ pub struct SimpleData {
 /// `kml:SimpleArrayData`, [9.7](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#177) in the KML specification.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SimpleArrayData {
+    pub name: String,
     pub values: Vec<String>,
     pub attrs: HashMap<String, String>,
 }

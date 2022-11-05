@@ -543,10 +543,20 @@ where
         &mut self,
         simple_array_data: &SimpleArrayData,
     ) -> Result<(), Error> {
-        self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"SimpleArrayData".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&simple_array_data.attrs)),
-        ))?;
+        let mut bytes_start = BytesStart::owned_name(b"SimpleArrayData".to_vec())
+            .with_attributes(vec![("name", &*simple_array_data.name)]);
+
+        // Remove `name` attribute if present to avoid writing it twice
+        if simple_array_data.attrs.contains_key("name") {
+            let mut attrs_filtered = simple_array_data.attrs.clone();
+            attrs_filtered.remove("name");
+            bytes_start = bytes_start.with_attributes(self.hash_map_as_attrs(&attrs_filtered));
+        } else {
+            bytes_start =
+                bytes_start.with_attributes(self.hash_map_as_attrs(&simple_array_data.attrs));
+        }
+
+        self.writer.write_event(Event::Start(bytes_start))?;
 
         for value in simple_array_data.values.iter() {
             self.write_text_element(b"value", value)?;
@@ -833,18 +843,17 @@ mod tests {
             ],
             arrays: vec![
                 SimpleArrayData {
+                    name: "cadence".to_string(),
                     values: vec!["86".to_string(), "113".to_string(), "113".to_string()],
-                    attrs: [("name".to_string(), "cadence".to_string())]
+                    attrs: [("anyAttribute".to_string(), "anySimpleType".to_string())]
                         .iter()
                         .cloned()
                         .collect(),
                 },
                 SimpleArrayData {
+                    name: "heartrate".to_string(),
                     values: vec!["181".to_string()],
-                    attrs: [("name".to_string(), "heartrate".to_string())]
-                        .iter()
-                        .cloned()
-                        .collect(),
+                    ..Default::default()
                 },
             ],
             attrs: [("schemaUrl".to_string(), "#TrailHeadTypeId".to_string())]
@@ -856,7 +865,7 @@ mod tests {
         let expected_string = "<SchemaData schemaUrl=\"#TrailHeadTypeId\">\
             <SimpleData name=\"TrailHeadName\" anyAttribute=\"anySimpleType\">Pi in the sky</SimpleData>\
             <SimpleData name=\"TrailLength\">3.14159</SimpleData>\
-            <SimpleArrayData name=\"cadence\">\
+            <SimpleArrayData name=\"cadence\" anyAttribute=\"anySimpleType\">\
                 <value>86</value>\
                 <value>113</value>\
                 <value>113</value>\

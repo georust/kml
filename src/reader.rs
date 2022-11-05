@@ -784,12 +784,17 @@ where
 
     fn read_simple_array_data(
         &mut self,
-        attrs: HashMap<String, String>,
+        mut attrs: HashMap<String, String>,
     ) -> Result<SimpleArrayData, Error> {
-        let mut simple_array_data = SimpleArrayData {
-            attrs,
-            ..Default::default()
-        };
+        let mut simple_array_data = SimpleArrayData::default();
+
+        // Move required `name` attribute into designated field
+        if let Some(name) = attrs.remove("name") {
+            simple_array_data.name = name;
+            simple_array_data.attrs = attrs;
+        } else {
+            return Err(Error::InvalidInput);
+        }
 
         loop {
             let e = self.reader.read_event(&mut self.buf)?;
@@ -1297,7 +1302,7 @@ mod tests {
         let kml_str = r###"<SchemaData schemaUrl="#TrailHeadTypeId">
             <SimpleData name="TrailHeadName" anyAttribute="anySimpleType">Pi in the sky</SimpleData>
             <SimpleData name="TrailLength" anyAttribute="anySimpleType">3.14159</SimpleData>
-            <SimpleArrayData name="cadence">
+            <SimpleArrayData name="cadence" anyAttribute="anySimpleType">
                 <value>86</value>
                 <value>113</value>
                 <value>113</value>
@@ -1331,18 +1336,17 @@ mod tests {
                 ],
                 arrays: vec![
                     SimpleArrayData {
+                        name: "cadence".to_string(),
                         values: vec!["86".to_string(), "113".to_string(), "113".to_string()],
-                        attrs: [("name".to_string(), "cadence".to_string())]
+                        attrs: [("anyAttribute".to_string(), "anySimpleType".to_string())]
                             .iter()
                             .cloned()
                             .collect()
                     },
                     SimpleArrayData {
+                        name: "heartrate".to_string(),
                         values: vec!["181".to_string()],
-                        attrs: [("name".to_string(), "heartrate".to_string())]
-                            .iter()
-                            .cloned()
-                            .collect()
+                        ..Default::default()
                     },
                 ],
                 attrs: [("schemaUrl".to_string(), "#TrailHeadTypeId".to_string())]
