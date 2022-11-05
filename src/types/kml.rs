@@ -5,7 +5,8 @@ use crate::errors::Error;
 use crate::types::{
     Alias, BalloonStyle, CoordType, Element, Icon, IconStyle, LabelStyle, LineString, LineStyle,
     LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair,
-    Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale, Style, StyleMap,
+    Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale, SchemaData, SimpleArrayData,
+    SimpleData, Style, StyleMap,
 };
 
 /// Enum for representing the KML version being parsed
@@ -86,5 +87,8 @@ pub enum Kml<T: CoordType = f64> {
     Link(Link),
     ResourceMap(ResourceMap),
     Alias(Alias),
+    SchemaData(SchemaData),
+    SimpleArrayData(SimpleArrayData),
+    SimpleData(SimpleData),
     Element(Element),
 }

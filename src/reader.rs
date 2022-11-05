@@ -18,8 +18,8 @@ use crate::types::{
     self, coords_from_str, Alias, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry,
     Icon, IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
     Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point,
-    PolyStyle, Polygon, RefreshMode, ResourceMap, Scale, Style, StyleMap, Units, Vec2,
-    ViewRefreshMode,
+    PolyStyle, Polygon, RefreshMode, ResourceMap, Scale, SchemaData, SimpleArrayData, SimpleData,
+    Style, StyleMap, Units, Vec2, ViewRefreshMode,
 };
 
 /// Main struct for reading KML documents
@@ -167,6 +167,15 @@ where
                             elements.push(Kml::ResourceMap(self.read_resource_map(attrs)?))
                         }
                         b"Alias" => elements.push(Kml::Alias(self.read_alias(attrs)?)),
+                        b"SchemaData" => {
+                            elements.push(Kml::SchemaData(self.read_schema_data(attrs)?))
+                        }
+                        b"SimpleArrayData" => {
+                            elements.push(Kml::SimpleArrayData(self.read_simple_array_data(attrs)?))
+                        }
+                        b"SimpleData" => {
+                            elements.push(Kml::SimpleData(self.read_simple_data(attrs)?))
+                        }
                         b"LabelStyle" => {
                             elements.push(Kml::LabelStyle(self.read_label_style(attrs)?))
                         }
@@ -737,6 +746,92 @@ where
         Ok(alias)
     }
 
+    fn read_schema_data(&mut self, attrs: HashMap<String, String>) -> Result<SchemaData, Error> {
+        let mut schema_data = SchemaData {
+            attrs,
+            ..Default::default()
+        };
+
+        loop {
+            let e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(e) => match e.local_name() {
+                    b"SimpleData" => {
+                        let attrs = Self::read_attrs(e.attributes());
+                        if let Ok(simple_data) = self.read_simple_data(attrs) {
+                            schema_data.data.push(simple_data);
+                        }
+                    }
+                    b"SimpleArrayData" => {
+                        let attrs = Self::read_attrs(e.attributes());
+                        if let Ok(simple_array_data) = self.read_simple_array_data(attrs) {
+                            schema_data.arrays.push(simple_array_data);
+                        }
+                    }
+                    _ => {}
+                },
+                Event::End(e) => {
+                    if e.local_name() == b"SchemaData" {
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        Ok(schema_data)
+    }
+
+    fn read_simple_array_data(
+        &mut self,
+        mut attrs: HashMap<String, String>,
+    ) -> Result<SimpleArrayData, Error> {
+        let mut simple_array_data = SimpleArrayData::default();
+
+        // Move required `name` attribute into designated field
+        if let Some(name) = attrs.remove("name") {
+            simple_array_data.name = name;
+            simple_array_data.attrs = attrs;
+        } else {
+            return Err(Error::InvalidInput);
+        }
+
+        loop {
+            let e = self.reader.read_event(&mut self.buf)?;
+            match e {
+                Event::Start(e) => {
+                    if let b"value" = e.local_name() {
+                        simple_array_data.values.push(self.read_str()?);
+                    }
+                }
+                Event::End(e) => {
+                    if e.local_name() == b"SimpleArrayData" {
+                        break;
+                    }
+                }
+                _ => break,
+            }
+        }
+
+        Ok(simple_array_data)
+    }
+
+    fn read_simple_data(
+        &mut self,
+        mut attrs: HashMap<String, String>,
+    ) -> Result<SimpleData, Error> {
+        // Move required `name` attribute into designated field
+        if let Some(name) = attrs.remove("name") {
+            Ok(SimpleData {
+                name,
+                value: self.read_str()?,
+                attrs,
+            })
+        } else {
+            Err(Error::InvalidInput)
+        }
+    }
+
     fn read_balloon_style(
         &mut self,
         attrs: HashMap<String, String>,
@@ -1198,6 +1293,66 @@ mod tests {
                 target_href: Some("../images/foo.jpg".to_string()),
                 source_href: Some("in-geometry-file/foo.jpg".to_string()),
                 attrs,
+            })
+        );
+    }
+
+    #[test]
+    fn test_read_schema_data() {
+        let kml_str = r###"<SchemaData schemaUrl="#TrailHeadTypeId">
+            <SimpleData name="TrailHeadName" anyAttribute="anySimpleType">Pi in the sky</SimpleData>
+            <SimpleData name="TrailLength" anyAttribute="anySimpleType">3.14159</SimpleData>
+            <SimpleArrayData name="cadence" anyAttribute="anySimpleType">
+                <value>86</value>
+                <value>113</value>
+                <value>113</value>
+            </SimpleArrayData>
+            <SimpleArrayData name="heartrate">
+                <value>181</value>
+            </SimpleArrayData>
+        </SchemaData>"###;
+
+        let a: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            a,
+            Kml::SchemaData(SchemaData {
+                data: vec![
+                    SimpleData {
+                        name: "TrailHeadName".to_string(),
+                        value: "Pi in the sky".to_string(),
+                        attrs: [("anyAttribute".to_string(), "anySimpleType".to_string())]
+                            .iter()
+                            .cloned()
+                            .collect()
+                    },
+                    SimpleData {
+                        name: "TrailLength".to_string(),
+                        value: "3.14159".to_string(),
+                        attrs: [("anyAttribute".to_string(), "anySimpleType".to_string())]
+                            .iter()
+                            .cloned()
+                            .collect()
+                    },
+                ],
+                arrays: vec![
+                    SimpleArrayData {
+                        name: "cadence".to_string(),
+                        values: vec!["86".to_string(), "113".to_string(), "113".to_string()],
+                        attrs: [("anyAttribute".to_string(), "anySimpleType".to_string())]
+                            .iter()
+                            .cloned()
+                            .collect()
+                    },
+                    SimpleArrayData {
+                        name: "heartrate".to_string(),
+                        values: vec!["181".to_string()],
+                        ..Default::default()
+                    },
+                ],
+                attrs: [("schemaUrl".to_string(), "#TrailHeadTypeId".to_string())]
+                    .iter()
+                    .cloned()
+                    .collect(),
             })
         );
     }
