@@ -136,11 +136,15 @@ where
     }
 
     fn write_point(&mut self, point: &Point<T>) -> Result<(), Error> {
-        self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Point".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&point.attrs)),
-        ))?;
-        self.write_container(b"data", &point.attrs, &[]);
+        self.writer
+            .write_event(Event::Start(BytesStart::owned_name(b"Point".to_vec())))?;
+        self.writer
+            .write_event(Event::Start(BytesStart::owned_name(b"data".to_vec())))?;
+        for a in &point.attrs {
+            self.write_text_element(a.0.as_bytes(), a.1)?;
+        }
+        self.writer
+            .write_event(Event::End(BytesEnd::owned(b"data".to_vec())))?;
         /*
         let start = BytesStart::borrowed_name(e.name.as_bytes())
          .with_attributes(self.hash_map_as_attrs(&e.attrs));
