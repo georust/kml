@@ -140,6 +140,7 @@ where
             BytesStart::owned_name(b"Point".to_vec())
                 .with_attributes(self.hash_map_as_attrs(&point.attrs)),
         ))?;
+        self.write_container(b"data", &point.attrs, &[]);
         /*
         let start = BytesStart::borrowed_name(e.name.as_bytes())
          .with_attributes(self.hash_map_as_attrs(&e.attrs));
