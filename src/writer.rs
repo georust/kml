@@ -266,6 +266,20 @@ where
         if let Some(geometry) = &placemark.geometry {
             self.write_geometry(geometry)?;
         }
+
+        // START DATA ELEMENTS
+        self.writer
+            .write_event(Event::Start(BytesStart::owned_name(
+                b"ExtendedData".to_vec(),
+            )))?;
+        for a in &placemark.attrs {
+            self.write_text_element(b"data", a.0)?;
+            self.write_text_element(b"value", a.1)?;
+        }
+        self.writer
+            .write_event(Event::End(BytesEnd::owned(b"ExtendedData".to_vec())))?;
+        // END DATA ELEMENTS
+
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::borrowed(b"Placemark")))?)
