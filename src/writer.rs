@@ -141,6 +141,7 @@ where
         self.write_text_element(b"extrude", if point.extrude { "1" } else { "0" })?;
         self.write_text_element(b"altitudeMode", &point.altitude_mode.to_string())?;
         self.write_text_element(b"coordinates", &point.coord.to_string())?;
+        self.hash_map_as_attrs(&point.attrs);
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::owned(b"Point".to_vec())))?)
