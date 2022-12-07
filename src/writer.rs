@@ -1,6 +1,7 @@
 //! Module for writing KML types
 use std::collections::HashMap;
 use std::fmt;
+use std::hash::Hash;
 use std::io::Write;
 use std::marker::PhantomData;
 use std::str;
@@ -267,18 +268,21 @@ where
             self.write_geometry(geometry)?;
         }
 
-        // START DATA ELEMENTS
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(
                 b"ExtendedData".to_vec(),
             )))?;
         for a in &placemark.attrs {
-            self.write_text_element(b"data", a.0)?;
-            self.write_text_element(b"value", a.1)?;
+            self.writer.write_event(Event::Start(
+                BytesStart::owned_name(b"ExtendedData".to_vec()).with_attributes(
+                    self.hash_map_as_attrs(&HashMap::from([("name".to_string(), a.0.to_owned())])),
+                ),
+            ))?;
+            self.writer
+                .write_event(Event::End(BytesEnd::owned(b"Data".to_vec())))?;
         }
         self.writer
             .write_event(Event::End(BytesEnd::owned(b"ExtendedData".to_vec())))?;
-        // END DATA ELEMENTS
 
         Ok(self
             .writer
