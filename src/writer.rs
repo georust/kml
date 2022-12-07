@@ -264,10 +264,6 @@ where
         for c in placemark.children.iter() {
             self.write_element(c)?;
         }
-        if let Some(geometry) = &placemark.geometry {
-            self.write_geometry(geometry)?;
-        }
-
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(
                 b"ExtendedData".to_vec(),
@@ -284,6 +280,9 @@ where
         }
         self.writer
             .write_event(Event::End(BytesEnd::owned(b"ExtendedData".to_vec())))?;
+        if let Some(geometry) = &placemark.geometry {
+            self.write_geometry(geometry)?;
+        }
 
         Ok(self
             .writer
