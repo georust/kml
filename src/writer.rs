@@ -274,10 +274,11 @@ where
             )))?;
         for a in &placemark.attrs {
             self.writer.write_event(Event::Start(
-                BytesStart::owned_name(b"ExtendedData".to_vec()).with_attributes(
+                BytesStart::owned_name(b"Data".to_vec()).with_attributes(
                     self.hash_map_as_attrs(&HashMap::from([("name".to_string(), a.0.to_owned())])),
                 ),
             ))?;
+            self.write_text_element(b"value", a.1)?;
             self.writer
                 .write_event(Event::End(BytesEnd::owned(b"Data".to_vec())))?;
         }
