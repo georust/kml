@@ -138,13 +138,20 @@ where
     fn write_point(&mut self, point: &Point<T>) -> Result<(), Error> {
         self.writer
             .write_event(Event::Start(BytesStart::owned_name(b"Point".to_vec())))?;
+
+        // START DATA ELEMENTS
         self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"data".to_vec())))?;
+            .write_event(Event::Start(BytesStart::owned_name(
+                b"ExtendedData".to_vec(),
+            )))?;
         for a in &point.attrs {
-            self.write_text_element(a.0.as_bytes(), a.1)?;
+            self.write_text_element(b"data", a.0)?;
+            self.write_text_element(b"value", a.1)?;
         }
         self.writer
-            .write_event(Event::End(BytesEnd::owned(b"data".to_vec())))?;
+            .write_event(Event::End(BytesEnd::owned(b"ExtendedData".to_vec())))?;
+        // END DATA ELEMENTS
+
         self.write_text_element(b"extrude", if point.extrude { "1" } else { "0" })?;
         self.write_text_element(b"altitudeMode", &point.altitude_mode.to_string())?;
         self.write_text_element(b"coordinates", &point.coord.to_string())?;
