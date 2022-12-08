@@ -17,6 +17,7 @@ use crate::types::{
     Coord, CoordType, Geometry, Kml, LineString, LinearRing, MultiGeometry, Point, Polygon,
 };
 
+#[allow(deprecated)]
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<geo_types::Coordinate<T>> for Coord<T>
 where
@@ -27,6 +28,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<Coord<T>> for geo_types::Coordinate<T>
 where
@@ -37,6 +39,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<geo_types::Point<T>> for Point<T>
 where
@@ -47,6 +50,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<Point<T>> for geo_types::Point<T>
 where
@@ -82,6 +86,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<LineString<T>> for geo_types::LineString<T>
 where
@@ -97,6 +102,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<geo_types::LineString<T>> for LinearRing<T>
 where
@@ -112,6 +118,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 impl<T> From<LinearRing<T>> for geo_types::LineString<T>
 where
