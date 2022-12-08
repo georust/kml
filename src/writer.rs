@@ -112,8 +112,10 @@ where
     }
 
     fn write_scale(&mut self, scale: &Scale<T>) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"Scale".to_vec())))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Scale".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&scale.attrs)),
+        ))?;
         self.write_text_element(b"x", &scale.x.to_string())?;
         self.write_text_element(b"y", &scale.y.to_string())?;
         self.write_text_element(b"z", &scale.z.to_string())?;
@@ -123,10 +125,10 @@ where
     }
 
     fn write_orientation(&mut self, orientation: &Orientation<T>) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(
-                b"Orientation".to_vec(),
-            )))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Orientation".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&orientation.attrs)),
+        ))?;
         self.write_text_element(b"roll", &orientation.roll.to_string())?;
         self.write_text_element(b"tilt", &orientation.tilt.to_string())?;
         self.write_text_element(b"heading", &orientation.heading.to_string())?;
@@ -136,8 +138,10 @@ where
     }
 
     fn write_point(&mut self, point: &Point<T>) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"Point".to_vec())))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Point".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&point.attrs)),
+        ))?;
         self.write_text_element(b"extrude", if point.extrude { "1" } else { "0" })?;
         self.write_text_element(b"altitudeMode", &point.altitude_mode.to_string())?;
         self.write_text_element(b"coordinates", &point.coord.to_string())?;
@@ -147,8 +151,10 @@ where
     }
 
     fn write_location(&mut self, location: &Location<T>) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"Location".to_vec())))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Location".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&location.attrs)),
+        ))?;
         self.write_text_element(b"longitude", &location.longitude.to_string())?;
         self.write_text_element(b"latitude", &location.latitude.to_string())?;
         self.write_text_element(b"altitude", &location.altitude.to_string())?;
@@ -158,8 +164,10 @@ where
     }
 
     fn write_line_string(&mut self, line_string: &LineString<T>) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"LineString".to_vec())))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"LineString".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&line_string.attrs)),
+        ))?;
         // TODO: Avoid clone here?
         self.write_geom_props(GeomProps {
             coords: line_string.coords.clone(),
@@ -173,8 +181,10 @@ where
     }
 
     fn write_linear_ring(&mut self, linear_ring: &LinearRing<T>) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"LinearRing".to_vec())))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"LinearRing".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&linear_ring.attrs)),
+        ))?;
         self.write_geom_props(GeomProps {
             // TODO: Avoid clone if possible
             coords: linear_ring.coords.clone(),
@@ -237,8 +247,10 @@ where
     }
 
     fn write_placemark(&mut self, placemark: &Placemark<T>) -> Result<(), Error> {
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"Placemark".to_vec())))?;
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"Placemark".to_vec())
+                .with_attributes(self.hash_map_as_attrs(&placemark.attrs)),
+        ))?;
         if let Some(name) = &placemark.name {
             self.write_text_element(b"name", name)?;
         }
@@ -543,20 +555,12 @@ where
         &mut self,
         simple_array_data: &SimpleArrayData,
     ) -> Result<(), Error> {
-        let mut bytes_start = BytesStart::owned_name(b"SimpleArrayData".to_vec())
-            .with_attributes(vec![("name", &*simple_array_data.name)]);
-
-        // Remove `name` attribute if present to avoid writing it twice
-        if simple_array_data.attrs.contains_key("name") {
-            let mut attrs_filtered = simple_array_data.attrs.clone();
-            attrs_filtered.remove("name");
-            bytes_start = bytes_start.with_attributes(self.hash_map_as_attrs(&attrs_filtered));
-        } else {
-            bytes_start =
-                bytes_start.with_attributes(self.hash_map_as_attrs(&simple_array_data.attrs));
-        }
-
-        self.writer.write_event(Event::Start(bytes_start))?;
+        let filter_attrs = HashMap::from([("name".to_string(), simple_array_data.name.clone())]);
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"SimpleArrayData".to_vec()).with_attributes(
+                self.hash_map_as_attrs_filtered(&simple_array_data.attrs, &filter_attrs),
+            ),
+        ))?;
 
         for value in simple_array_data.values.iter() {
             self.write_text_element(b"value", value)?;
@@ -568,19 +572,13 @@ where
     }
 
     fn write_simple_data(&mut self, simple_data: &SimpleData) -> Result<(), Error> {
-        let mut bytes_start = BytesStart::owned_name(b"SimpleData".to_vec())
-            .with_attributes(vec![("name", &*simple_data.name)]);
+        let filter_attrs = HashMap::from([("name".to_string(), simple_data.name.clone())]);
+        self.writer.write_event(Event::Start(
+            BytesStart::owned_name(b"SimpleData".to_vec()).with_attributes(
+                self.hash_map_as_attrs_filtered(&simple_data.attrs, &filter_attrs),
+            ),
+        ))?;
 
-        // Remove `name` attribute if present to avoid writing it twice
-        if simple_data.attrs.contains_key("name") {
-            let mut attrs_filtered = simple_data.attrs.clone();
-            attrs_filtered.remove("name");
-            bytes_start = bytes_start.with_attributes(self.hash_map_as_attrs(&attrs_filtered));
-        } else {
-            bytes_start = bytes_start.with_attributes(self.hash_map_as_attrs(&simple_data.attrs));
-        }
-
-        self.writer.write_event(Event::Start(bytes_start))?;
         self.writer.write(simple_data.value.as_bytes())?;
 
         Ok(self
@@ -648,6 +646,23 @@ where
     fn hash_map_as_attrs(&self, hash_map: &'a HashMap<String, String>) -> Vec<(&'a str, &'a str)> {
         hash_map
             .iter()
+            .map(|(k, v)| (&k[..], &v[..]))
+            .collect::<Vec<(&str, &str)>>()
+    }
+
+    fn hash_map_as_attrs_filtered(
+        &self,
+        hash_map: &'a HashMap<String, String>,
+        filter_hash_map: &'a HashMap<String, String>,
+    ) -> Vec<(&'a str, &'a str)> {
+        // Filter out select props like id/name so that we include them first in order
+        filter_hash_map
+            .iter()
+            .chain(
+                hash_map
+                    .iter()
+                    .filter(|(k, _)| !filter_hash_map.contains_key(&k.to_string())),
+            )
             .map(|(k, v)| (&k[..], &v[..]))
             .collect::<Vec<(&str, &str)>>()
     }
