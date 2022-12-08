@@ -144,19 +144,6 @@ where
         self.write_text_element(b"altitudeMode", &point.altitude_mode.to_string())?;
         self.write_text_element(b"coordinates", &point.coord.to_string())?;
 
-        // START DATA ELEMENTS
-        self.writer
-            .write_event(Event::Start(BytesStart::owned_name(
-                b"ExtendedData".to_vec(),
-            )))?;
-        for a in &point.attrs {
-            self.write_text_element(b"data", a.0)?;
-            self.write_text_element(b"value", a.1)?;
-        }
-        self.writer
-            .write_event(Event::End(BytesEnd::owned(b"ExtendedData".to_vec())))?;
-        // END DATA ELEMENTS
-
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::owned(b"Point".to_vec())))?)
