@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## [v0.6.0](https://github.com/georust/kml/releases/tag/v0.6.0)
+
+- Ignored deprecated code warnings for `geo_types::Coordinate` since we're supporting multiple versions of `geo-types` ([#40](https://github.com/georust/kml/pull/40))
+- Fixed attributes not being written for `kml:Scale`, `kml:Orientation`, `kml:Point`, `kml:Location`, `kml:LineString`, `kml:LinearRing`, and `kml:Placemark`  ([#38](https://github.com/georust/kml/pull/38))
+- Made license field SPDX compliant ([#36](https://github.com/georust/kml/pull/36))
+- Added `kml:SchemaData`, `kml:SimpleData`, and `kml:SimpleArrayData` ([#35](https://github.com/georust/kml/pull/35)) from [@k-mack](https://github.com/k-mack)
+- Fix clippy warnings from stable Rust 1.63.0 ([#31](https://github.com/georust/kml/pull/31)) from [@k-mack](https://github.com/k-mack)
+- Added `kml:Alias` and `kml:ResourceMap` ([#29](https://github.com/georust/kml/pull/29)) from [@k-mack](https://github.com/k-mack)
+
 ## [v0.5.0](https://github.com/georust/kml/releases/tag/v0.5.0)
 
 - Run tests without default features ([#26](https://github.com/georust/kml/pull/26))
