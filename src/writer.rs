@@ -285,8 +285,17 @@ where
     }
 
     fn write_style(&mut self, style: &Style) -> Result<(), Error> {
+        let attrs = if let Some(id) = &style.id {
+            vec![("id", id.as_ref())]
+        } else {
+            vec![]
+        };
+        let attrs: Vec<(&str, &str)> = attrs
+            .into_iter()
+            .chain(self.hash_map_as_attrs(&style.attrs))
+            .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Style".to_vec()).with_attributes(vec![("id", &*style.id)]),
+            BytesStart::owned_name(b"Style".to_vec()).with_attributes(attrs),
         ))?;
         if let Some(balloon) = &style.balloon {
             self.write_balloon_style(balloon)?;
@@ -312,9 +321,17 @@ where
     }
 
     fn write_style_map(&mut self, style_map: &StyleMap) -> Result<(), Error> {
+        let attrs = if let Some(id) = &style_map.id {
+            vec![("id", id.as_ref())]
+        } else {
+            vec![]
+        };
+        let attrs: Vec<(&str, &str)> = attrs
+            .into_iter()
+            .chain(self.hash_map_as_attrs(&style_map.attrs))
+            .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"StyleMap".to_vec())
-                .with_attributes(vec![("id", &*style_map.id)]),
+            BytesStart::owned_name(b"StyleMap".to_vec()).with_attributes(attrs),
         ))?;
         for p in style_map.pairs.iter() {
             self.write_pair(p)?;
@@ -337,9 +354,17 @@ where
     }
 
     fn write_balloon_style(&mut self, balloon_style: &BalloonStyle) -> Result<(), Error> {
+        let attrs = if let Some(id) = &balloon_style.id {
+            vec![("id", id.as_ref())]
+        } else {
+            vec![]
+        };
+        let attrs: Vec<(&str, &str)> = attrs
+            .into_iter()
+            .chain(self.hash_map_as_attrs(&balloon_style.attrs))
+            .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"BalloonStyle".to_vec())
-                .with_attributes(vec![("id", &*balloon_style.id)]),
+            BytesStart::owned_name(b"BalloonStyle".to_vec()).with_attributes(attrs),
         ))?;
         if let Some(bg_color) = &balloon_style.bg_color {
             self.write_text_element(b"bgColor", bg_color)?;
@@ -357,9 +382,17 @@ where
     }
 
     fn write_icon_style(&mut self, icon_style: &IconStyle) -> Result<(), Error> {
+        let attrs = if let Some(id) = &icon_style.id {
+            vec![("id", id.as_ref())]
+        } else {
+            vec![]
+        };
+        let attrs: Vec<(&str, &str)> = attrs
+            .into_iter()
+            .chain(self.hash_map_as_attrs(&icon_style.attrs))
+            .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"IconStyle".to_vec())
-                .with_attributes(vec![("id", &*icon_style.id)]),
+            BytesStart::owned_name(b"IconStyle".to_vec()).with_attributes(attrs),
         ))?;
         self.write_text_element(b"scale", &icon_style.scale.to_string())?;
         self.write_text_element(b"heading", &icon_style.heading.to_string())?;
@@ -393,9 +426,17 @@ where
     }
 
     fn write_label_style(&mut self, label_style: &LabelStyle) -> Result<(), Error> {
+        let attrs = if let Some(id) = &label_style.id {
+            vec![("id", id.as_ref())]
+        } else {
+            vec![]
+        };
+        let attrs: Vec<(&str, &str)> = attrs
+            .into_iter()
+            .chain(self.hash_map_as_attrs(&label_style.attrs))
+            .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"LabelStyle".to_vec())
-                .with_attributes(vec![("id", &*label_style.id)]),
+            BytesStart::owned_name(b"LabelStyle".to_vec()).with_attributes(attrs),
         ))?;
         self.write_text_element(b"color", &label_style.color)?;
         self.write_text_element(b"colorMode", &label_style.color_mode.to_string())?;
@@ -406,9 +447,17 @@ where
     }
 
     fn write_line_style(&mut self, line_style: &LineStyle) -> Result<(), Error> {
+        let attrs = if let Some(id) = &line_style.id {
+            vec![("id", id.as_ref())]
+        } else {
+            vec![]
+        };
+        let attrs: Vec<(&str, &str)> = attrs
+            .into_iter()
+            .chain(self.hash_map_as_attrs(&line_style.attrs))
+            .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"LineStyle".to_vec())
-                .with_attributes(vec![("id", &*line_style.id)]),
+            BytesStart::owned_name(b"LineStyle".to_vec()).with_attributes(attrs),
         ))?;
         self.write_text_element(b"color", &line_style.color)?;
         self.write_text_element(b"colorMode", &line_style.color_mode.to_string())?;
@@ -419,9 +468,17 @@ where
     }
 
     fn write_poly_style(&mut self, poly_style: &PolyStyle) -> Result<(), Error> {
+        let attrs = if let Some(id) = &poly_style.id {
+            vec![("id", id.as_ref())]
+        } else {
+            vec![]
+        };
+        let attrs: Vec<(&str, &str)> = attrs
+            .into_iter()
+            .chain(self.hash_map_as_attrs(&poly_style.attrs))
+            .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"PolyStyle".to_vec())
-                .with_attributes(vec![("id", &*poly_style.id)]),
+            BytesStart::owned_name(b"PolyStyle".to_vec()).with_attributes(attrs),
         ))?;
         self.write_text_element(b"color", &poly_style.color)?;
         self.write_text_element(b"colorMode", &poly_style.color_mode.to_string())?;
@@ -433,9 +490,17 @@ where
     }
 
     fn write_list_style(&mut self, list_style: &ListStyle) -> Result<(), Error> {
+        let attrs = if let Some(id) = &list_style.id {
+            vec![("id", id.as_ref())]
+        } else {
+            vec![]
+        };
+        let attrs: Vec<(&str, &str)> = attrs
+            .into_iter()
+            .chain(self.hash_map_as_attrs(&list_style.attrs))
+            .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"ListStyle".to_vec())
-                .with_attributes(vec![("id", &*list_style.id)]),
+            BytesStart::owned_name(b"ListStyle".to_vec()).with_attributes(attrs),
         ))?;
         self.write_text_element(b"bgColor", &list_style.bg_color)?;
         self.write_text_element(
@@ -962,6 +1027,20 @@ mod tests {
 -1.5,3,0
 -1.5,2,0
 -1,2,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"#,
+            kml.to_string()
+        );
+    }
+
+    #[test]
+    fn test_write_style_map() {
+        let kml: Kml = Kml::StyleMap(StyleMap {
+            id: Some("id".to_string()),
+            attrs: HashMap::from([("test".to_string(), "test".to_string())]),
+            ..Default::default()
+        });
+
+        assert_eq!(
+            r#"<StyleMap id="id" test="test"></StyleMap>"#,
             kml.to_string()
         );
     }
