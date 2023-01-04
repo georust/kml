@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- BREAKING: Updates `Style`, `StyleMap`, `BalloonStyle`, `IconStyle`, `Icon`, `LabelStyle`, `LineStyle`, `PolyStyle`, and `ListStyle` by adding public `attrs` property and changes type of `id` from `String` to `Option<String>` to more closely reflect the specification.
+
 ## [v0.6.0](https://github.com/georust/kml/releases/tag/v0.6.0)
 
 - Ignored deprecated code warnings for `geo_types::Coordinate` since we're supporting multiple versions of `geo-types` ([#40](https://github.com/georust/kml/pull/40))

@@ -460,11 +460,12 @@ where
         })
     }
 
-    fn read_style(&mut self, attrs: HashMap<String, String>) -> Result<Style, Error> {
-        let mut style = Style::default();
-        if let Some(id_str) = attrs.get("id") {
-            style.id = id_str.to_string();
-        }
+    fn read_style(&mut self, mut attrs: HashMap<String, String>) -> Result<Style, Error> {
+        let mut style = Style {
+            id: attrs.remove("id"),
+            attrs,
+            ..Default::default()
+        };
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -491,11 +492,12 @@ where
         Ok(style)
     }
 
-    fn read_style_map(&mut self, attrs: HashMap<String, String>) -> Result<StyleMap, Error> {
-        let mut style_map = StyleMap::default();
-        if let Some(id_str) = attrs.get("id") {
-            style_map.id = id_str.to_string();
-        }
+    fn read_style_map(&mut self, mut attrs: HashMap<String, String>) -> Result<StyleMap, Error> {
+        let mut style_map = StyleMap {
+            id: attrs.remove("id"),
+            attrs,
+            ..Default::default()
+        };
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -541,49 +543,52 @@ where
         Ok(pair)
     }
 
-    fn read_icon_style(&mut self, attrs: HashMap<String, String>) -> Result<IconStyle, Error> {
-        let mut icon_style = IconStyle::default();
-        if let Some(id_str) = attrs.get("id") {
-            icon_style.id = id_str.to_string();
-        }
+    fn read_icon_style(&mut self, mut attrs: HashMap<String, String>) -> Result<IconStyle, Error> {
+        let mut icon_style = IconStyle {
+            id: attrs.remove("id"),
+            attrs,
+            ..Default::default()
+        };
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
-                    b"scale" => icon_style.scale = self.read_float()?,
-                    b"heading" => icon_style.heading = self.read_float()?,
-                    b"hot_spot" => {
-                        let hot_spot_attrs = Self::read_attrs(e.attributes());
-                        let x_val = hot_spot_attrs.get("x");
-                        let y_val = hot_spot_attrs.get("y");
-                        let xunits = hot_spot_attrs.get("xunits");
-                        let yunits = hot_spot_attrs.get("yunits");
-                        if let (Some(x_str), Some(y_str)) = (x_val, y_val) {
-                            let x: f64 = x_str
-                                .parse()
-                                .map_err(|_| Error::NumParse(x_str.to_string()))?;
-                            let y: f64 = y_str
-                                .parse()
-                                .map_err(|_| Error::NumParse(y_str.to_string()))?;
-                            let xunits = xunits
-                                .map_or_else(|| Ok(Units::default()), |units| units.parse())?;
-                            let yunits = yunits
-                                .map_or_else(|| Ok(Units::default()), |units| units.parse())?;
-                            icon_style.hot_spot = Some(Vec2 {
-                                x,
-                                y,
-                                xunits,
-                                yunits,
-                            });
+                Event::Start(ref mut e) => {
+                    let attrs = Self::read_attrs(e.attributes());
+                    match e.local_name() {
+                        b"scale" => icon_style.scale = self.read_float()?,
+                        b"heading" => icon_style.heading = self.read_float()?,
+                        b"hot_spot" => {
+                            let x_val = attrs.get("x");
+                            let y_val = attrs.get("y");
+                            let xunits = attrs.get("xunits");
+                            let yunits = attrs.get("yunits");
+                            if let (Some(x_str), Some(y_str)) = (x_val, y_val) {
+                                let x: f64 = x_str
+                                    .parse()
+                                    .map_err(|_| Error::NumParse(x_str.to_string()))?;
+                                let y: f64 = y_str
+                                    .parse()
+                                    .map_err(|_| Error::NumParse(y_str.to_string()))?;
+                                let xunits = xunits
+                                    .map_or_else(|| Ok(Units::default()), |units| units.parse())?;
+                                let yunits = yunits
+                                    .map_or_else(|| Ok(Units::default()), |units| units.parse())?;
+                                icon_style.hot_spot = Some(Vec2 {
+                                    x,
+                                    y,
+                                    xunits,
+                                    yunits,
+                                });
+                            }
                         }
+                        b"Icon" => icon_style.icon = self.read_basic_link_type_icon(attrs)?,
+                        b"color" => icon_style.color = self.read_str()?,
+                        b"colorMode" => {
+                            icon_style.color_mode = self.read_str()?.parse::<ColorMode>()?
+                        }
+                        _ => {}
                     }
-                    b"Icon" => icon_style.icon = self.read_basic_link_type_icon()?,
-                    b"color" => icon_style.color = self.read_str()?,
-                    b"colorMode" => {
-                        icon_style.color_mode = self.read_str()?.parse::<ColorMode>()?
-                    }
-                    _ => {}
-                },
+                }
                 Event::End(ref mut e) => {
                     if e.local_name() == b"IconStyle" {
                         break;
@@ -595,7 +600,7 @@ where
         Ok(icon_style)
     }
 
-    fn read_basic_link_type_icon(&mut self) -> Result<Icon, Error> {
+    fn read_basic_link_type_icon(&mut self, attrs: HashMap<String, String>) -> Result<Icon, Error> {
         let mut href = String::new();
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
@@ -613,7 +618,7 @@ where
                 _ => break,
             }
         }
-        Ok(Icon { href })
+        Ok(Icon { href, attrs })
     }
 
     fn read_link_type_icon(
@@ -834,12 +839,13 @@ where
 
     fn read_balloon_style(
         &mut self,
-        attrs: HashMap<String, String>,
+        mut attrs: HashMap<String, String>,
     ) -> Result<BalloonStyle, Error> {
-        let mut balloon_style = BalloonStyle::default();
-        if let Some(id_str) = attrs.get("id") {
-            balloon_style.id = id_str.to_string();
-        }
+        let mut balloon_style = BalloonStyle {
+            id: attrs.remove("id"),
+            attrs,
+            ..Default::default()
+        };
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -861,11 +867,15 @@ where
         Ok(balloon_style)
     }
 
-    fn read_label_style(&mut self, attrs: HashMap<String, String>) -> Result<LabelStyle, Error> {
-        let mut label_style = LabelStyle::default();
-        if let Some(id_str) = attrs.get("id") {
-            label_style.id = id_str.to_string();
-        }
+    fn read_label_style(
+        &mut self,
+        mut attrs: HashMap<String, String>,
+    ) -> Result<LabelStyle, Error> {
+        let mut label_style = LabelStyle {
+            id: attrs.remove("id"),
+            attrs,
+            ..Default::default()
+        };
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -888,11 +898,12 @@ where
         Ok(label_style)
     }
 
-    fn read_line_style(&mut self, attrs: HashMap<String, String>) -> Result<LineStyle, Error> {
-        let mut line_style = LineStyle::default();
-        if let Some(id_str) = attrs.get("id") {
-            line_style.id = id_str.to_string();
-        }
+    fn read_line_style(&mut self, mut attrs: HashMap<String, String>) -> Result<LineStyle, Error> {
+        let mut line_style = LineStyle {
+            id: attrs.remove("id"),
+            attrs,
+            ..Default::default()
+        };
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -915,11 +926,12 @@ where
         Ok(line_style)
     }
 
-    fn read_list_style(&mut self, attrs: HashMap<String, String>) -> Result<ListStyle, Error> {
-        let mut list_style = ListStyle::default();
-        if let Some(id_str) = attrs.get("id") {
-            list_style.id = id_str.to_string();
-        }
+    fn read_list_style(&mut self, mut attrs: HashMap<String, String>) -> Result<ListStyle, Error> {
+        let mut list_style = ListStyle {
+            id: attrs.remove("id"),
+            attrs,
+            ..Default::default()
+        };
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -944,11 +956,12 @@ where
         Ok(list_style)
     }
 
-    fn read_poly_style(&mut self, attrs: HashMap<String, String>) -> Result<PolyStyle, Error> {
-        let mut poly_style = PolyStyle::default();
-        if let Some(id_str) = attrs.get("id") {
-            poly_style.id = id_str.to_string();
-        }
+    fn read_poly_style(&mut self, mut attrs: HashMap<String, String>) -> Result<PolyStyle, Error> {
+        let mut poly_style = PolyStyle {
+            id: attrs.remove("id"),
+            attrs,
+            ..Default::default()
+        };
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
             match e {
@@ -1476,6 +1489,23 @@ mod tests {
                     ..Default::default()
                 },
                 inner: vec![],
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_style_map() {
+        let kml_str = r#"
+        <StyleMap id="id" test="test">
+        </StyleMap>
+        "#;
+        let s: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            s,
+            Kml::StyleMap(StyleMap {
+                id: Some("id".to_string()),
+                attrs: HashMap::from([("test".to_string(), "test".to_string())]),
                 ..Default::default()
             })
         );

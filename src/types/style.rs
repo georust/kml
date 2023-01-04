@@ -10,21 +10,23 @@ use crate::types::Vec2;
 /// specification
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Style {
-    pub id: String,
+    pub id: Option<String>,
     pub balloon: Option<BalloonStyle>,
     pub icon: Option<IconStyle>,
     pub label: Option<LabelStyle>,
     pub line: Option<LineStyle>,
     pub poly: Option<PolyStyle>,
     pub list: Option<ListStyle>,
+    pub attrs: HashMap<String, String>,
 }
 
 /// `kml:StyleMap`, [12.3](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#811) in the KML
 /// specification
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct StyleMap {
-    pub id: String,
+    pub id: Option<String>,
     pub pairs: Vec<Pair>,
+    pub attrs: HashMap<String, String>,
 }
 
 /// `kml:Pair`, [12.4](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#819) in the KML
@@ -40,21 +42,23 @@ pub struct Pair {
 /// KML specification
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BalloonStyle {
-    pub id: String,
+    pub id: Option<String>,
     pub bg_color: Option<String>,
     pub text_color: String,
     pub text: Option<String>,
     pub display: bool,
+    pub attrs: HashMap<String, String>,
 }
 
 impl Default for BalloonStyle {
     fn default() -> BalloonStyle {
         BalloonStyle {
-            id: "".to_string(),
+            id: None,
             bg_color: None,
             text_color: "ffffffff".to_string(),
             text: None,
             display: true,
+            attrs: HashMap::new(),
         }
     }
 }
@@ -102,25 +106,27 @@ impl fmt::Display for ColorMode {
 /// KML specification
 #[derive(Clone, Debug, PartialEq)]
 pub struct IconStyle {
-    pub id: String,
+    pub id: Option<String>,
     pub scale: f64,
     pub heading: f64,
     pub hot_spot: Option<Vec2>,
     pub icon: Icon,
     pub color: String,
     pub color_mode: ColorMode,
+    pub attrs: HashMap<String, String>,
 }
 
 impl Default for IconStyle {
     fn default() -> IconStyle {
         IconStyle {
-            id: "".to_string(),
+            id: None,
             scale: 1.0,
             heading: 0.0,
             hot_spot: None,
             icon: Icon::default(),
             color: "ffffffff".to_string(),
             color_mode: ColorMode::default(),
+            attrs: HashMap::new(),
         }
     }
 }
@@ -132,25 +138,28 @@ impl Default for IconStyle {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Icon {
     pub href: String,
+    pub attrs: HashMap<String, String>,
 }
 
 /// `kml:LabelStyle`, [12.14](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#909) in the
 /// KML specification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LabelStyle {
-    pub id: String,
+    pub id: Option<String>,
     pub color: String,
     pub color_mode: ColorMode,
     pub scale: f64,
+    pub attrs: HashMap<String, String>,
 }
 
 impl Default for LabelStyle {
     fn default() -> LabelStyle {
         LabelStyle {
-            id: "".to_string(),
+            id: None,
             color: "ffffffff".to_string(),
             color_mode: ColorMode::default(),
             scale: 1.0,
+            attrs: HashMap::new(),
         }
     }
 }
@@ -159,19 +168,21 @@ impl Default for LabelStyle {
 /// KML specification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineStyle {
-    pub id: String,
+    pub id: Option<String>,
     pub color: String,
     pub color_mode: ColorMode,
     pub width: f64,
+    pub attrs: HashMap<String, String>,
 }
 
 impl Default for LineStyle {
     fn default() -> LineStyle {
         LineStyle {
-            id: "".to_string(),
+            id: None,
             color: "ffffffff".to_string(),
             color_mode: ColorMode::default(),
             width: 1.0,
+            attrs: HashMap::new(),
         }
     }
 }
@@ -180,21 +191,23 @@ impl Default for LineStyle {
 /// KML specification.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PolyStyle {
-    pub id: String,
+    pub id: Option<String>,
     pub color: String,
     pub color_mode: ColorMode,
     pub fill: bool,
     pub outline: bool,
+    pub attrs: HashMap<String, String>,
 }
 
 impl Default for PolyStyle {
     fn default() -> PolyStyle {
         PolyStyle {
-            id: "".to_string(),
+            id: None,
             color: "ffffffff".to_string(),
             color_mode: ColorMode::default(),
             fill: true,
             outline: true,
+            attrs: HashMap::new(),
         }
     }
 }
@@ -248,19 +261,21 @@ impl fmt::Display for ListItemType {
 /// KML specification.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ListStyle {
-    pub id: String,
+    pub id: Option<String>,
     pub bg_color: String,
     pub max_snippet_lines: u32,
     pub list_item_type: ListItemType,
+    pub attrs: HashMap<String, String>,
 }
 
 impl Default for ListStyle {
     fn default() -> ListStyle {
         ListStyle {
-            id: "".to_string(),
+            id: None,
             bg_color: "ffffffff".to_string(),
             max_snippet_lines: 2,
             list_item_type: ListItemType::default(),
+            attrs: HashMap::new(),
         }
     }
 }
