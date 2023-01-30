@@ -1,6 +1,6 @@
 [package]
 name = "kml"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Pat Sier <pjsier@gmail.com>", "The GeoRust Developers <mods@georust.org>"]
 description = "KML support for Rust"
 readme = "README.md"
@@ -8,6 +8,7 @@ documentation = "https://docs.rs/kml/"
 repository = "https://github.com/georust/kml"
 license = "MIT OR Apache-2.0"
 edition = "2021"
+categories = ["science::geo"]
 keywords = ["geo", "geospatial", "kml"]
 exclude = [".github/*"]
 

@@ -1105,7 +1105,7 @@ where
                 .unescape_and_decode(&self.reader)
                 .unwrap_or_else(|_| String::from_utf8_lossy(e.escaped()).to_string())),
             Event::End(_) => Ok("".to_string()),
-            e => Err(Error::InvalidXmlEvent(format!("{:?}", e))),
+            e => Err(Error::InvalidXmlEvent(format!("{e:?}"))),
         }
     }
 
