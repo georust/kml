@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.7.1](https://github.com/georust/kml/releases/tag/v0.7.1)
+
+- Handle invalid UTF-8 characters in tag name and attributes ([#45](https://github.com/georust/kml/pull/45))
+
 ## [v0.7.0](https://github.com/georust/kml/releases/tag/v0.7.0)
 
 - BREAKING: Updates `Style`, `StyleMap`, `BalloonStyle`, `IconStyle`, `Icon`, `LabelStyle`, `LineStyle`, `PolyStyle`, and `ListStyle` by adding public `attrs` property and changes type of `id` from `String` to `Option<String>` to more closely reflect the specification.
