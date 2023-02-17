@@ -998,7 +998,7 @@ where
     ) -> Result<Element, Error> {
         let mut element = Element::default();
         let tag = start.local_name();
-        element.name = str::from_utf8(tag).unwrap().to_string();
+        element.name = String::from_utf8_lossy(tag).to_string();
         element.attrs = attrs;
         loop {
             let mut e = self.reader.read_event(&mut self.buf)?;
@@ -1114,8 +1114,8 @@ where
             .filter_map(Result::ok)
             .map(|a| {
                 (
-                    str::from_utf8(a.key).unwrap().to_string(),
-                    str::from_utf8(&a.value).unwrap().to_string(),
+                    String::from_utf8_lossy(a.key).to_string(),
+                    String::from_utf8_lossy(&a.value).to_string(),
                 )
             })
             .collect()
