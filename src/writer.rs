@@ -74,7 +74,7 @@ where
 
     fn write_kml(&mut self, k: &Kml<T>) -> Result<(), Error> {
         match k {
-            Kml::KmlDocument(d) => self.write_container(b"kml", &d.attrs, &d.elements)?,
+            Kml::KmlDocument(d) => self.write_container("kml", &d.attrs, &d.elements)?,
             Kml::Scale(s) => self.write_scale(s)?,
             Kml::Orientation(o) => self.write_orientation(o)?,
             Kml::Point(p) => self.write_point(p)?,
@@ -102,9 +102,9 @@ where
             Kml::SimpleArrayData(s) => self.write_simple_array_data(s)?,
             Kml::SimpleData(s) => self.write_simple_data(s)?,
             Kml::Document { attrs, elements } => {
-                self.write_container(b"Document", attrs, elements)?
+                self.write_container("Document", attrs, elements)?
             }
-            Kml::Folder { attrs, elements } => self.write_container(b"Folder", attrs, elements)?,
+            Kml::Folder { attrs, elements } => self.write_container("Folder", attrs, elements)?,
             Kml::Element(e) => self.write_element(e)?,
         }
 
@@ -113,59 +113,56 @@ where
 
     fn write_scale(&mut self, scale: &Scale<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Scale".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&scale.attrs)),
+            BytesStart::new("Scale").with_attributes(self.hash_map_as_attrs(&scale.attrs)),
         ))?;
-        self.write_text_element(b"x", &scale.x.to_string())?;
-        self.write_text_element(b"y", &scale.y.to_string())?;
-        self.write_text_element(b"z", &scale.z.to_string())?;
+        self.write_text_element("x", &scale.x.to_string())?;
+        self.write_text_element("y", &scale.y.to_string())?;
+        self.write_text_element("z", &scale.z.to_string())?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::owned(b"Scale".to_vec())))?)
+            .write_event(Event::End(BytesEnd::new("Scale")))?)
     }
 
     fn write_orientation(&mut self, orientation: &Orientation<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Orientation".to_vec())
+            BytesStart::new("Orientation")
                 .with_attributes(self.hash_map_as_attrs(&orientation.attrs)),
         ))?;
-        self.write_text_element(b"roll", &orientation.roll.to_string())?;
-        self.write_text_element(b"tilt", &orientation.tilt.to_string())?;
-        self.write_text_element(b"heading", &orientation.heading.to_string())?;
+        self.write_text_element("roll", &orientation.roll.to_string())?;
+        self.write_text_element("tilt", &orientation.tilt.to_string())?;
+        self.write_text_element("heading", &orientation.heading.to_string())?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::owned(b"Orientation".to_vec())))?)
+            .write_event(Event::End(BytesEnd::new("Orientation")))?)
     }
 
     fn write_point(&mut self, point: &Point<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Point".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&point.attrs)),
+            BytesStart::new("Point").with_attributes(self.hash_map_as_attrs(&point.attrs)),
         ))?;
-        self.write_text_element(b"extrude", if point.extrude { "1" } else { "0" })?;
-        self.write_text_element(b"altitudeMode", &point.altitude_mode.to_string())?;
-        self.write_text_element(b"coordinates", &point.coord.to_string())?;
+        self.write_text_element("extrude", if point.extrude { "1" } else { "0" })?;
+        self.write_text_element("altitudeMode", &point.altitude_mode.to_string())?;
+        self.write_text_element("coordinates", &point.coord.to_string())?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::owned(b"Point".to_vec())))?)
+            .write_event(Event::End(BytesEnd::new("Point")))?)
     }
 
     fn write_location(&mut self, location: &Location<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Location".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&location.attrs)),
+            BytesStart::new("Location").with_attributes(self.hash_map_as_attrs(&location.attrs)),
         ))?;
-        self.write_text_element(b"longitude", &location.longitude.to_string())?;
-        self.write_text_element(b"latitude", &location.latitude.to_string())?;
-        self.write_text_element(b"altitude", &location.altitude.to_string())?;
+        self.write_text_element("longitude", &location.longitude.to_string())?;
+        self.write_text_element("latitude", &location.latitude.to_string())?;
+        self.write_text_element("altitude", &location.altitude.to_string())?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::owned(b"Location".to_vec())))?)
+            .write_event(Event::End(BytesEnd::new("Location")))?)
     }
 
     fn write_line_string(&mut self, line_string: &LineString<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"LineString".to_vec())
+            BytesStart::new("LineString")
                 .with_attributes(self.hash_map_as_attrs(&line_string.attrs)),
         ))?;
         // TODO: Avoid clone here?
@@ -177,12 +174,12 @@ where
         })?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::owned(b"LineString".to_vec())))?)
+            .write_event(Event::End(BytesEnd::new("LineString")))?)
     }
 
     fn write_linear_ring(&mut self, linear_ring: &LinearRing<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"LinearRing".to_vec())
+            BytesStart::new("LinearRing")
                 .with_attributes(self.hash_map_as_attrs(&linear_ring.attrs)),
         ))?;
         self.write_geom_props(GeomProps {
@@ -194,13 +191,12 @@ where
         })?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::owned(b"LinearRing".to_vec())))?)
+            .write_event(Event::End(BytesEnd::new("LinearRing")))?)
     }
 
     fn write_polygon(&mut self, polygon: &Polygon<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Polygon".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&polygon.attrs)),
+            BytesStart::new("Polygon").with_attributes(self.hash_map_as_attrs(&polygon.attrs)),
         ))?;
         self.write_geom_props(GeomProps {
             coords: Vec::new(),
@@ -209,32 +205,28 @@ where
             tessellate: polygon.tessellate,
         })?;
         self.writer
-            .write_event(Event::Start(BytesStart::owned_name(
-                b"outerBoundaryIs".to_vec(),
-            )))?;
+            .write_event(Event::Start(BytesStart::new("outerBoundaryIs")))?;
         self.write_linear_ring(&polygon.outer)?;
         self.writer
-            .write_event(Event::End(BytesEnd::borrowed(b"outerBoundaryIs")))?;
+            .write_event(Event::End(BytesEnd::new("outerBoundaryIs")))?;
 
         if !polygon.inner.is_empty() {
             self.writer
-                .write_event(Event::Start(BytesStart::owned_name(
-                    b"innerBoundaryIs".to_vec(),
-                )))?;
+                .write_event(Event::Start(BytesStart::new("innerBoundaryIs")))?;
             for b in &polygon.inner {
                 self.write_linear_ring(b)?;
             }
             self.writer
-                .write_event(Event::End(BytesEnd::borrowed(b"innerBoundaryIs")))?;
+                .write_event(Event::End(BytesEnd::new("innerBoundaryIs")))?;
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"Polygon")))?)
+            .write_event(Event::End(BytesEnd::new("Polygon")))?)
     }
 
     fn write_multi_geometry(&mut self, multi_geometry: &MultiGeometry<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"MultiGeometry".to_vec())
+            BytesStart::new("MultiGeometry")
                 .with_attributes(self.hash_map_as_attrs(&multi_geometry.attrs)),
         ))?;
 
@@ -243,19 +235,18 @@ where
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::owned(b"MultiGeometry".to_vec())))?)
+            .write_event(Event::End(BytesEnd::new("MultiGeometry")))?)
     }
 
     fn write_placemark(&mut self, placemark: &Placemark<T>) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Placemark".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&placemark.attrs)),
+            BytesStart::new("Placemark").with_attributes(self.hash_map_as_attrs(&placemark.attrs)),
         ))?;
         if let Some(name) = &placemark.name {
-            self.write_text_element(b"name", name)?;
+            self.write_text_element("name", name)?;
         }
         if let Some(description) = &placemark.description {
-            self.write_text_element(b"description", description)?;
+            self.write_text_element("description", description)?;
         }
         for c in placemark.children.iter() {
             self.write_element(c)?;
@@ -265,23 +256,22 @@ where
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"Placemark")))?)
+            .write_event(Event::End(BytesEnd::new("Placemark")))?)
     }
 
     fn write_element(&mut self, e: &Element) -> Result<(), Error> {
-        let start = BytesStart::borrowed_name(e.name.as_bytes())
-            .with_attributes(self.hash_map_as_attrs(&e.attrs));
+        let start = BytesStart::new(&e.name).with_attributes(self.hash_map_as_attrs(&e.attrs));
         self.writer.write_event(Event::Start(start))?;
         if let Some(content) = &e.content {
             self.writer
-                .write_event(Event::Text(BytesText::from_plain_str(content)))?;
+                .write_event(Event::Text(BytesText::new(content)))?;
         }
         for c in e.children.iter() {
             self.write_element(c)?;
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(e.name.as_bytes())))?)
+            .write_event(Event::End(BytesEnd::new(&e.name)))?)
     }
 
     fn write_style(&mut self, style: &Style) -> Result<(), Error> {
@@ -295,7 +285,7 @@ where
             .chain(self.hash_map_as_attrs(&style.attrs))
             .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Style".to_vec()).with_attributes(attrs),
+            BytesStart::new("Style").with_attributes(attrs),
         ))?;
         if let Some(balloon) = &style.balloon {
             self.write_balloon_style(balloon)?;
@@ -317,7 +307,7 @@ where
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"Style")))?)
+            .write_event(Event::End(BytesEnd::new("Style")))?)
     }
 
     fn write_style_map(&mut self, style_map: &StyleMap) -> Result<(), Error> {
@@ -331,26 +321,23 @@ where
             .chain(self.hash_map_as_attrs(&style_map.attrs))
             .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"StyleMap".to_vec()).with_attributes(attrs),
+            BytesStart::new("StyleMap").with_attributes(attrs),
         ))?;
         for p in style_map.pairs.iter() {
             self.write_pair(p)?;
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"StyleMap")))?)
+            .write_event(Event::End(BytesEnd::new("StyleMap")))?)
     }
 
     fn write_pair(&mut self, pair: &Pair) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Pair".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&pair.attrs)),
+            BytesStart::new("Pair").with_attributes(self.hash_map_as_attrs(&pair.attrs)),
         ))?;
-        self.write_text_element(b"key", &pair.key)?;
-        self.write_text_element(b"styleUrl", &pair.style_url)?;
-        Ok(self
-            .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"Pair")))?)
+        self.write_text_element("key", &pair.key)?;
+        self.write_text_element("styleUrl", &pair.style_url)?;
+        Ok(self.writer.write_event(Event::End(BytesEnd::new("Pair")))?)
     }
 
     fn write_balloon_style(&mut self, balloon_style: &BalloonStyle) -> Result<(), Error> {
@@ -364,21 +351,21 @@ where
             .chain(self.hash_map_as_attrs(&balloon_style.attrs))
             .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"BalloonStyle".to_vec()).with_attributes(attrs),
+            BytesStart::new("BalloonStyle").with_attributes(attrs),
         ))?;
         if let Some(bg_color) = &balloon_style.bg_color {
-            self.write_text_element(b"bgColor", bg_color)?;
+            self.write_text_element("bgColor", bg_color)?;
         }
-        self.write_text_element(b"textColor", &balloon_style.text_color)?;
+        self.write_text_element("textColor", &balloon_style.text_color)?;
         if let Some(text) = &balloon_style.text {
-            self.write_text_element(b"text", text)?;
+            self.write_text_element("text", text)?;
         }
         if !balloon_style.display {
-            self.write_text_element(b"displayMode", "hide")?;
+            self.write_text_element("displayMode", "hide")?;
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"BalloonStyle")))?)
+            .write_event(Event::End(BytesEnd::new("BalloonStyle")))?)
     }
 
     fn write_icon_style(&mut self, icon_style: &IconStyle) -> Result<(), Error> {
@@ -392,37 +379,36 @@ where
             .chain(self.hash_map_as_attrs(&icon_style.attrs))
             .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"IconStyle".to_vec()).with_attributes(attrs),
+            BytesStart::new("IconStyle").with_attributes(attrs),
         ))?;
-        self.write_text_element(b"scale", &icon_style.scale.to_string())?;
-        self.write_text_element(b"heading", &icon_style.heading.to_string())?;
+        self.write_text_element("scale", &icon_style.scale.to_string())?;
+        self.write_text_element("heading", &icon_style.heading.to_string())?;
         if let Some(hot_spot) = &icon_style.hot_spot {
-            self.writer.write_event(Event::Start(
-                BytesStart::owned_name(b"hotSpot".to_vec()).with_attributes(vec![
-                    ("x", &*hot_spot.x.to_string()),
-                    ("y", &*hot_spot.y.to_string()),
-                    ("xunits", &*hot_spot.xunits.to_string()),
-                    ("yunits", &*hot_spot.yunits.to_string()),
-                ]),
-            ))?;
             self.writer
-                .write_event(Event::End(BytesEnd::borrowed(b"hotSpot")))?;
+                .write_event(Event::Start(BytesStart::new("hotSpot").with_attributes(
+                    vec![
+                        ("x", &*hot_spot.x.to_string()),
+                        ("y", &*hot_spot.y.to_string()),
+                        ("xunits", &*hot_spot.xunits.to_string()),
+                        ("yunits", &*hot_spot.yunits.to_string()),
+                    ],
+                )))?;
+            self.writer
+                .write_event(Event::End(BytesEnd::new("hotSpot")))?;
         }
-        self.write_text_element(b"color", &icon_style.color)?;
-        self.write_text_element(b"colorMode", &icon_style.color_mode.to_string())?;
+        self.write_text_element("color", &icon_style.color)?;
+        self.write_text_element("colorMode", &icon_style.color_mode.to_string())?;
         self.write_icon(&icon_style.icon)?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"IconStyle")))?)
+            .write_event(Event::End(BytesEnd::new("IconStyle")))?)
     }
 
     fn write_icon(&mut self, icon: &Icon) -> Result<(), Error> {
         self.writer
-            .write_event(Event::Start(BytesStart::owned_name(b"Icon".to_vec())))?;
-        self.write_text_element(b"href", &icon.href)?;
-        Ok(self
-            .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"Icon")))?)
+            .write_event(Event::Start(BytesStart::new("Icon")))?;
+        self.write_text_element("href", &icon.href)?;
+        Ok(self.writer.write_event(Event::End(BytesEnd::new("Icon")))?)
     }
 
     fn write_label_style(&mut self, label_style: &LabelStyle) -> Result<(), Error> {
@@ -436,14 +422,14 @@ where
             .chain(self.hash_map_as_attrs(&label_style.attrs))
             .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"LabelStyle".to_vec()).with_attributes(attrs),
+            BytesStart::new("LabelStyle").with_attributes(attrs),
         ))?;
-        self.write_text_element(b"color", &label_style.color)?;
-        self.write_text_element(b"colorMode", &label_style.color_mode.to_string())?;
-        self.write_text_element(b"scale", &label_style.scale.to_string())?;
+        self.write_text_element("color", &label_style.color)?;
+        self.write_text_element("colorMode", &label_style.color_mode.to_string())?;
+        self.write_text_element("scale", &label_style.scale.to_string())?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"LabelStyle")))?)
+            .write_event(Event::End(BytesEnd::new("LabelStyle")))?)
     }
 
     fn write_line_style(&mut self, line_style: &LineStyle) -> Result<(), Error> {
@@ -457,14 +443,14 @@ where
             .chain(self.hash_map_as_attrs(&line_style.attrs))
             .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"LineStyle".to_vec()).with_attributes(attrs),
+            BytesStart::new("LineStyle").with_attributes(attrs),
         ))?;
-        self.write_text_element(b"color", &line_style.color)?;
-        self.write_text_element(b"colorMode", &line_style.color_mode.to_string())?;
-        self.write_text_element(b"width", &line_style.width.to_string())?;
+        self.write_text_element("color", &line_style.color)?;
+        self.write_text_element("colorMode", &line_style.color_mode.to_string())?;
+        self.write_text_element("width", &line_style.width.to_string())?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"LineStyle")))?)
+            .write_event(Event::End(BytesEnd::new("LineStyle")))?)
     }
 
     fn write_poly_style(&mut self, poly_style: &PolyStyle) -> Result<(), Error> {
@@ -478,15 +464,15 @@ where
             .chain(self.hash_map_as_attrs(&poly_style.attrs))
             .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"PolyStyle".to_vec()).with_attributes(attrs),
+            BytesStart::new("PolyStyle").with_attributes(attrs),
         ))?;
-        self.write_text_element(b"color", &poly_style.color)?;
-        self.write_text_element(b"colorMode", &poly_style.color_mode.to_string())?;
-        self.write_text_element(b"fill", &poly_style.fill.to_string())?;
-        self.write_text_element(b"outline", &poly_style.outline.to_string())?;
+        self.write_text_element("color", &poly_style.color)?;
+        self.write_text_element("colorMode", &poly_style.color_mode.to_string())?;
+        self.write_text_element("fill", &poly_style.fill.to_string())?;
+        self.write_text_element("outline", &poly_style.outline.to_string())?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"PolyStyle")))?)
+            .write_event(Event::End(BytesEnd::new("PolyStyle")))?)
     }
 
     fn write_list_style(&mut self, list_style: &ListStyle) -> Result<(), Error> {
@@ -500,77 +486,68 @@ where
             .chain(self.hash_map_as_attrs(&list_style.attrs))
             .collect();
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"ListStyle".to_vec()).with_attributes(attrs),
+            BytesStart::new("ListStyle").with_attributes(attrs),
         ))?;
-        self.write_text_element(b"bgColor", &list_style.bg_color)?;
-        self.write_text_element(
-            b"maxSnippetLines",
-            &list_style.max_snippet_lines.to_string(),
-        )?;
+        self.write_text_element("bgColor", &list_style.bg_color)?;
+        self.write_text_element("maxSnippetLines", &list_style.max_snippet_lines.to_string())?;
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"ListStyle")))?)
+            .write_event(Event::End(BytesEnd::new("ListStyle")))?)
     }
 
     fn write_link_type_icon(&mut self, icon: &LinkTypeIcon) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Icon".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&icon.attrs)),
+            BytesStart::new("Icon").with_attributes(self.hash_map_as_attrs(&icon.attrs)),
         ))?;
         if let Some(href) = &icon.href {
-            self.write_text_element(b"href", href)?;
+            self.write_text_element("href", href)?;
         }
         if let Some(refresh_mode) = &icon.refresh_mode {
-            self.write_text_element(b"refreshMode", &refresh_mode.to_string())?;
+            self.write_text_element("refreshMode", &refresh_mode.to_string())?;
         }
-        self.write_text_element(b"refreshInterval", &icon.refresh_interval.to_string())?;
+        self.write_text_element("refreshInterval", &icon.refresh_interval.to_string())?;
         if let Some(view_refresh_mode) = &icon.view_refresh_mode {
-            self.write_text_element(b"viewRefreshMode", &view_refresh_mode.to_string())?;
+            self.write_text_element("viewRefreshMode", &view_refresh_mode.to_string())?;
         }
-        self.write_text_element(b"viewRefreshTime", &icon.view_refresh_time.to_string())?;
-        self.write_text_element(b"viewBoundScale", &icon.view_bound_scale.to_string())?;
+        self.write_text_element("viewRefreshTime", &icon.view_refresh_time.to_string())?;
+        self.write_text_element("viewBoundScale", &icon.view_bound_scale.to_string())?;
         if let Some(view_format) = &icon.view_format {
-            self.write_text_element(b"viewFormat", view_format)?;
+            self.write_text_element("viewFormat", view_format)?;
         }
         if let Some(http_query) = &icon.http_query {
-            self.write_text_element(b"httpQuery", http_query)?;
+            self.write_text_element("httpQuery", http_query)?;
         }
-        Ok(self
-            .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"Icon")))?)
+        Ok(self.writer.write_event(Event::End(BytesEnd::new("Icon")))?)
     }
 
     fn write_link(&mut self, link: &Link) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Link".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&link.attrs)),
+            BytesStart::new("Link").with_attributes(self.hash_map_as_attrs(&link.attrs)),
         ))?;
         if let Some(href) = &link.href {
-            self.write_text_element(b"href", href)?;
+            self.write_text_element("href", href)?;
         }
         if let Some(refresh_mode) = &link.refresh_mode {
-            self.write_text_element(b"refreshMode", &refresh_mode.to_string())?;
+            self.write_text_element("refreshMode", &refresh_mode.to_string())?;
         }
-        self.write_text_element(b"refreshInterval", &link.refresh_interval.to_string())?;
+        self.write_text_element("refreshInterval", &link.refresh_interval.to_string())?;
         if let Some(view_refresh_mode) = &link.view_refresh_mode {
-            self.write_text_element(b"viewRefreshMode", &view_refresh_mode.to_string())?;
+            self.write_text_element("viewRefreshMode", &view_refresh_mode.to_string())?;
         }
-        self.write_text_element(b"viewRefreshTime", &link.view_refresh_time.to_string())?;
-        self.write_text_element(b"viewBoundScale", &link.view_bound_scale.to_string())?;
+        self.write_text_element("viewRefreshTime", &link.view_refresh_time.to_string())?;
+        self.write_text_element("viewBoundScale", &link.view_bound_scale.to_string())?;
         if let Some(view_format) = &link.view_format {
-            self.write_text_element(b"viewFormat", view_format)?;
+            self.write_text_element("viewFormat", view_format)?;
         }
         if let Some(http_query) = &link.http_query {
-            self.write_text_element(b"httpQuery", http_query)?;
+            self.write_text_element("httpQuery", http_query)?;
         }
-        Ok(self
-            .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"Link")))?)
+        Ok(self.writer.write_event(Event::End(BytesEnd::new("Link")))?)
     }
 
     fn write_resource_map(&mut self, resource_map: &ResourceMap) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"ResourceMap".to_vec())
+            BytesStart::new("ResourceMap")
                 .with_attributes(self.hash_map_as_attrs(&resource_map.attrs)),
         ))?;
         for alias in resource_map.aliases.iter() {
@@ -578,28 +555,27 @@ where
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"ResourceMap")))?)
+            .write_event(Event::End(BytesEnd::new("ResourceMap")))?)
     }
 
     fn write_alias(&mut self, alias: &Alias) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"Alias".to_vec())
-                .with_attributes(self.hash_map_as_attrs(&alias.attrs)),
+            BytesStart::new("Alias").with_attributes(self.hash_map_as_attrs(&alias.attrs)),
         ))?;
         if let Some(href) = &alias.target_href {
-            self.write_text_element(b"targetHref", href)?;
+            self.write_text_element("targetHref", href)?;
         }
         if let Some(href) = &alias.source_href {
-            self.write_text_element(b"sourceHref", href)?;
+            self.write_text_element("sourceHref", href)?;
         }
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"Alias")))?)
+            .write_event(Event::End(BytesEnd::new("Alias")))?)
     }
 
     fn write_schema_data(&mut self, schema_data: &SchemaData) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"SchemaData".to_vec())
+            BytesStart::new("SchemaData")
                 .with_attributes(self.hash_map_as_attrs(&schema_data.attrs)),
         ))?;
 
@@ -613,7 +589,7 @@ where
 
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"SchemaData")))?)
+            .write_event(Event::End(BytesEnd::new("SchemaData")))?)
     }
 
     fn write_simple_array_data(
@@ -622,33 +598,33 @@ where
     ) -> Result<(), Error> {
         let filter_attrs = HashMap::from([("name".to_string(), simple_array_data.name.clone())]);
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"SimpleArrayData".to_vec()).with_attributes(
+            BytesStart::new("SimpleArrayData").with_attributes(
                 self.hash_map_as_attrs_filtered(&simple_array_data.attrs, &filter_attrs),
             ),
         ))?;
 
         for value in simple_array_data.values.iter() {
-            self.write_text_element(b"value", value)?;
+            self.write_text_element("value", value)?;
         }
 
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"SimpleArrayData")))?)
+            .write_event(Event::End(BytesEnd::new("SimpleArrayData")))?)
     }
 
     fn write_simple_data(&mut self, simple_data: &SimpleData) -> Result<(), Error> {
         let filter_attrs = HashMap::from([("name".to_string(), simple_data.name.clone())]);
-        self.writer.write_event(Event::Start(
-            BytesStart::owned_name(b"SimpleData".to_vec()).with_attributes(
+        self.writer
+            .write_event(Event::Start(BytesStart::new("SimpleData").with_attributes(
                 self.hash_map_as_attrs_filtered(&simple_data.attrs, &filter_attrs),
-            ),
-        ))?;
+            )))?;
 
-        self.writer.write(simple_data.value.as_bytes())?;
+        self.writer
+            .write_event(Event::Text(BytesText::new(&simple_data.value)))?;
 
         Ok(self
             .writer
-            .write_event(Event::End(BytesEnd::borrowed(b"SimpleData")))?)
+            .write_event(Event::End(BytesEnd::new("SimpleData")))?)
     }
 
     fn write_geometry(&mut self, geometry: &Geometry<T>) -> Result<(), Error> {
@@ -663,12 +639,12 @@ where
     }
 
     fn write_geom_props(&mut self, props: GeomProps<T>) -> Result<(), Error> {
-        self.write_text_element(b"extrude", if props.extrude { "1" } else { "0" })?;
-        self.write_text_element(b"tessellate", if props.tessellate { "1" } else { "0" })?;
-        self.write_text_element(b"altitudeMode", &props.altitude_mode.to_string())?;
+        self.write_text_element("extrude", if props.extrude { "1" } else { "0" })?;
+        self.write_text_element("tessellate", if props.tessellate { "1" } else { "0" })?;
+        self.write_text_element("altitudeMode", &props.altitude_mode.to_string())?;
         if !props.coords.is_empty() {
             self.write_text_element(
-                b"coordinates",
+                "coordinates",
                 &props
                     .coords
                     .iter()
@@ -682,30 +658,26 @@ where
 
     fn write_container(
         &mut self,
-        tag: &[u8],
+        tag: &str,
         attrs: &HashMap<String, String>,
         elements: &[Kml<T>],
     ) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
-            BytesStart::owned_name(tag).with_attributes(self.hash_map_as_attrs(attrs)),
+            BytesStart::new(tag).with_attributes(self.hash_map_as_attrs(attrs)),
         ))?;
         for e in elements.iter() {
             self.write_kml(e)?;
         }
         // Wrapping in Ok to coerce the quick_xml::Error type with ?
-        Ok(self
-            .writer
-            .write_event(Event::End(BytesEnd::borrowed(tag)))?)
+        Ok(self.writer.write_event(Event::End(BytesEnd::new(tag)))?)
     }
 
-    fn write_text_element(&mut self, tag: &[u8], content: &str) -> Result<(), Error> {
+    fn write_text_element(&mut self, tag: &str, content: &str) -> Result<(), Error> {
         self.writer
-            .write_event(Event::Start(BytesStart::owned_name(tag)))?;
+            .write_event(Event::Start(BytesStart::new(tag)))?;
         self.writer
-            .write_event(Event::Text(BytesText::from_plain_str(content)))?;
-        Ok(self
-            .writer
-            .write_event(Event::End(BytesEnd::borrowed(tag)))?)
+            .write_event(Event::Text(BytesText::new(content)))?;
+        Ok(self.writer.write_event(Event::End(BytesEnd::new(tag)))?)
     }
 
     fn hash_map_as_attrs(&self, hash_map: &'a HashMap<String, String>) -> Vec<(&'a str, &'a str)> {
