@@ -121,11 +121,11 @@ where
     fn read_elements(&mut self) -> Result<Vec<Kml<T>>, Error> {
         let mut elements: Vec<Kml<T>> = Vec::new();
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
-                    match e.local_name() {
+                    match e.local_name().as_ref() {
                         b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document()?)),
                         b"Scale" => elements.push(Kml::Scale(self.read_scale(attrs)?)),
                         b"Orientation" => {
@@ -188,7 +188,7 @@ where
                         }
                     };
                 }
-                Event::End(ref mut e) => match e.local_name() {
+                Event::End(ref mut e) => match e.local_name().as_ref() {
                     b"Folder" | b"Document" => break,
                     _ => {}
                 },
@@ -215,16 +215,16 @@ where
         let mut z = One::one();
 
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"x" => x = self.read_float()?,
                     b"y" => y = self.read_float()?,
                     b"z" => z = self.read_float()?,
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Scale" {
+                    if e.local_name().as_ref() == b"Scale" {
                         break;
                     }
                 }
@@ -243,16 +243,16 @@ where
         let mut heading = Zero::zero();
 
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"roll" => roll = self.read_float()?,
                     b"tilt" => tilt = self.read_float()?,
                     b"heading" => heading = self.read_float()?,
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Orientation" {
+                    if e.local_name().as_ref() == b"Orientation" {
                         break;
                     }
                 }
@@ -283,16 +283,16 @@ where
         let mut altitude = Zero::zero();
 
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"longitude" => longitude = self.read_float()?,
                     b"latitude" => latitude = self.read_float()?,
                     b"altitude" => altitude = self.read_float()?,
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Location" {
+                    if e.local_name().as_ref() == b"Location" {
                         break;
                     }
                 }
@@ -337,9 +337,9 @@ where
         let mut tessellate = false;
 
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"outerBoundaryIs" => {
                         let mut outer_ring = self.read_boundary(b"outerBoundaryIs")?;
                         if outer_ring.is_empty() {
@@ -358,7 +358,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Polygon" {
+                    if e.local_name().as_ref() == b"Polygon" {
                         break;
                     }
                 }
@@ -381,11 +381,11 @@ where
     ) -> Result<MultiGeometry<T>, Error> {
         let mut geometries: Vec<Geometry<T>> = Vec::new();
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref e) => {
                     let attrs = Self::read_attrs(e.attributes());
-                    match e.local_name() {
+                    match e.local_name().as_ref() {
                         b"Point" => geometries.push(Geometry::Point(self.read_point(attrs)?)),
                         b"LineString" => {
                             geometries.push(Geometry::LineString(self.read_line_string(attrs)?))
@@ -400,7 +400,7 @@ where
                     }
                 }
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"MultiGeometry" {
+                    if e.local_name().as_ref() == b"MultiGeometry" {
                         break;
                     }
                 }
@@ -417,11 +417,11 @@ where
         let mut children: Vec<Element> = Vec::new();
 
         loop {
-            let e = self.reader.read_event(&mut self.buf)?;
+            let e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref e) => {
                     let attrs = Self::read_attrs(e.attributes());
-                    match e.local_name() {
+                    match e.local_name().as_ref() {
                         b"name" => name = Some(self.read_str()?),
                         b"description" => description = Some(self.read_str()?),
                         b"Point" => geometry = Some(Geometry::Point(self.read_point(attrs)?)),
@@ -444,7 +444,7 @@ where
                     }
                 }
                 Event::End(ref e) => {
-                    if e.local_name() == b"Placemark" {
+                    if e.local_name().as_ref() == b"Placemark" {
                         break;
                     }
                 }
@@ -467,11 +467,11 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
-                    match e.local_name() {
+                    match e.local_name().as_ref() {
                         b"BalloonStyle" => style.balloon = Some(self.read_balloon_style(attrs)?),
                         b"IconStyle" => style.icon = Some(self.read_icon_style(attrs)?),
                         b"LabelStyle" => style.label = Some(self.read_label_style(attrs)?),
@@ -482,7 +482,7 @@ where
                     }
                 }
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Style" {
+                    if e.local_name().as_ref() == b"Style" {
                         break;
                     }
                 }
@@ -499,16 +499,16 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
-                    if e.local_name() == b"Pair" {
+                    if e.local_name().as_ref() == b"Pair" {
                         let pair_attrs = Self::read_attrs(e.attributes());
                         style_map.pairs.push(self.read_pair(pair_attrs)?);
                     }
                 }
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"StyleMap" {
+                    if e.local_name().as_ref() == b"StyleMap" {
                         break;
                     }
                 }
@@ -525,15 +525,15 @@ where
         };
 
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"key" => pair.key = self.read_str()?,
                     b"styleUrl" => pair.style_url = self.read_str()?,
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Pair" {
+                    if e.local_name().as_ref() == b"Pair" {
                         break;
                     }
                 }
@@ -550,11 +550,11 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
-                    match e.local_name() {
+                    match e.local_name().as_ref() {
                         b"scale" => icon_style.scale = self.read_float()?,
                         b"heading" => icon_style.heading = self.read_float()?,
                         b"hot_spot" => {
@@ -590,7 +590,7 @@ where
                     }
                 }
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"IconStyle" {
+                    if e.local_name().as_ref() == b"IconStyle" {
                         break;
                     }
                 }
@@ -603,15 +603,15 @@ where
     fn read_basic_link_type_icon(&mut self, attrs: HashMap<String, String>) -> Result<Icon, Error> {
         let mut href = String::new();
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
-                    if e.local_name() == b"href" {
+                    if e.local_name().as_ref() == b"href" {
                         href = self.read_str()?;
                     }
                 }
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Icon" {
+                    if e.local_name().as_ref() == b"Icon" {
                         break;
                     }
                 }
@@ -630,9 +630,9 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"href" => icon.href = Some(self.read_str()?),
                     b"refreshMode" => {
                         icon.refresh_mode = Some(RefreshMode::from_str(&self.read_str()?)?);
@@ -648,7 +648,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Icon" {
+                    if e.local_name().as_ref() == b"Icon" {
                         break;
                     }
                 }
@@ -664,9 +664,9 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"href" => link.href = Some(self.read_str()?),
                     b"refreshMode" => {
                         link.refresh_mode = Some(RefreshMode::from_str(&self.read_str()?)?);
@@ -682,7 +682,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"Link" {
+                    if e.local_name().as_ref() == b"Link" {
                         break;
                     }
                 }
@@ -701,10 +701,10 @@ where
         let mut aliases = Vec::new();
 
         loop {
-            let e = self.reader.read_event(&mut self.buf)?;
+            let e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(e) => {
-                    if e.local_name() == b"Alias" {
+                    if e.local_name().as_ref() == b"Alias" {
                         let attrs = Self::read_attrs(e.attributes());
                         if let Ok(alias) = self.read_alias(attrs) {
                             aliases.push(alias);
@@ -712,7 +712,7 @@ where
                     }
                 }
                 Event::End(e) => {
-                    if e.local_name() == b"ResourceMap" {
+                    if e.local_name().as_ref() == b"ResourceMap" {
                         break;
                     }
                 }
@@ -732,15 +732,15 @@ where
         };
 
         loop {
-            let e = self.reader.read_event(&mut self.buf)?;
+            let e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(e) => match e.local_name() {
+                Event::Start(e) => match e.local_name().as_ref() {
                     b"targetHref" => alias.target_href = Some(self.read_str()?),
                     b"sourceHref" => alias.source_href = Some(self.read_str()?),
                     _ => {}
                 },
                 Event::End(e) => {
-                    if e.local_name() == b"Alias" {
+                    if e.local_name().as_ref() == b"Alias" {
                         break;
                     }
                 }
@@ -758,9 +758,9 @@ where
         };
 
         loop {
-            let e = self.reader.read_event(&mut self.buf)?;
+            let e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(e) => match e.local_name() {
+                Event::Start(e) => match e.local_name().as_ref() {
                     b"SimpleData" => {
                         let attrs = Self::read_attrs(e.attributes());
                         if let Ok(simple_data) = self.read_simple_data(attrs) {
@@ -776,7 +776,7 @@ where
                     _ => {}
                 },
                 Event::End(e) => {
-                    if e.local_name() == b"SchemaData" {
+                    if e.local_name().as_ref() == b"SchemaData" {
                         break;
                     }
                 }
@@ -802,15 +802,15 @@ where
         }
 
         loop {
-            let e = self.reader.read_event(&mut self.buf)?;
+            let e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(e) => {
-                    if let b"value" = e.local_name() {
+                    if let b"value" = e.local_name().as_ref() {
                         simple_array_data.values.push(self.read_str()?);
                     }
                 }
                 Event::End(e) => {
-                    if e.local_name() == b"SimpleArrayData" {
+                    if e.local_name().as_ref() == b"SimpleArrayData" {
                         break;
                     }
                 }
@@ -847,9 +847,9 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"bgColor" => balloon_style.bg_color = Some(self.read_str()?),
                     b"textColor" => balloon_style.text_color = self.read_str()?,
                     b"text" => balloon_style.text = Some(self.read_str()?),
@@ -857,7 +857,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"BalloonStyle" {
+                    if e.local_name().as_ref() == b"BalloonStyle" {
                         break;
                     }
                 }
@@ -877,9 +877,9 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"color" => label_style.color = self.read_str()?,
                     b"colorMode" => {
                         label_style.color_mode = self.read_str()?.parse::<ColorMode>()?;
@@ -888,7 +888,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"LabelStyle" {
+                    if e.local_name().as_ref() == b"LabelStyle" {
                         break;
                     }
                 }
@@ -905,9 +905,9 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"color" => line_style.color = self.read_str()?,
                     b"colorMode" => {
                         line_style.color_mode = self.read_str()?.parse::<ColorMode>()?;
@@ -916,7 +916,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"LineStyle" {
+                    if e.local_name().as_ref() == b"LineStyle" {
                         break;
                     }
                 }
@@ -933,9 +933,9 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"bgColor" => list_style.bg_color = self.read_str()?,
                     b"maxSnippetLines" => {
                         let line_str = self.read_str()?;
@@ -946,7 +946,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"ListStyle" {
+                    if e.local_name().as_ref() == b"ListStyle" {
                         break;
                     }
                 }
@@ -963,9 +963,9 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"color" => poly_style.color = self.read_str()?,
                     b"colorMode" => {
                         poly_style.color_mode = self.read_str()?.parse::<ColorMode>()?;
@@ -981,7 +981,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == b"PolyStyle" {
+                    if e.local_name().as_ref() == b"PolyStyle" {
                         break;
                     }
                 }
@@ -998,10 +998,10 @@ where
     ) -> Result<Element, Error> {
         let mut element = Element::default();
         let tag = start.local_name();
-        element.name = String::from_utf8_lossy(tag).to_string();
+        element.name = String::from_utf8_lossy(tag.into_inner()).to_string();
         element.attrs = attrs;
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(e) => {
                     let start = e.to_owned();
@@ -1012,8 +1012,9 @@ where
                 }
                 Event::Text(ref mut e) => {
                     element.content = Some(
-                        e.unescape_and_decode(&self.reader)
-                            .unwrap_or_else(|_| String::from_utf8_lossy(e.escaped()).to_string()),
+                        e.unescape()
+                            .map(|s| s.to_string())
+                            .unwrap_or_else(|_| e.escape_ascii().to_string()),
                     )
                 }
                 Event::End(ref mut e) => {
@@ -1030,16 +1031,16 @@ where
     fn read_boundary(&mut self, end_tag: &[u8]) -> Result<Vec<LinearRing<T>>, Error> {
         let mut boundary: Vec<LinearRing<T>> = Vec::new();
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
-                    if e.local_name() == b"LinearRing" {
+                    if e.local_name().as_ref() == b"LinearRing" {
                         boundary.push(self.read_linear_ring(attrs)?);
                     }
                 }
                 Event::End(ref mut e) => {
-                    if e.local_name() == end_tag {
+                    if e.local_name().as_ref() == end_tag {
                         break;
                     }
                 }
@@ -1056,9 +1057,9 @@ where
         let mut tessellate = false;
 
         loop {
-            let mut e = self.reader.read_event(&mut self.buf)?;
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
-                Event::Start(ref mut e) => match e.local_name() {
+                Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"coordinates" => {
                         coords = coords_from_str(&self.read_str()?)?;
                     }
@@ -1070,7 +1071,7 @@ where
                     _ => {}
                 },
                 Event::End(ref mut e) => {
-                    if e.local_name() == end_tag {
+                    if e.local_name().as_ref() == end_tag {
                         break;
                     }
                 }
@@ -1099,11 +1100,15 @@ where
     }
 
     fn read_str(&mut self) -> Result<String, Error> {
-        let e = self.reader.read_event(&mut self.buf)?;
+        let e = self.reader.read_event_into(&mut self.buf)?;
         match e {
-            Event::Text(e) | Event::CData(e) => Ok(e
-                .unescape_and_decode(&self.reader)
-                .unwrap_or_else(|_| String::from_utf8_lossy(e.escaped()).to_string())),
+            Event::Text(e) => Ok(e
+                .unescape()
+                .map(|s| s.to_string())
+                .unwrap_or_else(|_| e.escape_ascii().to_string())),
+            Event::CData(e) => {
+                Ok(String::from_utf8(e.to_vec()).unwrap_or_else(|_| e.escape_ascii().to_string()))
+            }
             Event::End(_) => Ok("".to_string()),
             e => Err(Error::InvalidXmlEvent(format!("{e:?}"))),
         }
@@ -1114,7 +1119,7 @@ where
             .filter_map(Result::ok)
             .map(|a| {
                 (
-                    String::from_utf8_lossy(a.key).to_string(),
+                    String::from_utf8_lossy(a.key.into_inner()).to_string(),
                     String::from_utf8_lossy(&a.value).to_string(),
                 )
             })
