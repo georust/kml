@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.8.0](https://github.com/georust/kml/releases/tag/v0.8.0)
+
+- Updated `quick-xml` and `zip` dependencies ([#48](https://github.com/georust/kml/pull/48)) from [@luke-biel](https://github.com/luke-biel)
+
 ## [v0.7.1](https://github.com/georust/kml/releases/tag/v0.7.1)
 
 - Handle invalid UTF-8 characters in tag name and attributes ([#45](https://github.com/georust/kml/pull/45))
