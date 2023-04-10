@@ -9,6 +9,8 @@ use crate::errors::Error;
 pub enum AltitudeMode {
     ClampToGround,
     RelativeToGround,
+    ClampToSeaFloor,
+    RelativeToSeaFloor,
     Absolute,
 }
 
@@ -25,6 +27,8 @@ impl FromStr for AltitudeMode {
         match s {
             "clampToGround" => Ok(Self::ClampToGround),
             "relativeToGround" => Ok(Self::RelativeToGround),
+            "clampToSeaFloor" => Ok(Self::ClampToSeaFloor),
+            "relativeToSeaFloor" => Ok(Self::RelativeToSeaFloor),
             "absolute" => Ok(Self::Absolute),
             v => Err(Error::InvalidAltitudeMode(v.to_string())),
         }
@@ -39,6 +43,8 @@ impl fmt::Display for AltitudeMode {
             match self {
                 Self::ClampToGround => "clampToGround",
                 Self::RelativeToGround => "relativeToGround",
+                Self::ClampToSeaFloor => "clampToSeaFloor",
+                Self::RelativeToSeaFloor => "relativeToSeaFloor",
                 Self::Absolute => "absolute",
             }
         )
