@@ -5,17 +5,12 @@ use crate::errors::Error;
 
 /// `kml:altitudeMode`, [9.20](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#322) in the
 /// KML specification
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum AltitudeMode {
+    #[default]
     ClampToGround,
     RelativeToGround,
     Absolute,
-}
-
-impl Default for AltitudeMode {
-    fn default() -> AltitudeMode {
-        AltitudeMode::ClampToGround
-    }
 }
 
 impl FromStr for AltitudeMode {

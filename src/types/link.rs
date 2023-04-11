@@ -65,17 +65,12 @@ impl Default for Icon {
 }
 
 /// `kml:refreshModeEnumType`, [16.21](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#1239) in the KML specification.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum RefreshMode {
+    #[default]
     OnChange,
     OnInterval,
     OnExpire,
-}
-
-impl Default for RefreshMode {
-    fn default() -> RefreshMode {
-        RefreshMode::OnChange
-    }
 }
 
 impl FromStr for RefreshMode {
@@ -102,18 +97,13 @@ impl fmt::Display for RefreshMode {
 }
 
 /// `kml:viewRefreshModeEnumType`, [16.27](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#1270) in the KML specification.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum ViewRefreshMode {
+    #[default]
     Never,
     OnRequest,
     OnStop,
     OnRegion,
-}
-
-impl Default for ViewRefreshMode {
-    fn default() -> ViewRefreshMode {
-        ViewRefreshMode::Never
-    }
 }
 
 impl FromStr for ViewRefreshMode {

@@ -13,18 +13,13 @@ use crate::types::{
 ///
 /// According to <http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#7> namespace for 2.3
 /// is unchanged since it should be backwards-compatible
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum KmlVersion {
+    #[default]
     Unknown,
     V22,
     V23,
-}
-
-impl Default for KmlVersion {
-    fn default() -> KmlVersion {
-        KmlVersion::Unknown
-    }
 }
 
 // TODO: According to http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#7 namespace for 2.3

@@ -65,16 +65,11 @@ impl Default for BalloonStyle {
 
 /// `kml:colorMode`, [12.11](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#879) in the
 /// KML specification
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum ColorMode {
+    #[default]
     Default,
     Random,
-}
-
-impl Default for ColorMode {
-    fn default() -> ColorMode {
-        ColorMode::Default
-    }
 }
 
 impl FromStr for ColorMode {
@@ -214,18 +209,13 @@ impl Default for PolyStyle {
 
 /// `kml:listItemType`, [12.18](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#955) in the
 /// KML specification.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum ListItemType {
+    #[default]
     Check,
     CheckOffOnly,
     CheckHideChildren,
     RadioFolder,
-}
-
-impl Default for ListItemType {
-    fn default() -> ListItemType {
-        ListItemType::Check
-    }
 }
 
 impl FromStr for ListItemType {
