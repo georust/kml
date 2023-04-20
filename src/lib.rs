@@ -96,7 +96,6 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[allow(clippy::derivable_impls)]
 pub mod types;
 
 pub use crate::types::{Kml, KmlDocument, KmlVersion};
