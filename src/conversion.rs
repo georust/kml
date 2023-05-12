@@ -7,7 +7,7 @@
 //! use geo_types;
 //!
 //! let kml_coord = Coord::new(1.0, 1.0, None);
-//! let geo_coord = geo_types::Coordinate::from(kml_coord);
+//! let geo_coord = geo_types::Coord::from(kml_coord);
 //! let kml_coord: Coord = Coord::from(geo_coord);
 //! ```
 use std::convert::TryFrom;

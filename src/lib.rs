@@ -53,8 +53,7 @@
 //!
 //! ```
 //! use std::str;
-//! use quick_xml;
-//! use kml::{Kml, KmlWriter, types::{AltitudeMode, Coord, Point}};
+//! use kml::{Kml, KmlWriter, types::Point};
 //!
 //! let kml = Kml::Point(Point::new(1., 1., None));
 //!
