@@ -17,7 +17,12 @@ quick-xml = "0.28"
 num-traits = "0.2"
 thiserror = "1.0"
 geo-types = { version = ">=0.6, <0.8", optional = true }
-zip = { version = "0.6", optional = true }
+zip = { version = "0.6", optional = true, default-features = false, features = [
+    "bzip2",
+    "deflate",
+    "time",
+    "zstd",
+] }
 
 [dev-dependencies]
 criterion = "0.4"
