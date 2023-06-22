@@ -557,7 +557,7 @@ where
                     match e.local_name().as_ref() {
                         b"scale" => icon_style.scale = self.read_float()?,
                         b"heading" => icon_style.heading = self.read_float()?,
-                        b"hot_spot" => {
+                        b"hotSpot" => {
                             let x_val = attrs.get("x");
                             let y_val = attrs.get("y");
                             let xunits = attrs.get("xunits");
