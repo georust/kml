@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## [v0.8.1](https://github.com/georust/kml/releases/tag/v0.8.1)
+
+- Fix parsing of `hotSpot` in `IconStyle` ([#53](https://github.com/georust/kml/pull/53)) from [@adrianhoppe](https://github.com/adrianhoppe)
+- Disable unneeded aes-crypto feature for zip ([#52](https://github.com/georust/kml/pull/52)) from [@Dosenpfand](https://github.com/Dosenpfand)
+- Clean up code examples ([#51](https://github.com/georust/kml/pull/51)) from [@Dosenpfand](https://github.com/Dosenpfand)
+- Fix default implementation on enums ([#50](https://github.com/georust/kml/pull/50)) from [@luke-biel](https://github.com/luke-biel)))
+
 ## [v0.8.0](https://github.com/georust/kml/releases/tag/v0.8.0)
 
 - Updated `quick-xml` and `zip` dependencies ([#48](https://github.com/georust/kml/pull/48)) from [@luke-biel](https://github.com/luke-biel)
