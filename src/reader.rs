@@ -228,6 +228,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -256,6 +257,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -296,6 +298,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -362,6 +365,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -404,6 +408,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -486,6 +491,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -512,6 +518,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -537,6 +544,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -594,6 +602,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -615,6 +624,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -652,6 +662,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -686,6 +697,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -716,6 +728,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -744,6 +757,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -814,6 +828,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -861,6 +876,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -892,6 +908,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -920,6 +937,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -950,6 +968,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -985,6 +1004,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -1022,6 +1042,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -1044,6 +1065,7 @@ where
                         break;
                     }
                 }
+                Event::Comment(_) => {}
                 _ => break,
             }
         }
@@ -1163,6 +1185,7 @@ mod tests {
     #[test]
     fn test_parse_location() {
         let poly_str = r#"<Location>
+            <!-- comment -->
             <longitude>39.55</longitude>
             <latitude>-118.98</latitude>
             <altitude>1223</altitude>
@@ -1184,6 +1207,7 @@ mod tests {
     #[test]
     fn test_read_link() {
         let kml_str = r#"<Link id="Some ID">
+            <!-- comment -->
             <href>/path/to/local/resource</href>
             <refreshMode>onChange</refreshMode>
             <refreshInterval>4</refreshInterval>
@@ -1213,6 +1237,7 @@ mod tests {
     #[test]
     fn test_read_link_type_icon() {
         let kml_str = r#"<Icon id="Some ID">
+            <!-- comment -->
             <href>/path/to/local/resource</href>
             <refreshMode>onChange</refreshMode>
             <refreshInterval>4</refreshInterval>
@@ -1243,6 +1268,7 @@ mod tests {
     fn test_read_resource_map() {
         let kml_str = r#"<ResourceMap id="ResourceMap ID">
             <Alias id="Alias ID 1">
+                <!-- comment -->
                 <targetHref>../images/foo1.jpg</targetHref>
                 <sourceHref>in-geometry-file/foo1.jpg</sourceHref>
             </Alias>
@@ -1297,6 +1323,7 @@ mod tests {
     #[test]
     fn test_read_alias() {
         let kml_str = r#"<Alias id="Some ID">
+            <!-- comment -->
             <targetHref>../images/foo.jpg</targetHref>
             <sourceHref>in-geometry-file/foo.jpg</sourceHref>
         </Alias>"#;
@@ -1322,6 +1349,7 @@ mod tests {
             <SimpleData name="TrailLength" anyAttribute="anySimpleType">3.14159</SimpleData>
             <SimpleArrayData name="cadence" anyAttribute="anySimpleType">
                 <value>86</value>
+                <!-- comment -->
                 <value>113</value>
                 <value>113</value>
             </SimpleArrayData>
@@ -1380,6 +1408,7 @@ mod tests {
         let kml_str = r#"<Scale>
             <x>1.2</x>
             <y>3.5</y>
+            <!-- comment -->
             <z>2.5</z>
         </Scale>"#;
         let s: Kml = kml_str.parse().unwrap();
