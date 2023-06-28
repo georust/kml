@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.8.2](https://github.com/georust/kml/releases/tag/v0.8.2)
+
+- Ignore comments to avoid breaking parsing logic in reader ([#55](https://github.com/georust/kml/pull/55))
+
 ## [v0.8.1](https://github.com/georust/kml/releases/tag/v0.8.1)
 
 - Fix parsing of `hotSpot` in `IconStyle` ([#53](https://github.com/georust/kml/pull/53)) from [@adrianhoppe](https://github.com/adrianhoppe)
