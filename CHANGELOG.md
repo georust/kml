@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.8.3](https://github.com/georust/kml/releases/tag/v0.8.3)
+
+- Fixes `ColorMode` variants by making the default `normal` ([#57](https://github.com/georust/kml/pull/57))
+
 ## [v0.8.2](https://github.com/georust/kml/releases/tag/v0.8.2)
 
 - Ignore comments to avoid breaking parsing logic in reader ([#55](https://github.com/georust/kml/pull/55))
