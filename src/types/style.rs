@@ -68,7 +68,7 @@ impl Default for BalloonStyle {
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum ColorMode {
     #[default]
-    Default,
+    Normal,
     Random,
 }
 
@@ -77,7 +77,7 @@ impl FromStr for ColorMode {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "default" => Ok(Self::Default),
+            "normal" => Ok(Self::Normal),
             "random" => Ok(Self::Random),
             v => Err(Error::InvalidColorMode(v.to_string())),
         }
@@ -90,7 +90,7 @@ impl fmt::Display for ColorMode {
             f,
             "{}",
             match self {
-                Self::Default => "default",
+                Self::Normal => "normal",
                 Self::Random => "random",
             }
         )
