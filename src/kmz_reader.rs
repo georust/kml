@@ -36,7 +36,9 @@ where
 
         // Should parse the first file with a KML extension
         for i in 0..archive.len() {
-            let mut kml_file = archive.by_index(i).map_err(|_| Error::InvalidInput)?;
+            let mut kml_file = archive
+                .by_index(i)
+                .map_err(|e| Error::InvalidInput(format!("{e:?}")))?;
             if !kml_file.name().to_ascii_lowercase().ends_with(".kml") {
                 continue;
             }
@@ -45,7 +47,9 @@ where
             return Ok(KmlReader::from_reader(Cursor::new(buf)));
         }
 
-        Err(Error::InvalidInput)
+        Err(Error::InvalidInput(
+            "Archive contains no elements".to_string(),
+        ))
     }
 }
 

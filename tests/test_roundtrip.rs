@@ -30,6 +30,7 @@ mod roundtrip_tests {
         test_polygon: "polygon.kml",
         test_sample: "sample.kml",
         test_countries: "countries.kml",
+        test_style_merging: "style-merging.kml",
     }
 
     // Confirms that parsing from KML and writing back doesn't drop any currently tracked data
