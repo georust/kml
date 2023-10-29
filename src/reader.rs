@@ -1349,7 +1349,7 @@ mod tests {
 
     #[test]
     fn test_read_schema_data() {
-        let kml_str = r###"<SchemaData schemaUrl="#TrailHeadTypeId">
+        let kml_str = r##"<SchemaData schemaUrl="#TrailHeadTypeId">
             <SimpleData name="TrailHeadName" anyAttribute="anySimpleType">Pi in the sky</SimpleData>
             <SimpleData name="TrailLength" anyAttribute="anySimpleType">3.14159</SimpleData>
             <SimpleArrayData name="cadence" anyAttribute="anySimpleType">
@@ -1361,7 +1361,7 @@ mod tests {
             <SimpleArrayData name="heartrate">
                 <value>181</value>
             </SimpleArrayData>
-        </SchemaData>"###;
+        </SchemaData>"##;
 
         let a: Kml = kml_str.parse().unwrap();
         assert_eq!(
