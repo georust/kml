@@ -813,7 +813,9 @@ where
             simple_array_data.name = name;
             simple_array_data.attrs = attrs;
         } else {
-            return Err(Error::InvalidInput("Required \"name\" attribute not present".to_string()));
+            return Err(Error::InvalidInput(
+                "Required \"name\" attribute not present".to_string(),
+            ));
         }
 
         loop {
@@ -849,7 +851,9 @@ where
                 attrs,
             })
         } else {
-            Err(Error::InvalidInput("Required \"name\" attribute not present".to_string()))
+            Err(Error::InvalidInput(
+                "Required \"name\" attribute not present".to_string(),
+            ))
         }
     }
 
@@ -1689,14 +1693,13 @@ mod tests {
     #[test]
     fn test_parse_style_merging() {
         let kml_str = include_str!("../tests/fixtures/style-merging.kml");
-        let res = Kml::<f64>::from_str(kml_str);
-        if let Err(e) = res {
-            println!("Error: {:?}", e);
-        }
+        let res = Kml::<f64>::from_str(kml_str).unwrap();
+        println!("{res:#?}");
 
         assert!(matches!(
             Kml::<f64>::from_str(kml_str).unwrap(),
             Kml::KmlDocument(_)
-        ))
+        ));
+        assert_eq!(true, false);
     }
 }
