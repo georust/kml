@@ -5,7 +5,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Invalid input supplied for XML")]
-    InvalidInput,
+    InvalidInput(String),
     #[error("Encountered malformed XML: {0}")]
     MalformedXml(#[from] quick_xml::Error),
     #[error("Invalid XML event: {0}")]

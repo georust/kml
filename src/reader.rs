@@ -194,7 +194,8 @@ where
                 },
                 Event::Decl(_) | Event::CData(_) | Event::Empty(_) | Event::Text(_) => {}
                 Event::Eof => break,
-                _ => return Err(Error::InvalidInput),
+                Event::Comment(_) => {}
+                x => return Err(Error::InvalidInput(format!("{:?}", x))),
             };
         }
 
@@ -812,7 +813,9 @@ where
             simple_array_data.name = name;
             simple_array_data.attrs = attrs;
         } else {
-            return Err(Error::InvalidInput);
+            return Err(Error::InvalidInput(
+                "Required \"name\" attribute not present".to_string(),
+            ));
         }
 
         loop {
@@ -848,7 +851,9 @@ where
                 attrs,
             })
         } else {
-            Err(Error::InvalidInput)
+            Err(Error::InvalidInput(
+                "Required \"name\" attribute not present".to_string(),
+            ))
         }
     }
 
@@ -1344,7 +1349,7 @@ mod tests {
 
     #[test]
     fn test_read_schema_data() {
-        let kml_str = r###"<SchemaData schemaUrl="#TrailHeadTypeId">
+        let kml_str = r##"<SchemaData schemaUrl="#TrailHeadTypeId">
             <SimpleData name="TrailHeadName" anyAttribute="anySimpleType">Pi in the sky</SimpleData>
             <SimpleData name="TrailLength" anyAttribute="anySimpleType">3.14159</SimpleData>
             <SimpleArrayData name="cadence" anyAttribute="anySimpleType">
@@ -1356,7 +1361,7 @@ mod tests {
             <SimpleArrayData name="heartrate">
                 <value>181</value>
             </SimpleArrayData>
-        </SchemaData>"###;
+        </SchemaData>"##;
 
         let a: Kml = kml_str.parse().unwrap();
         assert_eq!(
@@ -1683,5 +1688,15 @@ mod tests {
             Kml::<f64>::from_str(kml_str).unwrap(),
             Kml::KmlDocument(_)
         ))
+    }
+
+    #[test]
+    fn test_parse_style_merging() {
+        let kml_str = include_str!("../tests/fixtures/style-merging.kml");
+
+        assert!(matches!(
+            Kml::<f64>::from_str(kml_str).unwrap(),
+            Kml::KmlDocument(_)
+        ));
     }
 }
