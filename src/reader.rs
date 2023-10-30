@@ -1693,13 +1693,10 @@ mod tests {
     #[test]
     fn test_parse_style_merging() {
         let kml_str = include_str!("../tests/fixtures/style-merging.kml");
-        let res = Kml::<f64>::from_str(kml_str).unwrap();
-        println!("{res:#?}");
 
         assert!(matches!(
             Kml::<f64>::from_str(kml_str).unwrap(),
             Kml::KmlDocument(_)
         ));
-        assert_eq!(true, false);
     }
 }
