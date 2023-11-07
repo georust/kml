@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.8.4](https://github.com/georust/kml/releases/tag/v0.8.4)
+
+- Add error message inside `InvalidInput` ([#58](https://github.com/georust/kml/pull/58)) from [@k-bx](https://github.com/k-bx)
+
 ## [v0.8.3](https://github.com/georust/kml/releases/tag/v0.8.3)
 
 - Fixes `ColorMode` variants by making the default `normal` ([#57](https://github.com/georust/kml/pull/57))
