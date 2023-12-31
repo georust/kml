@@ -353,7 +353,10 @@ where
                         }
                         outer = outer_ring.remove(0);
                     }
-                    b"innerBoundaryIs" => inner = self.read_boundary(b"innerBoundaryIs")?,
+                    b"innerBoundaryIs" => {
+                        let mut boundary = self.read_boundary(b"innerBoundaryIs")?;
+                        inner.append(&mut boundary);
+                    }
                     b"altitudeMode" => {
                         altitude_mode = types::AltitudeMode::from_str(&self.read_str()?)?
                     }
