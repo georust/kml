@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.8.5](https://github.com/georust/kml/releases/tag/v0.8.5)
+
+- Fix reading all inner rings in `Polygon` ([#59](https://github.com/georust/kml/pull/59)) from [@cfzimmerman](https://github.com/cfzimmerman)
+
 ## [v0.8.4](https://github.com/georust/kml/releases/tag/v0.8.4)
 
 - Add error message inside `InvalidInput` ([#58](https://github.com/georust/kml/pull/58)) from [@k-bx](https://github.com/k-bx)
