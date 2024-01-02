@@ -353,7 +353,9 @@ where
                         }
                         outer = outer_ring.remove(0);
                     }
-                    b"innerBoundaryIs" => inner = self.read_boundary(b"innerBoundaryIs")?,
+                    b"innerBoundaryIs" => {
+                        inner.append(&mut self.read_boundary(b"innerBoundaryIs")?);
+                    }
                     b"altitudeMode" => {
                         altitude_mode = types::AltitudeMode::from_str(&self.read_str()?)?
                     }
