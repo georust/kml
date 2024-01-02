@@ -117,5 +117,6 @@ pub use conversion::quick_collection;
 #[cfg(feature = "zip")]
 mod kmz_reader;
 
+#[allow(unused_imports)]
 #[cfg(feature = "zip")]
 pub use kmz_reader::*;
