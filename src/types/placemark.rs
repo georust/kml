@@ -16,6 +16,7 @@ pub struct Placemark<T: CoordType = f64> {
     pub name: Option<String>,
     pub description: Option<String>,
     pub geometry: Option<Geometry<T>>,
+    pub style_url: Option<String>,
     pub attrs: HashMap<String, String>,
     pub children: Vec<Element>,
 }
