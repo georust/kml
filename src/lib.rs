@@ -67,7 +67,7 @@
 //! ```
 //! # #[cfg(feature = "geo-types")] {
 //! use geo_types::{self, GeometryCollection};
-//! use kml::{quick_collection, Kml, types::Point};
+//! use kml::{Kml, types::Point};
 //!
 //! let kml_point = Point::new(1., 1., None);
 //! // Convert into geo_types primitives
@@ -88,8 +88,7 @@
 //! </Folder>"#;
 //! let kml_folder: Kml<f64> = kml_folder_str.parse().unwrap();
 //!
-//! // Use the quick_collection helper to convert Kml to a geo_types::GeometryCollection
-//! let geom_coll: GeometryCollection<f64> = quick_collection(kml_folder).unwrap();
+//! let geom_coll: GeometryCollection<f64> = kml_folder.try_into().unwrap();
 //! # }
 //! ```
 
