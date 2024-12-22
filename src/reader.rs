@@ -30,7 +30,7 @@ pub struct KmlReader<B: BufRead, T: CoordType + FromStr + Default = f64> {
     _phantom: PhantomData<T>,
 }
 
-impl<'a, T> KmlReader<&'a [u8], T>
+impl<T> KmlReader<&[u8], T>
 where
     T: CoordType + FromStr + Default,
 {
