@@ -250,6 +250,9 @@ where
         if let Some(geometry) = &placemark.geometry {
             self.write_geometry(geometry)?;
         }
+        if let Some(style_url) = &placemark.style_url {
+            self.write_text_element("styleUrl", style_url)?;
+        }
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::new("Placemark")))?)

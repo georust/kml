@@ -423,6 +423,7 @@ where
         let mut description: Option<String> = None;
         let mut geometry: Option<Geometry<T>> = None;
         let mut children: Vec<Element> = Vec::new();
+        let mut style_url: Option<String> = None;
 
         loop {
             let e = self.reader.read_event_into(&mut self.buf)?;
@@ -432,6 +433,7 @@ where
                     match e.local_name().as_ref() {
                         b"name" => name = Some(self.read_str()?),
                         b"description" => description = Some(self.read_str()?),
+                        b"styleUrl" => style_url = Some(self.read_str()?),
                         b"Point" => geometry = Some(Geometry::Point(self.read_point(attrs)?)),
                         b"LineString" => {
                             geometry = Some(Geometry::LineString(self.read_line_string(attrs)?))
@@ -462,6 +464,7 @@ where
         Ok(Placemark {
             name,
             description,
+            style_url,
             geometry,
             attrs,
             children,
@@ -1599,6 +1602,7 @@ mod tests {
             <Placemark>
             <name><![CDATA[Test & Test]]></name>
             <description>1¼ miles</description>
+            <styleUrl>#foo</styleUrl>
             <Point>
             <coordinates>
                 -1.0,1.0,0
@@ -1614,6 +1618,7 @@ mod tests {
         .unwrap();
         assert_eq!(placemark.name, Some("Test & Test".to_string()));
         assert_eq!(placemark.description, Some("1¼ miles".to_string()));
+        assert_eq!(placemark.style_url, Some("#foo".to_string()));
     }
 
     #[test]
