@@ -425,7 +425,7 @@ mod tests {
     use std::collections::HashMap;
 
     #[test]
-    fn test_quick_collection() {
+    fn test_try_from_collection() {
         let k = KmlDocument {
             elements: vec![
                 Kml::Point(Point::from(Coord::from((1., 1.)))),
@@ -448,6 +448,9 @@ mod tests {
             geo_types::Geometry::LineString(geo_types::LineString::from(vec![(1., 1.), (2., 2.)])),
             geo_types::Geometry::Point(geo_types::Point::from((3., 3.))),
         ]);
-        assert_eq!(quick_collection(Kml::KmlDocument(k)).unwrap(), gc);
+        assert_eq!(
+            geo_types::GeometryCollection::try_from(Kml::KmlDocument(k)).unwrap(),
+            gc
+        );
     }
 }
