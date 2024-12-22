@@ -85,8 +85,8 @@ where
     }
 
     fn from_xml_reader(mut reader: quick_xml::Reader<B>) -> KmlReader<B, T> {
-        reader.trim_text(true);
-        reader.expand_empty_elements(true);
+        let config = reader.config_mut();
+        config.trim_text(true);
         KmlReader {
             reader,
             buf: Vec::new(),
