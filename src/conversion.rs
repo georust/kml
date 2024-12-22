@@ -310,56 +310,75 @@ where
     }
 }
 
-fn process_kml<T>(k: Kml<T>) -> Result<Vec<geo_types::Geometry<T>>, Error>
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> TryFrom<Kml<T>> for Vec<geo_types::Geometry<T>>
 where
     T: CoordType,
 {
-    match k {
-        Kml::KmlDocument(d) => Ok(d
-            .elements
-            .into_iter()
-            .flat_map(process_kml)
-            .flatten()
-            .collect()),
-        Kml::Point(p) => Ok(vec![
-            geo_types::Geometry::Point(geo_types::Point::from(p));
-            1
-        ]),
-        Kml::LineString(l) => Ok(vec![
-            geo_types::Geometry::LineString(
-                geo_types::LineString::from(l),
-            );
-            1
-        ]),
-        Kml::LinearRing(l) => Ok(vec![
-            geo_types::Geometry::LineString(
-                geo_types::LineString::from(l),
-            );
-            1
-        ]),
-        Kml::Polygon(p) => Ok(vec![
-            geo_types::Geometry::Polygon(geo_types::Polygon::from(
-                p
-            ));
-            1
-        ]),
-        Kml::MultiGeometry(g) => Ok(geo_types::GeometryCollection::try_from(g)?.0),
-        Kml::Placemark(p) => Ok(if let Some(g) = p.geometry {
-            vec![geo_types::Geometry::try_from(g)?; 1]
-        } else {
-            vec![]
-        }),
-        Kml::Document { elements, .. } => Ok(elements
-            .into_iter()
-            .flat_map(process_kml)
-            .flatten()
-            .collect()),
-        Kml::Folder { elements, .. } => Ok(elements
-            .into_iter()
-            .flat_map(process_kml)
-            .flatten()
-            .collect()),
-        _ => Ok(vec![]),
+    type Error = Error;
+
+    fn try_from(k: Kml<T>) -> Result<Vec<geo_types::Geometry<T>>, Self::Error> {
+        match k {
+            Kml::KmlDocument(d) => Ok(d
+                .elements
+                .into_iter()
+                .flat_map(Vec::<geo_types::Geometry<T>>::try_from)
+                .flatten()
+                .collect::<Vec<geo_types::Geometry<T>>>()),
+            Kml::Point(p) => Ok(vec![
+                geo_types::Geometry::Point(geo_types::Point::from(p));
+                1
+            ]),
+            Kml::LineString(l) => Ok(vec![
+                geo_types::Geometry::LineString(
+                    geo_types::LineString::from(l),
+                );
+                1
+            ]),
+            Kml::LinearRing(l) => Ok(vec![
+                geo_types::Geometry::LineString(
+                    geo_types::LineString::from(l),
+                );
+                1
+            ]),
+            Kml::Polygon(p) => Ok(vec![
+                geo_types::Geometry::Polygon(geo_types::Polygon::from(
+                    p
+                ));
+                1
+            ]),
+            Kml::MultiGeometry(g) => Ok(geo_types::GeometryCollection::try_from(g)?.0),
+            Kml::Placemark(p) => Ok(if let Some(g) = p.geometry {
+                vec![geo_types::Geometry::try_from(g)?; 1]
+            } else {
+                vec![]
+            }),
+            Kml::Document { elements, .. } => Ok(elements
+                .into_iter()
+                .flat_map(Vec::<geo_types::Geometry<T>>::try_from)
+                .flatten()
+                .collect()),
+            Kml::Folder { elements, .. } => Ok(elements
+                .into_iter()
+                .flat_map(Vec::<geo_types::Geometry<T>>::try_from)
+                .flatten()
+                .collect()),
+            _ => Ok(vec![]),
+        }
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
+impl<T> TryFrom<Kml<T>> for geo_types::GeometryCollection<T>
+where
+    T: CoordType,
+{
+    type Error = Error;
+
+    fn try_from(k: Kml<T>) -> Result<geo_types::GeometryCollection<T>, Self::Error> {
+        Ok(geo_types::GeometryCollection(
+            Vec::<geo_types::Geometry<T>>::try_from(k)?,
+        ))
     }
 }
 
@@ -387,12 +406,16 @@ where
 /// // Turn the KML string into a geo_types GeometryCollection
 /// let mut collection: GeometryCollection<f64> = quick_collection(k).unwrap();
 /// ```
+#[deprecated(
+    since = "0.8.7",
+    note = "use `geo_types::GeometryCollection::try_from(&k)` instead"
+)]
 #[cfg_attr(docsrs, doc(cfg(feature = "geo-types")))]
 pub fn quick_collection<T>(k: Kml<T>) -> Result<geo_types::GeometryCollection<T>, Error>
 where
     T: CoordType,
 {
-    Ok(geo_types::GeometryCollection(process_kml(k)?))
+    geo_types::GeometryCollection::try_from(k)
 }
 
 #[cfg(test)]
