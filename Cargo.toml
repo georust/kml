@@ -1,6 +1,6 @@
 [package]
 name = "kml"
-version = "0.8.5"
+version = "0.8.6"
 authors = ["Pat Sier <pjsier@gmail.com>", "The GeoRust Developers <mods@georust.org>"]
 description = "KML support for Rust"
 readme = "README.md"

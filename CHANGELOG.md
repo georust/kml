@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [v0.8.6](https://github.com/georust/kml/releases/tag/v0.8.6)
+
+- Add support for `styleUrl` to `Placemark` ([#61](https://github.com/georust/kml/pull/61)) from [@keltia](https://github.com/keltia)
+- Fix clippy lint by removing unnecessary lifetime
+- Update dependencies ([#63](https://github.com/georust/kml/pull/63))
+
 ## [v0.8.5](https://github.com/georust/kml/releases/tag/v0.8.5)
 
 - Fix reading all inner rings in `Polygon` ([#59](https://github.com/georust/kml/pull/59)) from [@cfzimmerman](https://github.com/cfzimmerman)
