@@ -112,6 +112,7 @@ pub use crate::writer::KmlWriter;
 pub mod conversion;
 
 #[cfg(feature = "geo-types")]
+#[allow(deprecated)]
 pub use conversion::quick_collection;
 
 #[cfg(feature = "zip")]
