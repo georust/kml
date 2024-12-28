@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.8.7](https://github.com/georust/kml/releases/tag/v0.8.7)
+
+- Add `TryFrom` implementation for `geo_types::GeometryCollection` to replace `quick_collection` and deprecate `quick_collection` ([#64](https://github.com/georust/kml/pull/64))
+
 ## [v0.8.6](https://github.com/georust/kml/releases/tag/v0.8.6)
 
 - Add support for `styleUrl` to `Placemark` ([#61](https://github.com/georust/kml/pull/61)) from [@keltia](https://github.com/keltia)
