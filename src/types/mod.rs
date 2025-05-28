@@ -29,6 +29,9 @@ mod element;
 pub(crate) mod geom_props;
 mod placemark;
 
+mod folder;
+pub use folder::Folder;
+
 pub use element::Element;
 pub use placemark::Placemark;
 

@@ -358,7 +358,8 @@ where
                 .flat_map(Vec::<geo_types::Geometry<T>>::try_from)
                 .flatten()
                 .collect()),
-            Kml::Folder { elements, .. } => Ok(elements
+            Kml::Folder(f) => Ok(f
+                .elements
                 .into_iter()
                 .flat_map(Vec::<geo_types::Geometry<T>>::try_from)
                 .flatten()
@@ -421,16 +422,15 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::Folder;
     use crate::KmlDocument;
-    use std::collections::HashMap;
 
     #[test]
     fn test_try_from_collection() {
         let k = KmlDocument {
             elements: vec![
                 Kml::Point(Point::from(Coord::from((1., 1.)))),
-                Kml::Folder {
-                    attrs: HashMap::new(),
+                Kml::Folder(Folder {
                     elements: vec![
                         Kml::LineString(LineString::from(vec![
                             Coord::from((1., 1.)),
@@ -438,7 +438,8 @@ mod tests {
                         ])),
                         Kml::Point(Point::from(Coord::from((3., 3.)))),
                     ],
-                },
+                    ..Default::default()
+                }),
             ],
             ..Default::default()
         };

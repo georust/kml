@@ -11,10 +11,10 @@ use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    Alias, BalloonStyle, Coord, CoordType, Element, Geometry, Icon, IconStyle, Kml, LabelStyle,
-    LineString, LineStyle, LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry,
-    Orientation, Pair, Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale, SchemaData,
-    SimpleArrayData, SimpleData, Style, StyleMap,
+    Alias, BalloonStyle, Coord, CoordType, Element, Folder, Geometry, Icon, IconStyle, Kml,
+    LabelStyle, LineString, LineStyle, LinearRing, Link, LinkTypeIcon, ListStyle, Location,
+    MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale,
+    SchemaData, SimpleArrayData, SimpleData, Style, StyleMap,
 };
 
 /// Struct for managing writing KML
@@ -100,10 +100,9 @@ where
             Kml::Document { attrs, elements } => {
                 self.write_container("Document", attrs, elements)?
             }
-            Kml::Folder { attrs, elements } => self.write_container("Folder", attrs, elements)?,
+            Kml::Folder(f) => self.write_folder(f)?,
             Kml::Element(e) => self.write_element(e)?,
         }
-
         Ok(())
     }
 
@@ -271,6 +270,24 @@ where
         Ok(self
             .writer
             .write_event(Event::End(BytesEnd::new(&e.name)))?)
+    }
+
+    fn write_folder(&mut self, folder: &Folder<T>) -> Result<(), Error> {
+        self.writer.write_event(Event::Start(
+            BytesStart::new("Folder").with_attributes(self.hash_map_as_attrs(&folder.attrs)),
+        ))?;
+        if let Some(name) = &folder.name {
+            self.write_text_element("name", name)?;
+        }
+        if let Some(description) = &folder.description {
+            self.write_text_element("description", description)?;
+        }
+        for e in folder.elements.iter() {
+            self.write_kml(e)?;
+        }
+        Ok(self
+            .writer
+            .write_event(Event::End(BytesEnd::new("Folder")))?)
     }
 
     fn write_style(&mut self, style: &Style) -> Result<(), Error> {

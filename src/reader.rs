@@ -15,11 +15,11 @@ use quick_xml::events::{BytesStart, Event};
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    self, coords_from_str, Alias, BalloonStyle, ColorMode, Coord, CoordType, Element, Geometry,
-    Icon, IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle, LinearRing,
-    Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair, Placemark, Point,
-    PolyStyle, Polygon, RefreshMode, ResourceMap, Scale, SchemaData, SimpleArrayData, SimpleData,
-    Style, StyleMap, Units, Vec2, ViewRefreshMode,
+    self, coords_from_str, Alias, BalloonStyle, ColorMode, Coord, CoordType, Element, Folder,
+    Geometry, Icon, IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle,
+    LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair,
+    Placemark, Point, PolyStyle, Polygon, RefreshMode, ResourceMap, Scale, SchemaData,
+    SimpleArrayData, SimpleData, Style, StyleMap, Units, Vec2, ViewRefreshMode,
 };
 
 /// Main struct for reading KML documents
@@ -148,10 +148,7 @@ where
                             attrs,
                             elements: self.read_elements()?,
                         }),
-                        b"Folder" => elements.push(Kml::Folder {
-                            attrs,
-                            elements: self.read_elements()?,
-                        }),
+                        b"Folder" => elements.push(Kml::Folder(self.read_folder(attrs)?)),
                         b"Style" => elements.push(Kml::Style(self.read_style(attrs)?)),
                         b"StyleMap" => elements.push(Kml::StyleMap(self.read_style_map(attrs)?)),
                         b"Pair" => elements.push(Kml::Pair(self.read_pair(attrs)?)),
@@ -468,6 +465,44 @@ where
             geometry,
             attrs,
             children,
+        })
+    }
+
+    fn read_folder(&mut self, attrs: HashMap<String, String>) -> Result<Folder<T>, Error> {
+        let mut name = None;
+        let mut description = None;
+        let mut folder_elements = Vec::new();
+
+        loop {
+            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            match e {
+                Event::Start(ref mut e) => {
+                    let attrs = Self::read_attrs(e.attributes());
+                    match e.local_name().as_ref() {
+                        b"name" => name = Some(self.read_str()?),
+                        b"description" => description = Some(self.read_str()?),
+                        _ => {
+                            let start = e.to_owned();
+                            let element = self.read_element(&start, attrs)?;
+                            folder_elements.push(Kml::Element(element));
+                        }
+                    }
+                }
+                Event::End(ref mut e) => {
+                    if e.local_name().as_ref() == b"Folder" {
+                        break;
+                    }
+                }
+                Event::Comment(_) => {}
+                _ => break,
+            }
+        }
+
+        Ok(Folder {
+            name,
+            description,
+            attrs,
+            elements: folder_elements,
         })
     }
 
@@ -1643,10 +1678,12 @@ mod tests {
         assert_eq!(doc.elements.len(), 2);
         assert!(doc.elements.iter().all(|e| matches!(
             e,
-            Kml::Folder {
+            Kml::Folder(Folder {
+                name: Some(_),
+                description: None,
                 attrs: _,
-                elements: _
-            }
+                elements: _,
+            })
         )));
     }
 
@@ -1680,10 +1717,12 @@ mod tests {
         assert_eq!(elements.len(), 2);
         assert!(elements.iter().all(|e| matches!(
             e,
-            Kml::Folder {
+            Kml::Folder(Folder {
+                name: Some(_),
+                description: None,
                 attrs: _,
-                elements: _
-            }
+                elements: _,
+            })
         )));
     }
 
