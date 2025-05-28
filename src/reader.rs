@@ -472,6 +472,7 @@ where
         let mut name = None;
         let mut description = None;
         let mut folder_elements = Vec::new();
+        let mut style_url: Option<String> = None;
 
         loop {
             let mut e = self.reader.read_event_into(&mut self.buf)?;
@@ -481,6 +482,7 @@ where
                     match e.local_name().as_ref() {
                         b"name" => name = Some(self.read_str()?),
                         b"description" => description = Some(self.read_str()?),
+                        b"styleUrl" => style_url = Some(self.read_str()?),
                         _ => {
                             let start = e.to_owned();
                             let element = self.read_element(&start, attrs)?;
@@ -501,6 +503,7 @@ where
         Ok(Folder {
             name,
             description,
+            style_url,
             attrs,
             elements: folder_elements,
         })
@@ -1661,9 +1664,11 @@ mod tests {
         let kml_str = r#"
     <Folder>
         <name>Folder 1</name>
+        <description>Folder 1 description</description>
     </Folder>
     <Folder>
         <name>Folder 2</name>
+        <description>Folder 2 description</description>
     </Folder>
     "#;
         let f: Kml = kml_str.parse().unwrap();
@@ -1680,7 +1685,8 @@ mod tests {
             e,
             Kml::Folder(Folder {
                 name: Some(_),
-                description: None,
+                description: Some(_),
+                style_url: None,
                 attrs: _,
                 elements: _,
             })
@@ -1695,9 +1701,11 @@ mod tests {
     <Document>
     <Folder>
         <name>Folder 1</name>
+        <styleUrl>#foo</styleUrl>
     </Folder>
     <Folder>
         <name>Folder 2</name>
+        <styleUrl>#foo</styleUrl>
     </Folder>
     </Document>
     </kml>
@@ -1720,6 +1728,7 @@ mod tests {
             Kml::Folder(Folder {
                 name: Some(_),
                 description: None,
+                style_url: Some(_),
                 attrs: _,
                 elements: _,
             })

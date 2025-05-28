@@ -9,6 +9,7 @@ use std::collections::HashMap;
 pub struct Folder<T: CoordType = f64> {
     pub name: Option<String>,
     pub description: Option<String>,
+    pub style_url: Option<String>,
     pub attrs: HashMap<String, String>,
     pub elements: Vec<Kml<T>>,
 }

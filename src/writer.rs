@@ -282,6 +282,9 @@ where
         if let Some(description) = &folder.description {
             self.write_text_element("description", description)?;
         }
+        if let Some(style_url) = &folder.style_url {
+            self.write_text_element("styleUrl", style_url)?;
+        }
         for e in folder.elements.iter() {
             self.write_kml(e)?;
         }
