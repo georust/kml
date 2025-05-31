@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.9.0](https://github.com/georust/kml/releases/tag/v0.9.0)
+
+- Add name, description, and styleUrl support for Folder ([#65](https://github.com/georust/kml/pull/65)) from [@christianaaronschroeder](https://github.com/christianaaronschroeder)
+
 ## [v0.8.7](https://github.com/georust/kml/releases/tag/v0.8.7)
 
 - Add `TryFrom` implementation for `geo_types::GeometryCollection` to replace `quick_collection` and deprecate `quick_collection` ([#64](https://github.com/georust/kml/pull/64))
