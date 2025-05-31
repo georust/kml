@@ -3,9 +3,9 @@ use std::str::FromStr;
 
 use crate::errors::Error;
 use crate::types::{
-    Alias, BalloonStyle, CoordType, Element, Icon, IconStyle, LabelStyle, LineString, LineStyle,
-    LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair,
-    Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale, SchemaData, SimpleArrayData,
+    Alias, BalloonStyle, CoordType, Element, Folder, Icon, IconStyle, LabelStyle, LineString,
+    LineStyle, LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation,
+    Pair, Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale, SchemaData, SimpleArrayData,
     SimpleData, Style, StyleMap,
 };
 
@@ -64,10 +64,7 @@ pub enum Kml<T: CoordType = f64> {
         attrs: HashMap<String, String>,
         elements: Vec<Kml<T>>,
     },
-    Folder {
-        attrs: HashMap<String, String>,
-        elements: Vec<Kml<T>>,
-    },
+    Folder(Folder<T>),
     Style(Style),
     StyleMap(StyleMap),
     Pair(Pair),
