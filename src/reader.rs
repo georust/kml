@@ -471,32 +471,18 @@ where
     fn read_folder(&mut self, attrs: HashMap<String, String>) -> Result<Folder<T>, Error> {
         let mut name = None;
         let mut description = None;
-        let mut folder_elements = Vec::new();
-        let mut style_url: Option<String> = None;
+        let mut style_url = None;
+        let mut elements: Vec<Kml<T>> = Vec::new();
 
-        loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
-            match e {
-                Event::Start(ref mut e) => {
-                    let attrs = Self::read_attrs(e.attributes());
-                    match e.local_name().as_ref() {
-                        b"name" => name = Some(self.read_str()?),
-                        b"description" => description = Some(self.read_str()?),
-                        b"styleUrl" => style_url = Some(self.read_str()?),
-                        _ => {
-                            let start = e.to_owned();
-                            let element = self.read_element(&start, attrs)?;
-                            folder_elements.push(Kml::Element(element));
-                        }
-                    }
-                }
-                Event::End(ref mut e) => {
-                    if e.local_name().as_ref() == b"Folder" {
-                        break;
-                    }
-                }
-                Event::Comment(_) => {}
-                _ => break,
+        for element in self.read_elements()? {
+            match element {
+                Kml::Element(el) => match el.name.as_str() {
+                    "name" => name = el.content,
+                    "description" => description = el.content,
+                    "styleUrl" => style_url = el.content,
+                    _ => {}
+                },
+                el => elements.push(el),
             }
         }
 
@@ -505,7 +491,7 @@ where
             description,
             style_url,
             attrs,
-            elements: folder_elements,
+            elements,
         })
     }
 
@@ -1691,6 +1677,29 @@ mod tests {
                 elements: _,
             })
         )));
+    }
+
+    #[test]
+    fn test_parse_folder_content() {
+        let kml_str = r#"
+    <Folder>
+        <Placemark></Placemark>
+        <name>Folder 1</name>
+        <description>Folder 1 description</description>
+    </Folder>
+    "#;
+        let f: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            f,
+            Kml::Folder(Folder {
+                name: Some("Folder 1".to_string()),
+                description: Some("Folder 1 description".to_string()),
+                elements: vec![Kml::Placemark(Placemark {
+                    ..Default::default()
+                })],
+                ..Default::default()
+            })
+        );
     }
 
     #[test]
