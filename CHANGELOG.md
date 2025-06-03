@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.9.1](https://github.com/georust/kml/releases/tag/v0.9.1)
+
+- Fixes a bug with `Folder` parsing where sub elements were all added as `Kml::Element` variants even if specific types were available ([#67](https://github.com/georust/kml/pull/67))
+
 ## [v0.9.0](https://github.com/georust/kml/releases/tag/v0.9.0)
 
 - Add name, description, and styleUrl support for Folder ([#65](https://github.com/georust/kml/pull/65)) from [@christianaaronschroeder](https://github.com/christianaaronschroeder)
