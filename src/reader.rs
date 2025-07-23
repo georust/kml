@@ -1134,18 +1134,13 @@ where
                 _ => {}
             }
         }
-        if coords.is_empty() {
-            Err(Error::InvalidGeometry(
-                "Geometry must contain coordinates element".to_string(),
-            ))
-        } else {
-            Ok(GeomProps {
-                coords,
-                altitude_mode,
-                extrude,
-                tessellate,
-            })
-        }
+
+        Ok(GeomProps {
+            coords,
+            altitude_mode,
+            extrude,
+            tessellate,
+        })
     }
 
     fn read_float<F: Float + FromStr>(&mut self) -> Result<F, Error> {
