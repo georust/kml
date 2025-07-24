@@ -1758,4 +1758,27 @@ mod tests {
             Kml::KmlDocument(_)
         ));
     }
+
+    #[test]
+    fn test_parse_empty_coordinates() {
+        let kml_str = r#"
+            <?xml version="1.0" encoding="utf-8"?>
+            <kml xmlns="http://www.opengis.net/kml/2.2">
+              <Document>
+                <Placemark>
+                  <name>test</name>
+                  <LineString>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates />
+                  </LineString>
+                </Placemark>
+              </Document>
+            </kml>
+        "#;
+
+        assert!(matches!(
+            Kml::<f64>::from_str(kml_str).unwrap(),
+            Kml::KmlDocument(_)
+        ));
+    }
 }
