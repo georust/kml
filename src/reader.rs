@@ -192,7 +192,7 @@ where
                 Event::Decl(_) | Event::CData(_) | Event::Empty(_) | Event::Text(_) => {}
                 Event::Eof => break,
                 Event::Comment(_) => {}
-                x => return Err(Error::InvalidInput(format!("{:?}", x))),
+                x => return Err(Error::InvalidInput(format!("{x:?}"))),
             };
         }
 
