@@ -1134,18 +1134,13 @@ where
                 _ => {}
             }
         }
-        if coords.is_empty() {
-            Err(Error::InvalidGeometry(
-                "Geometry must contain coordinates element".to_string(),
-            ))
-        } else {
-            Ok(GeomProps {
-                coords,
-                altitude_mode,
-                extrude,
-                tessellate,
-            })
-        }
+
+        Ok(GeomProps {
+            coords,
+            altitude_mode,
+            extrude,
+            tessellate,
+        })
     }
 
     fn read_float<F: Float + FromStr>(&mut self) -> Result<F, Error> {
@@ -1762,5 +1757,24 @@ mod tests {
             Kml::<f64>::from_str(kml_str).unwrap(),
             Kml::KmlDocument(_)
         ));
+    }
+
+    #[test]
+    fn test_parse_empty_coordinates() {
+        let kml_str = r#"
+        <LineString>
+            <altitudeMode>absolute</altitudeMode>
+            <coordinates />
+        </LineString>
+        "#;
+
+        assert_eq!(
+            Kml::<f64>::from_str(kml_str).unwrap(),
+            Kml::LineString(LineString {
+                coords: vec![],
+                altitude_mode: types::AltitudeMode::Absolute,
+                ..Default::default()
+            })
+        );
     }
 }
