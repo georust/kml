@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## [v0.10.0](https://github.com/georust/kml/releases/tag/v0.10.0)
+
+- Allows for parsing geometries with empty coordinates without failing ([#68](https://github.com/georust/kml/pull/68)) from [@cappuc](https://github.com/cappuc)
+- Fix clippy linting issue ([#69](https://github.com/georust/kml/pull/69))
+
 ## [v0.9.1](https://github.com/georust/kml/releases/tag/v0.9.1)
 
 - Fixes a bug with `Folder` parsing where sub elements were all added as `Kml::Element` variants even if specific types were available ([#67](https://github.com/georust/kml/pull/67))
