@@ -1762,23 +1762,19 @@ mod tests {
     #[test]
     fn test_parse_empty_coordinates() {
         let kml_str = r#"
-            <?xml version="1.0" encoding="utf-8"?>
-            <kml xmlns="http://www.opengis.net/kml/2.2">
-              <Document>
-                <Placemark>
-                  <name>test</name>
-                  <LineString>
-                    <altitudeMode>absolute</altitudeMode>
-                    <coordinates />
-                  </LineString>
-                </Placemark>
-              </Document>
-            </kml>
+        <LineString>
+            <altitudeMode>absolute</altitudeMode>
+            <coordinates />
+        </LineString>
         "#;
 
-        assert!(matches!(
+        assert_eq!(
             Kml::<f64>::from_str(kml_str).unwrap(),
-            Kml::KmlDocument(_)
-        ));
+            Kml::LineString(LineString {
+                coords: vec![],
+                altitude_mode: types::AltitudeMode::Absolute,
+                ..Default::default()
+            })
+        );
     }
 }
