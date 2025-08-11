@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.11.0](https://github.com/georust/kml/releases/tag/v0.11.0)
+
+- Update `thiserror` to version 2.0 ([#71](https://github.com/georust/kml/pull/71)) from [@grim7reaper](https://github.com/grim7reaper)
+
 ## [v0.10.0](https://github.com/georust/kml/releases/tag/v0.10.0)
 
 - Allows for parsing geometries with empty coordinates without failing ([#68](https://github.com/georust/kml/pull/68)) from [@cappuc](https://github.com/cappuc)
