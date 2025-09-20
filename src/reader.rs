@@ -15,7 +15,7 @@ use quick_xml::events::{BytesStart, Event};
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    self, coords_from_str, Alias, BalloonStyle, ColorMode, Coord, CoordType, Element, Folder,
+    self, coords_from_str, Alias, BalloonStyle, ColorMode, Coord, CoordType, Data, Element, Folder,
     Geometry, Icon, IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle,
     LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair,
     Placemark, Point, PolyStyle, Polygon, RefreshMode, ResourceMap, Scale, SchemaData,
@@ -164,6 +164,7 @@ where
                             elements.push(Kml::ResourceMap(self.read_resource_map(attrs)?))
                         }
                         b"Alias" => elements.push(Kml::Alias(self.read_alias(attrs)?)),
+                        b"Data" => elements.push(Kml::Data(self.read_data(attrs)?)),
                         b"SchemaData" => {
                             elements.push(Kml::SchemaData(self.read_schema_data(attrs)?))
                         }
@@ -795,6 +796,37 @@ where
         Ok(alias)
     }
 
+    fn read_data(&mut self, mut attrs: HashMap<String, String>) -> Result<Data, Error> {
+        let mut kml_data = Data {
+            name: attrs.remove("name"),
+            uom: attrs.remove("uom"),
+            attrs,
+            ..Default::default()
+        };
+        loop {
+            let e = self.reader.read_event_into(&mut self.buf)?;
+            match e {
+                Event::Start(e) => match e.local_name().as_ref() {
+                    b"displayName" => {
+                        kml_data.display_name = self.read_str().ok();
+                    }
+                    b"value" => {
+                        kml_data.value = self.read_str()?;
+                    }
+                    _ => {}
+                },
+                Event::End(e) => {
+                    if e.local_name().as_ref() == b"Data" {
+                        break;
+                    }
+                }
+                Event::Comment(_) => {}
+                _ => {}
+            }
+        }
+        Ok(kml_data)
+    }
+
     fn read_schema_data(&mut self, attrs: HashMap<String, String>) -> Result<SchemaData, Error> {
         let mut schema_data = SchemaData {
             attrs,
@@ -1367,6 +1399,49 @@ mod tests {
                 target_href: Some("../images/foo.jpg".to_string()),
                 source_href: Some("in-geometry-file/foo.jpg".to_string()),
                 attrs,
+            })
+        );
+    }
+
+    #[test]
+    fn test_read_kml_data() {
+        let kml_str = r##"<Data name="holeNumber", uom="yd_us", anyAttribute="anySimpleType">
+            <!-- comment -->
+            <displayName>holeNumberDisplay</displayName>
+            <value>1234</value>
+            </Data>"##;
+        let a: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            a,
+            Kml::Data(Data {
+                name: Some("holeNumber".to_string()),
+                uom: Some("yd_us".to_string()),
+                display_name: Some("holeNumberDisplay".to_string()),
+                value: "1234".to_string(),
+                attrs: [("anyAttribute".to_string(), "anySimpleType".to_string()),]
+                    .iter()
+                    .cloned()
+                    .collect(),
+            })
+        );
+    }
+
+    #[test]
+    fn test_read_kml_data_without_attrs() {
+        let kml_str = r##"<Data>
+            <!-- comment -->
+            <displayName>holeNumberDisplay</displayName>
+            <value>1234</value>
+            </Data>"##;
+        let a: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            a,
+            Kml::Data(Data {
+                name: None,
+                uom: None,
+                display_name: Some("holeNumberDisplay".to_string()),
+                value: "1234".to_string(),
+                ..Default::default()
             })
         );
     }

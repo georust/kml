@@ -11,7 +11,7 @@ use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use crate::errors::Error;
 use crate::types::geom_props::GeomProps;
 use crate::types::{
-    Alias, BalloonStyle, Coord, CoordType, Element, Folder, Geometry, Icon, IconStyle, Kml,
+    Alias, BalloonStyle, Coord, CoordType, Data, Element, Folder, Geometry, Icon, IconStyle, Kml,
     LabelStyle, LineString, LineStyle, LinearRing, Link, LinkTypeIcon, ListStyle, Location,
     MultiGeometry, Orientation, Pair, Placemark, Point, PolyStyle, Polygon, ResourceMap, Scale,
     SchemaData, SimpleArrayData, SimpleData, Style, StyleMap,
@@ -94,6 +94,7 @@ where
             Kml::Link(l) => self.write_link(l)?,
             Kml::ResourceMap(r) => self.write_resource_map(r)?,
             Kml::Alias(a) => self.write_alias(a)?,
+            Kml::Data(d) => self.write_kml_data(d)?,
             Kml::SchemaData(s) => self.write_schema_data(s)?,
             Kml::SimpleArrayData(s) => self.write_simple_array_data(s)?,
             Kml::SimpleData(s) => self.write_simple_data(s)?,
@@ -592,6 +593,28 @@ where
             .write_event(Event::End(BytesEnd::new("Alias")))?)
     }
 
+    fn write_kml_data(&mut self, data: &Data) -> Result<(), Error> {
+        let mut filter_attrs: HashMap<String, String> = HashMap::new();
+        if let Some(name) = data.name.clone() {
+            filter_attrs.insert("name".to_string(), name);
+        }
+        if let Some(uom) = data.uom.clone() {
+            filter_attrs.insert("uom".to_string(), uom);
+        }
+
+        self.writer
+            .write_event(Event::Start(BytesStart::new("Data").with_attributes(
+                self.hash_map_as_attrs_filtered(&data.attrs, &filter_attrs),
+            )))?;
+
+        if let Some(dn) = &data.display_name {
+            self.write_text_element("displayName", dn)?;
+        }
+
+        self.write_text_element("value", &data.value.to_string())?;
+        Ok(self.writer.write_event(Event::End(BytesEnd::new("Data")))?)
+    }
+
     fn write_schema_data(&mut self, schema_data: &SchemaData) -> Result<(), Error> {
         self.writer.write_event(Event::Start(
             BytesStart::new("SchemaData")
@@ -888,6 +911,89 @@ mod tests {
             <targetHref>../images/foo.jpg</targetHref>\
             <sourceHref>in-geometry-file/foo.jpg</sourceHref>\
         </Alias>";
+        assert_eq!(expected_string, kml.to_string());
+    }
+
+    #[test]
+    fn test_write_kml_data() {
+        let kml: Kml<f64> = Kml::Data(Data {
+            name: Some("holeNumber".to_string()),
+            uom: Some("yd_us".to_string()),
+            display_name: Some("holeNumberDisplay".to_string()),
+            value: "1234".to_string(),
+            attrs: [
+                ("name".to_string(), "shouldBeRemoved".to_string()),
+                ("uom".to_string(), "shouldBeRemoved".to_string()),
+                ("anyAttribute".to_string(), "anySimpleType".to_string()),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
+        });
+        let expected_string_name_uom =
+            "<Data name=\"holeNumber\" uom=\"yd_us\" anyAttribute=\"anySimpleType\">\
+                <displayName>holeNumberDisplay</displayName>\
+                <value>1234</value>\
+            </Data>";
+        let expected_string_uom_name =
+            "<Data uom=\"yd_us\" name=\"holeNumber\" anyAttribute=\"anySimpleType\">\
+                <displayName>holeNumberDisplay</displayName>\
+                <value>1234</value>\
+            </Data>";
+        let result_kml = kml.to_string();
+        assert!(
+            expected_string_name_uom == result_kml || expected_string_uom_name == result_kml,
+            "{}, {}, {}",
+            expected_string_name_uom,
+            expected_string_uom_name,
+            result_kml
+        );
+    }
+
+    #[test]
+    fn test_write_kml_data_without_valid_data() {
+        let kml: Kml<f64> = Kml::Data(Data {
+            name: None,
+            uom: None,
+            display_name: Some("holeNumberDisplay".to_string()),
+            value: "1234".to_string(),
+            attrs: [
+                ("name".to_string(), "holeNumber".to_string()),
+                ("uom".to_string(), "yd_us".to_string()),
+                ("anyAttribute".to_string(), "anySimpleType".to_string()),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
+        });
+
+        let result_kml = kml.to_string();
+
+        let attr_pattern = r#"name="holeNumber""#;
+        let uom_pattern = r#"uom="yd_us""#;
+        let any_attr_pattern = r#"anyAttribute="anySimpleType""#;
+
+        assert!(result_kml.contains(attr_pattern));
+        assert!(result_kml.contains(uom_pattern));
+        assert!(result_kml.contains(any_attr_pattern));
+
+        assert!(result_kml.contains("<displayName>holeNumberDisplay</displayName>"));
+        assert!(result_kml.contains("<value>1234</value>"));
+    }
+
+    #[test]
+    fn test_write_kml_data_without_attrs() {
+        let kml: Kml<f64> = Kml::Data(Data {
+            name: None,
+            uom: None,
+            display_name: Some("holeNumberDisplay".to_string()),
+            value: "1234".to_string(),
+            ..Default::default()
+        });
+        let expected_string = "<Data>\
+                <displayName>holeNumberDisplay</displayName>\
+                <value>1234</value>\
+            </Data>";
         assert_eq!(expected_string, kml.to_string());
     }
 

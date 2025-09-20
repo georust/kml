@@ -60,7 +60,7 @@ pub use alias::Alias;
 
 mod data;
 
-pub use data::{SchemaData, SimpleArrayData, SimpleData};
+pub use data::{Data, SchemaData, SimpleArrayData, SimpleData};
 
 mod kml;
 
