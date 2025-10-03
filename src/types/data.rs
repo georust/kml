@@ -1,5 +1,15 @@
 use std::collections::HashMap;
 
+/// `kml:Data` [9.4](https://docs.ogc.org/is/12-007r2/12-007r2.html#136) in the KML
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct Data {
+    pub name: Option<String>,
+    pub uom: Option<String>,
+    pub display_name: Option<String>,
+    pub value: String,
+    pub attrs: HashMap<String, String>,
+}
+
 /// `kml:SchemaData`, [9.5](https://docs.opengeospatial.org/is/12-007r2/12-007r2.html#155) in the KML specification.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SchemaData {
