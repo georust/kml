@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.12.0](https://github.com/georust/kml/releases/tag/v0.12.0)
+
+- Add `kml:Data` ([#72](https://github.com/georust/kml/pull/72)) from [@DimitriiTrater](https://github.com/DimitriiTrater)
+
 ## [v0.11.0](https://github.com/georust/kml/releases/tag/v0.11.0)
 
 - Update `thiserror` to version 2.0 ([#71](https://github.com/georust/kml/pull/71)) from [@grim7reaper](https://github.com/grim7reaper)
