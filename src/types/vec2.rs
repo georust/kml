@@ -22,15 +22,13 @@ impl Default for Vec2 {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum Units {
     #[default]
     Fraction,
     Pixels,
     InsetPixels,
 }
-
 
 impl FromStr for Units {
     type Err = Error;
