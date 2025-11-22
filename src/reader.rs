@@ -1108,7 +1108,7 @@ where
                         break;
                     }
                 }
-                Event::Comment(_) => {}
+                Event::Comment(_) | Event::Empty(_) => {}
                 _ => break,
             }
         }
@@ -1767,6 +1767,44 @@ mod tests {
                 elements: vec![Kml::Placemark(Placemark {
                     ..Default::default()
                 })],
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_placemark_children_with_empty_field() {
+        let kml_str = r#"
+            <Placemark>
+            <name>Test Placemark</name>
+            <ExtendedData>
+                <CustomField>CustomValue</CustomField>
+                <EmptyField/>
+                <AnotherCustomField>CustomValue2</AnotherCustomField>
+            </ExtendedData>
+            </Placemark>
+        "#;
+        let f: Kml = kml_str.parse().unwrap();
+        assert_eq!(
+            f,
+            Kml::Placemark(Placemark {
+                name: Some("Test Placemark".to_string()),
+                children: vec![Element {
+                    name: "ExtendedData".to_string(),
+                    children: vec![
+                        Element {
+                            name: "CustomField".to_string(),
+                            content: Some("CustomValue".to_string()),
+                            ..Default::default()
+                        },
+                        Element {
+                            name: "AnotherCustomField".to_string(),
+                            content: Some("CustomValue2".to_string()),
+                            ..Default::default()
+                        }
+                    ],
+                    ..Default::default()
+                }],
                 ..Default::default()
             })
         );

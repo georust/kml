@@ -22,17 +22,12 @@ impl Default for Vec2 {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum Units {
+    #[default]
     Fraction,
     Pixels,
     InsetPixels,
-}
-
-impl Default for Units {
-    fn default() -> Self {
-        Self::Fraction
-    }
 }
 
 impl FromStr for Units {
