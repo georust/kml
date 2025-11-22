@@ -1108,8 +1108,7 @@ where
                         break;
                     }
                 }
-                Event::Comment(_) => {}
-                Event::Empty(_) => {} // Need o handle empty element to properly parse the tree
+                Event::Comment(_) | Event::Empty(_) => {}
                 _ => break,
             }
         }
