@@ -425,14 +425,12 @@ where
             let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref e) => {
-                    match e.local_name().as_ref() {
-                        b"coord" => {
-                            geometries.push(Geometry::Point(coords_from_str(&self
-                                .read_str()?
-                                .replace(" ", ","))?
-                                .remove(0).into()));
-                        }
-                        _ => {}
+                    if e.local_name().as_ref() == b"coord" {
+                        geometries.push(Geometry::Point(
+                            coords_from_str(&self.read_str()?.replace(" ", ","))?
+                                .remove(0)
+                                .into(),
+                        ));
                     }
                 }
                 Event::End(ref mut e) => {
@@ -441,7 +439,7 @@ where
                     }
                 }
                 Event::Comment(_) => {}
-                _ => {},
+                _ => {}
             }
         }
         Ok(MultiGeometry { geometries, attrs })
@@ -476,7 +474,8 @@ where
                                 Some(Geometry::MultiGeometry(self.read_multi_geometry(attrs)?))
                         }
                         b"Track" => {
-                            geometry = Some(Geometry::MultiGeometry(self.read_gx_track_coords(attrs)?));
+                            geometry =
+                                Some(Geometry::MultiGeometry(self.read_gx_track_coords(attrs)?));
                         }
                         _ => {
                             let start = e.to_owned();
@@ -1942,13 +1941,20 @@ mod tests {
             Kml::Placemark(Placemark {
                 name: Some("Test Placemark".to_string()),
                 geometry: Some(Geometry::MultiGeometry(MultiGeometry {
-                    geometries: vec![Geometry::Point(Point {
-                        coord: Coord::new(139.74128033333332, 35.60417266666666, Some(30.099999999999998)),
-                        ..Default::default()
-                    }), Geometry::Point(Point {
-                        coord: Coord::new(139.73755016666667, 35.59745483333334, Some(36.0)),
-                        ..Default::default()
-                    })],
+                    geometries: vec![
+                        Geometry::Point(Point {
+                            coord: Coord::new(
+                                139.74128033333332,
+                                35.60417266666666,
+                                Some(30.099999999999998)
+                            ),
+                            ..Default::default()
+                        }),
+                        Geometry::Point(Point {
+                            coord: Coord::new(139.73755016666667, 35.59745483333334, Some(36.0)),
+                            ..Default::default()
+                        })
+                    ],
                     attrs: HashMap::new()
                 })),
                 children: vec![],
