@@ -19,7 +19,7 @@ use crate::types::{
     Geometry, Icon, IconStyle, Kml, KmlDocument, KmlVersion, LabelStyle, LineString, LineStyle,
     LinearRing, Link, LinkTypeIcon, ListStyle, Location, MultiGeometry, Orientation, Pair,
     Placemark, Point, PolyStyle, Polygon, RefreshMode, ResourceMap, Scale, SchemaData,
-    SimpleArrayData, SimpleData, Style, StyleMap, Units, Vec2, ViewRefreshMode,
+    SimpleArrayData, SimpleData, Style, StyleMap, Track, Units, Vec2, ViewRefreshMode,
 };
 
 /// Main struct for reading KML documents
@@ -416,21 +416,15 @@ where
         Ok(MultiGeometry { geometries, attrs })
     }
 
-    fn read_gx_track_coords(
-        &mut self,
-        attrs: HashMap<String, String>,
-    ) -> Result<MultiGeometry<T>, Error> {
-        let mut geometries: Vec<Geometry<T>> = Vec::new();
+    fn read_track(&mut self, attrs: HashMap<String, String>) -> Result<Track<T>, Error> {
+        let mut coords: Vec<Coord<T>> = Vec::new();
         loop {
             let mut e = self.reader.read_event_into(&mut self.buf)?;
             match e {
                 Event::Start(ref e) => {
                     if e.local_name().as_ref() == b"coord" {
-                        geometries.push(Geometry::Point(
-                            coords_from_str(&self.read_str()?.replace(" ", ","))?
-                                .remove(0)
-                                .into(),
-                        ));
+                        let mut coord = coords_from_str(&self.read_str()?.replace(" ", ","))?;
+                        coords.push(coord.remove(0));
                     }
                 }
                 Event::End(ref mut e) => {
@@ -442,7 +436,7 @@ where
                 _ => {}
             }
         }
-        Ok(MultiGeometry { geometries, attrs })
+        Ok(Track { coords, attrs })
     }
 
     fn read_placemark(&mut self, attrs: HashMap<String, String>) -> Result<Placemark<T>, Error> {
@@ -474,8 +468,7 @@ where
                                 Some(Geometry::MultiGeometry(self.read_multi_geometry(attrs)?))
                         }
                         b"Track" => {
-                            geometry =
-                                Some(Geometry::MultiGeometry(self.read_gx_track_coords(attrs)?));
+                            geometry = Some(Geometry::LineString(self.read_track(attrs)?.into()));
                         }
                         _ => {
                             let start = e.to_owned();
@@ -1925,13 +1918,14 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_kml_document_default222() {
+    fn test_parse_kml_document_with_track() {
         let kml_str = r#"
              <Placemark>
                 <name>Test Placemark</name>
                     <gx:Track>
                         <gx:coord>139.74128033333332 35.60417266666666 30.099999999999998</gx:coord>
                         <gx:coord>139.73755016666667 35.59745483333334 36.0</gx:coord>
+                        <gx:coord>139.73755018666667 35.589745483333334 40.0</gx:coord>
                     </gx:Track>
               </Placemark>
           "#;
@@ -1940,23 +1934,18 @@ mod tests {
             kml,
             Kml::Placemark(Placemark {
                 name: Some("Test Placemark".to_string()),
-                geometry: Some(Geometry::MultiGeometry(MultiGeometry {
-                    geometries: vec![
-                        Geometry::Point(Point {
-                            coord: Coord::new(
-                                139.74128033333332,
-                                35.60417266666666,
-                                Some(30.099999999999998)
-                            ),
-                            ..Default::default()
-                        }),
-                        Geometry::Point(Point {
-                            coord: Coord::new(139.73755016666667, 35.59745483333334, Some(36.0)),
-                            ..Default::default()
-                        })
-                    ],
-                    attrs: HashMap::new()
-                })),
+                geometry: Some(Geometry::LineString(
+                    vec![
+                        Coord::new(
+                            139.74128033333332,
+                            35.60417266666666,
+                            Some(30.099999999999998)
+                        ),
+                        Coord::new(139.73755016666667, 35.59745483333334, Some(36.0)),
+                        Coord::new(139.73755018666667, 35.589745483333334, Some(40.0))
+                    ]
+                    .into()
+                )),
                 children: vec![],
                 ..Default::default()
             })
