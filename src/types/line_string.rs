@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::types::altitude_mode::AltitudeMode;
 use crate::types::coord::{Coord, CoordType};
+use crate::types::Track;
 
 /// `kml:LineString`, [10.7](http://docs.opengeospatial.org/is/12-007r2/12-007r2.html#488) in the
 /// KML specification
@@ -21,6 +22,18 @@ where
     fn from(coords: Vec<Coord<T>>) -> Self {
         LineString {
             coords,
+            ..Default::default()
+        }
+    }
+}
+
+impl<T> From<Track<T>> for LineString<T>
+where
+    T: CoordType + Default,
+{
+    fn from(track: Track<T>) -> Self {
+        LineString {
+            coords: track.coords,
             ..Default::default()
         }
     }

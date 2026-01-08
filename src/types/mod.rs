@@ -13,6 +13,7 @@ mod orientation;
 mod point;
 mod polygon;
 mod scale;
+mod track;
 mod vec2;
 
 pub use line_string::LineString;
@@ -23,6 +24,7 @@ pub use orientation::Orientation;
 pub use point::Point;
 pub use polygon::Polygon;
 pub use scale::Scale;
+pub use track::Track;
 pub use vec2::{Units, Vec2};
 
 mod element;
