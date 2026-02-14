@@ -126,7 +126,7 @@ where
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
                     match e.local_name().as_ref() {
-                        b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document()?)),
+                        b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document(attrs)?)),
                         b"Scale" => elements.push(Kml::Scale(self.read_scale(attrs)?)),
                         b"Orientation" => {
                             elements.push(Kml::Orientation(self.read_orientation(attrs)?))
@@ -200,11 +200,15 @@ where
         Ok(elements)
     }
 
-    fn read_kml_document(&mut self) -> Result<KmlDocument<T>, Error> {
-        // TODO: Should parse version, change version based on NS
+    fn read_kml_document(&mut self, attrs: HashMap<String, String>) -> Result<KmlDocument<T>, Error> {
+        let version = match attrs.get("xmlns").or_else(|| attrs.get("xmlns:kml")) {
+            Some(xmlns) => KmlVersion::from_str(xmlns).unwrap_or_default(),
+            None => KmlVersion::default()
+        };
         Ok(KmlDocument {
-            elements: self.read_elements()?,
-            ..Default::default()
+            version,
+            attrs,
+            elements: self.read_elements()?
         })
     }
 
