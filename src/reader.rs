@@ -200,15 +200,18 @@ where
         Ok(elements)
     }
 
-    fn read_kml_document(&mut self, attrs: HashMap<String, String>) -> Result<KmlDocument<T>, Error> {
+    fn read_kml_document(
+        &mut self,
+        attrs: HashMap<String, String>,
+    ) -> Result<KmlDocument<T>, Error> {
         let version = match attrs.get("xmlns").or_else(|| attrs.get("xmlns:kml")) {
             Some(xmlns) => KmlVersion::from_str(xmlns).unwrap_or_default(),
-            None => KmlVersion::default()
+            None => KmlVersion::default(),
         };
         Ok(KmlDocument {
             version,
             attrs,
-            elements: self.read_elements()?
+            elements: self.read_elements()?,
         })
     }
 
