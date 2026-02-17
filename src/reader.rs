@@ -1698,6 +1698,87 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_kml_document_version() {
+        let xmlns = "xmlns".to_string();
+        let xmlns_kml = "xmlns:kml".to_string();
+        let xmlns_v2_2 = "http://www.opengis.net/kml/2.2".to_string();
+        let xmlns_v2_3 = "http://www.opengis.net/kml/2.3".to_string();
+        let kml_str_v2_2 = format!(
+            r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml {xmlns}="{xmlns_v2_2}">
+        </kml>
+        "#
+        );
+        let kml_str_v2_3 = format!(
+            r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml {xmlns}="{xmlns_v2_3}">
+        </kml>
+        "#
+        );
+        let kml_str_v2_2_xmlns_kml = format!(
+            r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml {xmlns_kml}="{xmlns_v2_2}">
+        </kml>
+        "#
+        );
+        let kml_str_v2_3_xmlns_kml = format!(
+            r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml {xmlns_kml}="{xmlns_v2_3}">
+        </kml>
+        "#
+        );
+        let kml_str_v_unknown = r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml>
+        </kml>
+        "#;
+
+        assert_eq!(
+            Kml::<f64>::from_str(&kml_str_v2_2).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::V22,
+                attrs: HashMap::from([(xmlns.clone(), xmlns_v2_2.clone())]),
+                ..Default::default()
+            })
+        );
+        assert_eq!(
+            Kml::<f64>::from_str(&kml_str_v2_3).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::V23,
+                attrs: HashMap::from([(xmlns, xmlns_v2_3.clone())]),
+                ..Default::default()
+            })
+        );
+        assert_eq!(
+            Kml::<f64>::from_str(&kml_str_v2_2_xmlns_kml).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::V22,
+                attrs: HashMap::from([(xmlns_kml.clone(), xmlns_v2_2)]),
+                ..Default::default()
+            })
+        );
+        assert_eq!(
+            Kml::<f64>::from_str(&kml_str_v2_3_xmlns_kml).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::V23,
+                attrs: HashMap::from([(xmlns_kml, xmlns_v2_3)]),
+                ..Default::default()
+            })
+        );
+        assert_eq!(
+            Kml::<f64>::from_str(kml_str_v_unknown).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::Unknown,
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
     fn test_read_str_lossy() {
         let kml_str = r#"
             <Placemark>
