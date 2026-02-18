@@ -126,7 +126,7 @@ where
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
                     match e.local_name().as_ref() {
-                        b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document()?)),
+                        b"kml" => elements.push(Kml::KmlDocument(self.read_kml_document(attrs)?)),
                         b"Scale" => elements.push(Kml::Scale(self.read_scale(attrs)?)),
                         b"Orientation" => {
                             elements.push(Kml::Orientation(self.read_orientation(attrs)?))
@@ -200,11 +200,18 @@ where
         Ok(elements)
     }
 
-    fn read_kml_document(&mut self) -> Result<KmlDocument<T>, Error> {
-        // TODO: Should parse version, change version based on NS
+    fn read_kml_document(
+        &mut self,
+        attrs: HashMap<String, String>,
+    ) -> Result<KmlDocument<T>, Error> {
+        let version = match attrs.get("xmlns").or_else(|| attrs.get("xmlns:kml")) {
+            Some(xmlns) => KmlVersion::from_str(xmlns).unwrap_or_default(),
+            None => KmlVersion::default(),
+        };
         Ok(KmlDocument {
+            version,
+            attrs,
             elements: self.read_elements()?,
-            ..Default::default()
         })
     }
 
@@ -1688,6 +1695,87 @@ mod tests {
                 },
             _ => false,
         }))
+    }
+
+    #[test]
+    fn test_parse_kml_document_version() {
+        let xmlns = "xmlns".to_string();
+        let xmlns_kml = "xmlns:kml".to_string();
+        let xmlns_v2_2 = "http://www.opengis.net/kml/2.2".to_string();
+        let xmlns_v2_3 = "http://www.opengis.net/kml/2.3".to_string();
+        let kml_str_v2_2 = format!(
+            r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml {xmlns}="{xmlns_v2_2}">
+        </kml>
+        "#
+        );
+        let kml_str_v2_3 = format!(
+            r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml {xmlns}="{xmlns_v2_3}">
+        </kml>
+        "#
+        );
+        let kml_str_v2_2_xmlns_kml = format!(
+            r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml {xmlns_kml}="{xmlns_v2_2}">
+        </kml>
+        "#
+        );
+        let kml_str_v2_3_xmlns_kml = format!(
+            r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml {xmlns_kml}="{xmlns_v2_3}">
+        </kml>
+        "#
+        );
+        let kml_str_v_unknown = r#"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <kml>
+        </kml>
+        "#;
+
+        assert_eq!(
+            Kml::<f64>::from_str(&kml_str_v2_2).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::V22,
+                attrs: HashMap::from([(xmlns.clone(), xmlns_v2_2.clone())]),
+                ..Default::default()
+            })
+        );
+        assert_eq!(
+            Kml::<f64>::from_str(&kml_str_v2_3).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::V23,
+                attrs: HashMap::from([(xmlns, xmlns_v2_3.clone())]),
+                ..Default::default()
+            })
+        );
+        assert_eq!(
+            Kml::<f64>::from_str(&kml_str_v2_2_xmlns_kml).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::V22,
+                attrs: HashMap::from([(xmlns_kml.clone(), xmlns_v2_2)]),
+                ..Default::default()
+            })
+        );
+        assert_eq!(
+            Kml::<f64>::from_str(&kml_str_v2_3_xmlns_kml).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::V23,
+                attrs: HashMap::from([(xmlns_kml, xmlns_v2_3)]),
+                ..Default::default()
+            })
+        );
+        assert_eq!(
+            Kml::<f64>::from_str(kml_str_v_unknown).unwrap(),
+            Kml::KmlDocument(KmlDocument {
+                version: KmlVersion::Unknown,
+                ..Default::default()
+            })
+        );
     }
 
     #[test]
