@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## [v0.13.0](https://github.com/georust/kml/releases/tag/v0.13.0)
+
+- Add attribute and version parsing to `KmlDocument` ([#75](https://github.com/georust/kml/pull/75)) from [@NikBel3476](https://github.com/NikBel3476)
+- Fix handling of empty elements ([#73](https://github.com/georust/kml/pull/73)) from [@ricardobtez](https://github.com/ricardobtez)
+
 ## [v0.12.0](https://github.com/georust/kml/releases/tag/v0.12.0)
 
 - Add `kml:Data` ([#72](https://github.com/georust/kml/pull/72)) from [@DimitriiTrater](https://github.com/DimitriiTrater)
