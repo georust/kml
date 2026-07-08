@@ -16,7 +16,7 @@ keywords = ["geo", "geospatial", "kml"]
 exclude = [".github/*"]
 
 [dependencies]
-quick-xml = "0.37.1"
+quick-xml = "0.41.0"
 num-traits = "0.2"
 thiserror = "2.0"
 geo-types = { version = ">=0.6, <0.8", optional = true }
