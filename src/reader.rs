@@ -133,10 +133,7 @@ where
             self.buf.clear();
             let e = self.reader.read_event_into(&mut self.buf)?.into_owned();
             if let Event::Text(ref t) = e {
-                let is_whitespace = t
-                    .decode()
-                    .map(|s| s.trim().is_empty())
-                    .unwrap_or(false);
+                let is_whitespace = t.decode().map(|s| s.trim().is_empty()).unwrap_or(false);
                 if is_whitespace {
                     continue;
                 }
@@ -489,10 +486,8 @@ where
                         }
                     }
                 }
-                Event::End(ref e) => {
-                    if e.local_name().as_ref() == b"Placemark" {
-                        break;
-                    }
+                Event::End(ref e) if e.local_name().as_ref() == b"Placemark" => {
+                    break;
                 }
                 _ => {}
             }
@@ -889,10 +884,8 @@ where
                     }
                     _ => {}
                 },
-                Event::End(e) => {
-                    if e.local_name().as_ref() == b"SchemaData" {
-                        break;
-                    }
+                Event::End(e) if e.local_name().as_ref() == b"SchemaData" => {
+                    break;
                 }
                 _ => {}
             }
@@ -1207,10 +1200,8 @@ where
                     b"tessellate" => tessellate = self.read_str()? == "1",
                     _ => {}
                 },
-                Event::End(ref mut e) => {
-                    if e.local_name().as_ref() == end_tag {
-                        break;
-                    }
+                Event::End(ref mut e) if e.local_name().as_ref() == end_tag => {
+                    break;
                 }
                 _ => {}
             }
