@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [v0.14.0](https://github.com/georust/kml/releases/tag/v0.14.0)
+
+- Updates `quick-xml` to address vulnerabilities mentioned in [#76](https://github.com/georust/kml/issues/76), includes some adaptations to breaking changes for parsing XML references ([#77](https://github.com/georust/kml/pull/77))
+
 ## [v0.13.0](https://github.com/georust/kml/releases/tag/v0.13.0)
 
 - Add attribute and version parsing to `KmlDocument` ([#75](https://github.com/georust/kml/pull/75)) from [@NikBel3476](https://github.com/NikBel3476)
