@@ -86,7 +86,7 @@ where
 
     fn from_xml_reader(mut reader: quick_xml::Reader<B>) -> KmlReader<B, T> {
         let config = reader.config_mut();
-        config.trim_text(true);
+        config.trim_text(false);
         KmlReader {
             reader,
             buf: Vec::new(),
@@ -118,10 +118,37 @@ where
         }
     }
 
+    /// Reads the next event, transparently skipping over `Event::Text` events
+    /// that consist entirely of whitespace (e.g. pretty-printing indentation
+    /// between sibling tags). This replicates the effect that quick-xml's
+    /// `trim_text` used to have, but does so per logical event rather than
+    /// per fragment, so it doesn't clobber significant internal whitespace in
+    /// text that has been split around `Event::GeneralRef` entities. This
+    /// should be used by any loop that only expects `Start`/`End`/`Comment`
+    /// events and treats stray text as a sign to stop; loops that need to
+    /// capture text content (`read_element`, `read_str`) should keep calling
+    /// `self.reader.read_event_into` directly so they see every fragment.
+    fn next_event(&mut self) -> Result<Event<'static>, Error> {
+        loop {
+            self.buf.clear();
+            let e = self.reader.read_event_into(&mut self.buf)?.into_owned();
+            if let Event::Text(ref t) = e {
+                let is_whitespace = t
+                    .decode()
+                    .map(|s| s.trim().is_empty())
+                    .unwrap_or(false);
+                if is_whitespace {
+                    continue;
+                }
+            }
+            return Ok(e);
+        }
+    }
+
     fn read_elements(&mut self) -> Result<Vec<Kml<T>>, Error> {
         let mut elements: Vec<Kml<T>> = Vec::new();
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
@@ -190,7 +217,11 @@ where
                     b"Folder" | b"Document" => break,
                     _ => {}
                 },
-                Event::Decl(_) | Event::CData(_) | Event::Empty(_) | Event::Text(_) => {}
+                Event::Decl(_)
+                | Event::CData(_)
+                | Event::Empty(_)
+                | Event::Text(_)
+                | Event::GeneralRef(_) => {}
                 Event::Eof => break,
                 Event::Comment(_) => {}
                 x => return Err(Error::InvalidInput(format!("{x:?}"))),
@@ -221,7 +252,7 @@ where
         let mut z = One::one();
 
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"x" => x = self.read_float()?,
@@ -250,7 +281,7 @@ where
         let mut heading = Zero::zero();
 
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"roll" => roll = self.read_float()?,
@@ -291,7 +322,7 @@ where
         let mut altitude = Zero::zero();
 
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"longitude" => longitude = self.read_float()?,
@@ -346,7 +377,7 @@ where
         let mut tessellate = false;
 
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"outerBoundaryIs" => {
@@ -393,7 +424,7 @@ where
     ) -> Result<MultiGeometry<T>, Error> {
         let mut geometries: Vec<Geometry<T>> = Vec::new();
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref e) => {
                     let attrs = Self::read_attrs(e.attributes());
@@ -431,7 +462,7 @@ where
         let mut style_url: Option<String> = None;
 
         loop {
-            let e = self.reader.read_event_into(&mut self.buf)?;
+            let e = self.next_event()?;
             match e {
                 Event::Start(ref e) => {
                     let attrs = Self::read_attrs(e.attributes());
@@ -510,7 +541,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
@@ -543,7 +574,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => {
                     if e.local_name().as_ref() == b"Pair" {
@@ -570,7 +601,7 @@ where
         };
 
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"key" => pair.key = self.read_str()?,
@@ -596,7 +627,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
@@ -650,7 +681,7 @@ where
     fn read_basic_link_type_icon(&mut self, attrs: HashMap<String, String>) -> Result<Icon, Error> {
         let mut href = String::new();
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => {
                     if e.local_name().as_ref() == b"href" {
@@ -678,7 +709,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"href" => icon.href = Some(self.read_str()?),
@@ -713,7 +744,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"href" => link.href = Some(self.read_str()?),
@@ -751,7 +782,7 @@ where
         let mut aliases = Vec::new();
 
         loop {
-            let e = self.reader.read_event_into(&mut self.buf)?;
+            let e = self.next_event()?;
             match e {
                 Event::Start(e) => {
                     if e.local_name().as_ref() == b"Alias" {
@@ -783,7 +814,7 @@ where
         };
 
         loop {
-            let e = self.reader.read_event_into(&mut self.buf)?;
+            let e = self.next_event()?;
             match e {
                 Event::Start(e) => match e.local_name().as_ref() {
                     b"targetHref" => alias.target_href = Some(self.read_str()?),
@@ -811,7 +842,7 @@ where
             ..Default::default()
         };
         loop {
-            let e = self.reader.read_event_into(&mut self.buf)?;
+            let e = self.next_event()?;
             match e {
                 Event::Start(e) => match e.local_name().as_ref() {
                     b"displayName" => {
@@ -841,7 +872,7 @@ where
         };
 
         loop {
-            let e = self.reader.read_event_into(&mut self.buf)?;
+            let e = self.next_event()?;
             match e {
                 Event::Start(e) => match e.local_name().as_ref() {
                     b"SimpleData" => {
@@ -887,7 +918,7 @@ where
         }
 
         loop {
-            let e = self.reader.read_event_into(&mut self.buf)?;
+            let e = self.next_event()?;
             match e {
                 Event::Start(e) => {
                     if let b"value" = e.local_name().as_ref() {
@@ -935,7 +966,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"bgColor" => balloon_style.bg_color = Some(self.read_str()?),
@@ -966,7 +997,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"color" => label_style.color = self.read_str()?,
@@ -995,7 +1026,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"color" => line_style.color = self.read_str()?,
@@ -1024,7 +1055,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"bgColor" => list_style.bg_color = self.read_str()?,
@@ -1055,7 +1086,7 @@ where
             ..Default::default()
         };
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"color" => poly_style.color = self.read_str()?,
@@ -1104,11 +1135,22 @@ where
                         .push(self.read_element(&start, start_attrs)?);
                 }
                 Event::Text(ref mut e) => {
-                    element.content = Some(
-                        e.unescape()
-                            .map(|s| s.to_string())
-                            .unwrap_or_else(|_| e.escape_ascii().to_string()),
-                    )
+                    let s = e
+                        .decode()
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|_| e.escape_ascii().to_string());
+                    // Skip leading whitespace-only fragments (e.g. indentation
+                    // before the first real character), but once real content
+                    // has started, preserve whitespace verbatim -- it may be
+                    // significant internal whitespace that quick-xml split
+                    // around an Event::GeneralRef (entity reference).
+                    if element.content.is_some() || !s.trim().is_empty() {
+                        element.content.get_or_insert_with(String::new).push_str(&s);
+                    }
+                }
+                Event::GeneralRef(ref e) => {
+                    let s = Self::decode_general_ref(e)?;
+                    element.content.get_or_insert_with(String::new).push_str(&s);
                 }
                 Event::End(ref mut e) => {
                     if e.local_name() == tag {
@@ -1125,7 +1167,7 @@ where
     fn read_boundary(&mut self, end_tag: &[u8]) -> Result<Vec<LinearRing<T>>, Error> {
         let mut boundary: Vec<LinearRing<T>> = Vec::new();
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => {
                     let attrs = Self::read_attrs(e.attributes());
@@ -1152,7 +1194,7 @@ where
         let mut tessellate = false;
 
         loop {
-            let mut e = self.reader.read_event_into(&mut self.buf)?;
+            let mut e = self.next_event()?;
             match e {
                 Event::Start(ref mut e) => match e.local_name().as_ref() {
                     b"coordinates" => {
@@ -1189,19 +1231,40 @@ where
             .map_err(|_| Error::NumParse(float_str))
     }
 
-    fn read_str(&mut self) -> Result<String, Error> {
-        let e = self.reader.read_event_into(&mut self.buf)?;
-        match e {
-            Event::Text(e) => Ok(e
-                .unescape()
-                .map(|s| s.to_string())
-                .unwrap_or_else(|_| e.escape_ascii().to_string())),
-            Event::CData(e) => {
-                Ok(String::from_utf8(e.to_vec()).unwrap_or_else(|_| e.escape_ascii().to_string()))
-            }
-            Event::End(_) => Ok("".to_string()),
-            e => Err(Error::InvalidXmlEvent(format!("{e:?}"))),
+    fn decode_general_ref(bytes_ref: &quick_xml::events::BytesRef) -> Result<String, Error> {
+        if let Some(c) = bytes_ref
+            .resolve_char_ref()
+            .map_err(|e| Error::InvalidXmlEvent(e.to_string()))?
+        {
+            return Ok(c.to_string());
         }
+        let name = bytes_ref
+            .decode()
+            .map_err(|e| Error::InvalidXmlEvent(e.to_string()))?;
+        quick_xml::escape::resolve_xml_entity(&name)
+            .map(|s| s.to_string())
+            .ok_or_else(|| Error::InvalidXmlEvent(format!("Unknown entity &{name};")))
+    }
+
+    fn read_str(&mut self) -> Result<String, Error> {
+        let mut result = String::new();
+        loop {
+            let e = self.reader.read_event_into(&mut self.buf)?;
+            match e {
+                Event::Text(e) => result.push_str(
+                    &e.decode()
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|_| e.escape_ascii().to_string()),
+                ),
+                Event::GeneralRef(ref e) => result.push_str(&Self::decode_general_ref(e)?),
+                Event::CData(e) => result.push_str(
+                    &String::from_utf8(e.to_vec()).unwrap_or_else(|_| e.escape_ascii().to_string()),
+                ),
+                Event::End(_) => break,
+                e => return Err(Error::InvalidXmlEvent(format!("{e:?}"))),
+            }
+        }
+        Ok(result)
     }
 
     fn read_attrs(attrs: Attributes) -> HashMap<String, String> {
@@ -1801,6 +1864,37 @@ mod tests {
         assert_eq!(placemark.name, Some("Test & Test".to_string()));
         assert_eq!(placemark.description, Some("1¼ miles".to_string()));
         assert_eq!(placemark.style_url, Some("#foo".to_string()));
+    }
+
+    #[test]
+    fn test_read_str_with_entities() {
+        // Regression test for quick-xml >= 0.38, which reports entity/character
+        // references as their own `Event::GeneralRef` instead of inlining them
+        // into `Event::Text`. A single logical text run can therefore arrive as
+        // several Text/GeneralRef events that must be stitched back together.
+        let kml_str = r#"
+            <Placemark>
+            <name>AT&amp;T &lt;Tower&gt; &#65; &#x42;</name>
+            <description>line one
+          &amp;
+          line two</description>
+            <Point>
+            <coordinates>-1.0,1.0,0</coordinates>
+            </Point>
+        </Placemark>"#;
+        let p: Kml = kml_str.parse().unwrap();
+        let placemark: Placemark = match p {
+            Kml::Placemark(p) => p,
+            _ => panic!("expected Placemark"),
+        };
+        assert_eq!(placemark.name, Some("AT&T <Tower> A B".to_string()));
+        // Whitespace between the entity and the surrounding text (here, the
+        // newline + indentation on either side of `&amp;`) must survive --
+        // it's significant content, not insignificant inter-tag indentation.
+        assert_eq!(
+            placemark.description,
+            Some("line one\n          &\n          line two".to_string())
+        );
     }
 
     #[test]
