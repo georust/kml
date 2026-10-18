@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Chore(deps): Update zip to v9 to address [RUSTSEC-2026-0367](https://rustsec.org/advisories/RUSTSEC-2026-0367)
+## [v0.15.0](https://github.com/georust/kml/releases/tag/v0.15.0)
+
+- Chore(deps): Update zip to v9 to address [RUSTSEC-2026-0367](https://rustsec.org/advisories/RUSTSEC-2026-0367) from [@Johnabell](https://github.com/Johnabell)
 
 ## [v0.14.0](https://github.com/georust/kml/releases/tag/v0.14.0)
 
