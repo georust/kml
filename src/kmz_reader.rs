@@ -39,7 +39,7 @@ where
             let mut kml_file = archive
                 .by_index(i)
                 .map_err(|e| Error::InvalidInput(format!("{e:?}")))?;
-            if !kml_file.name().to_ascii_lowercase().ends_with(".kml") {
+            if !kml_file.name()?.to_ascii_lowercase().ends_with(".kml") {
                 continue;
             }
             let mut buf = Vec::with_capacity(kml_file.size() as usize);

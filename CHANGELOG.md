@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Chore(deps): Update zip to v9 to address [RUSTSEC-2026-0367](https://rustsec.org/advisories/RUSTSEC-2026-0367)
+
 ## [v0.14.0](https://github.com/georust/kml/releases/tag/v0.14.0)
 
 - Updates `quick-xml` to address vulnerabilities mentioned in [#76](https://github.com/georust/kml/issues/76), includes some adaptations to breaking changes for parsing XML references ([#77](https://github.com/georust/kml/pull/77))
