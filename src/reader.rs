@@ -489,6 +489,11 @@ where
                 Event::End(ref e) if e.local_name().as_ref() == b"Placemark" => {
                     break;
                 }
+                Event::Eof => {
+                    return Err(Error::InvalidInput(
+                        "document ended before the Placemark was closed".to_string(),
+                    ))
+                }
                 _ => {}
             }
         }
@@ -854,6 +859,11 @@ where
                     }
                 }
                 Event::Comment(_) => {}
+                Event::Eof => {
+                    return Err(Error::InvalidInput(
+                        "document ended before the Data element was closed".to_string(),
+                    ))
+                }
                 _ => {}
             }
         }
@@ -886,6 +896,11 @@ where
                 },
                 Event::End(e) if e.local_name().as_ref() == b"SchemaData" => {
                     break;
+                }
+                Event::Eof => {
+                    return Err(Error::InvalidInput(
+                        "document ended before the SchemaData element was closed".to_string(),
+                    ))
                 }
                 _ => {}
             }
@@ -1203,6 +1218,11 @@ where
                 Event::End(ref mut e) if e.local_name().as_ref() == end_tag => {
                     break;
                 }
+                Event::Eof => {
+                    return Err(Error::InvalidInput(
+                        "document ended before the geometry was closed".to_string(),
+                    ))
+                }
                 _ => {}
             }
         }
@@ -1284,6 +1304,52 @@ where
 
 #[cfg(test)]
 mod tests {
+    /// A truncated element must not keep the reader spinning.
+    ///
+    /// These six hang on `main`: the parse never returns. So this test would
+    /// not go red if the defect came back - it would hang, and CI would time
+    /// out instead. That is a property of the defect, and the reason the list
+    /// is asserted rather than described in a comment.
+    ///
+    /// Only these six were measured to hang. Other loops in this file wait for
+    /// an end tag without an `Eof` arm too and still return, so the missing arm
+    /// is not by itself the defect, and they are left alone.
+    #[test]
+    fn truncated_elements_terminate() {
+        for element in [
+            "Point",
+            "LineString",
+            "LinearRing",
+            "Placemark",
+            "Data",
+            "SchemaData",
+        ] {
+            let doc = format!("<{element}>");
+            assert!(
+                doc.parse::<Kml>().is_err(),
+                "<{element}> without its end tag should be rejected, not spun on"
+            );
+        }
+    }
+
+    /// The shape a fuzzer produced: two `Point` start tags and no end tag.
+    #[test]
+    fn repeated_unclosed_point_terminates() {
+        assert!("<xjA:Point>0j><xjA:Point>".parse::<Kml>().is_err());
+    }
+
+    /// The counter-proof: well formed documents still parse.
+    ///
+    /// Without it, a change that rejected everything would pass the two tests
+    /// above. The rest of the suite covers this far better; this is here so the
+    /// three tests read as one argument.
+    #[test]
+    fn well_formed_documents_still_parse() {
+        let doc = "<Placemark><name>x</name>\
+                   <Point><coordinates>1,2</coordinates></Point></Placemark>";
+        assert!(doc.parse::<Kml>().is_ok());
+    }
+
     use super::*;
 
     #[test]
