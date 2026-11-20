@@ -305,6 +305,11 @@ where
 
     fn read_point(&mut self, attrs: HashMap<String, String>) -> Result<Point<T>, Error> {
         let mut props = self.read_geom_props(b"Point")?;
+        if props.coords.is_empty() {
+            return Err(Error::InvalidGeometry(
+                "Point must contain a coordinate".to_string(),
+            ));
+        }
         Ok(Point {
             coord: props.coords.remove(0),
             altitude_mode: props.altitude_mode,
@@ -2062,5 +2067,23 @@ mod tests {
                 ..Default::default()
             })
         );
+    }
+
+    #[test]
+    fn test_parse_point_without_coordinates() {
+        for kml_str in [
+            "<Point></Point>",
+            "<Point><coordinates /></Point>",
+            "<Point><coordinates> </coordinates></Point>",
+            "<Placemark><Point><altitudeMode>absolute</altitudeMode></Point></Placemark>",
+        ] {
+            assert!(
+                matches!(
+                    Kml::<f64>::from_str(kml_str),
+                    Err(Error::InvalidGeometry(_))
+                ),
+                "{kml_str}"
+            );
+        }
     }
 }
